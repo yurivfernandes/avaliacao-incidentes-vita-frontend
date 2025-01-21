@@ -29,19 +29,19 @@ function WelcomePage() {
   };
 
   const cards = [
-    {
-      title: 'Técnicos',
+    ...(user?.is_staff || user?.is_gestor ? [{
+      title: 'Gestão de Usuários',
       description: 'Gerencie a equipe técnica',
       active: true,
       icon: <FaUsers size={32} />,
       subItems: [
         { 
-          name: 'Técnicos', 
+          name: 'Gestão de Usuários', 
           icon: <FaUsers size={16} />, 
-          path: '/tecnicos'
+          path: '/gestao-usuarios'
         }
       ]
-    },
+    }] : []),
     {
       title: 'Avaliação de Incidentes',
       description: 'Realize avaliações de incidentes',

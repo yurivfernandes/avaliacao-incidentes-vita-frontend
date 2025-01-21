@@ -49,20 +49,22 @@ function Header() {
 
         <nav className={`app-nav ${menuOpen ? 'active' : ''}`}>
           <ul className="app-menu">
-            <li className="app-menu-item user-menu">
-              <Link to="/tecnicos">
-                <FaUsers />
-                <span>Técnicos</span>
-              </Link>
-              <ul className="user-submenu">
-              <li>
-                  <Link to="/tecnicos">
-                    <FaUsers />
-                    <span>Técnicos</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
+            {(user?.is_staff || user?.is_gestor) && (
+              <li className="app-menu-item user-menu">
+                <Link to="/gestao-usuarios">
+                  <FaUsers />
+                  <span>Gestão de Usuários</span>
+                </Link>
+                <ul className="user-submenu">
+                  <li>
+                    <Link to="/gestao-usuarios">
+                      <FaUsers />
+                      <span>Gestão de Usuários</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+            )}
             <li className="app-menu-item user-menu">
               <Link to="/avaliacoes">
                 <FaHeadset />
