@@ -5,6 +5,7 @@ import './index.css';
 import LoginPage from './pages/LoginPage';
 import WelcomePage from './pages/WelcomePage';
 import PasswordPage from './pages/PasswordPage';
+import TecnicosPage from './pages/TecnicosPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -20,6 +21,14 @@ ReactDOM.render(
             element={
               <ProtectedRoute>
                 <WelcomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tecnicos"
+            element={
+              <ProtectedRoute>
+                <TecnicosPage />
               </ProtectedRoute>
             }
           />

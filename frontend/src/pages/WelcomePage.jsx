@@ -36,14 +36,9 @@ function WelcomePage() {
       icon: <FaUsers size={32} />,
       subItems: [
         { 
-          name: 'Lista de Técnicos', 
+          name: 'Técnicos', 
           icon: <FaUsers size={16} />, 
           path: '/tecnicos'
-        },
-        { 
-          name: 'Novo Técnico', 
-          icon: <FaUserCog size={16} />, 
-          path: '/tecnicos/novo'
         }
       ]
     },

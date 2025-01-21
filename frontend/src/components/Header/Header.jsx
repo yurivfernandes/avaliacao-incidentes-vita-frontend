@@ -55,16 +55,10 @@ function Header() {
                 <span>Técnicos</span>
               </Link>
               <ul className="user-submenu">
-                <li>
-                  <Link to="/tecnicos/novo">
-                    <FaUserCog />
-                    <span>Novo Técnico</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tecnicos/lista">
+              <li>
+                  <Link to="/tecnicos">
                     <FaUsers />
-                    <span>Lista de Técnicos</span>
+                    <span>Técnicos</span>
                   </Link>
                 </li>
               </ul>
