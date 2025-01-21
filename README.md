@@ -1,7 +1,11 @@
-# Sistema de Gestão de Inventário - Vivo Vita
+# Sistema de Análise de Incidentes
+
+<p align="center">
+    <img src="frontend/assets/images/logo_login.svg" alt="Logo" width="150" />
+</p>
 
 ## Sobre o Projeto
-Sistema desenvolvido para gerenciar o inventário completo da Vivo Vita, permitindo o controle de clientes, sites, equipamentos e serviços. O sistema também realiza a análise de incidentes, correlacionando informações para monitorar e avaliar indisponibilidades.
+Sistema desenvolvido para realizar a análise e gestão de incidentes, permitindo o controle de ocorrências, acompanhamento de técnicos e geração de relatórios detalhados. O sistema realiza a análise de incidentes, correlacionando informações para monitorar e avaliar indisponibilidades.
 
 ## Funcionalidades
 ### Implementadas
@@ -10,18 +14,16 @@ Sistema desenvolvido para gerenciar o inventário completo da Vivo Vita, permiti
 - Alteração de senha
 - Tela de perfil/alteração de senha
 - Welcome page
-- Tela de inventário
-- Gestão de inventário
-  - Cadastro de clientes
-  - Cadastro de sites
-  - Cadastro de equipamentos
-  - Cadastro de serviços
+- Gestão de técnicos
+  - Visualização de técnicos
+  - Cadastro de novos técnicos
+  - Perfil de técnico
 
 ### Em Desenvolvimento
-- Gestão de incidentes
-  - Análise de indisponibilidades
-  - Correlação de eventos
-  - Tela de gestão de incidentes
+- Sistema de relatórios
+  - Relatórios de incidentes
+  - Relatórios de desempenho
+  - Dashboards
 
 ## Tecnologias Utilizadas
 

@@ -5,17 +5,15 @@ import Header from '../components/Header/Header';
 import '../styles/WelcomePage.css';
 import { 
   FaUserCog, 
-  FaWarehouse, 
-  FaClipboardCheck, 
-  FaExclamationTriangle,
-  FaThLarge, // Importar o ícone do fluxo
-  FaChartPie, // Importar o ícone de relatórios
+  FaChartBar, // Substituir FaChartPie por FaChartBar
   FaBook, // Adicionar import para o ícone de documentação
-  FaUser,
-  FaServer,
+  FaUsers, // Novo import para técnicos
   FaReact,
-  FaCode, // Para o backend
-  FaFileAlt // Para o manual
+  FaPython, // Para o backend
+  FaFileAlt, // Para o manual
+  FaTicketAlt, // Ícone de ticket/chamado
+  FaListAlt,   // Ícone de lista de chamados
+  FaHeadset,   // Ícone relacionado a suporte
 } from 'react-icons/fa';
 
 function WelcomePage() {
@@ -32,11 +30,58 @@ function WelcomePage() {
 
   const cards = [
     {
+      title: 'Técnicos',
+      description: 'Gerencie a equipe técnica',
+      active: true,
+      icon: <FaUsers size={32} />,
+      subItems: [
+        { 
+          name: 'Lista de Técnicos', 
+          icon: <FaUsers size={16} />, 
+          path: '/tecnicos'
+        },
+        { 
+          name: 'Novo Técnico', 
+          icon: <FaUserCog size={16} />, 
+          path: '/tecnicos/novo'
+        }
+      ]
+    },
+    {
+      title: 'Avaliação de Incidentes',
+      description: 'Realize avaliações de incidentes',
+      active: true,
+      icon: <FaHeadset size={32} />, // Ícone principal alterado para headset
+      subItems: [
+        { 
+          name: 'Avaliações', 
+          icon: <FaListAlt size={16} />, // Lista de avaliações
+          path: '/avaliacoes'
+        },
+        { 
+          name: 'Nova Avaliação', 
+          icon: <FaTicketAlt size={16} />, // Novo ticket/chamado
+          path: '/avaliacoes/nova'
+        }
+      ]
+    },
+    {
       title: 'Relatórios',
       description: 'Acesse relatórios detalhados e estatísticas',
-      active: false,
-      icon: <FaChartPie size={32} />,
-      subItems: []
+      active: true,
+      icon: <FaChartBar size={32} />, // Alterado de FaChartPie para FaChartBar
+      subItems: [
+        {
+          name: 'Técnicos',
+          icon: <FaUsers size={16} />,
+          path: '/relatorios/tecnicos'
+        },
+        {
+          name: 'Equipes',
+          icon: <FaUserCog size={16} />,
+          path: '/relatorios/equipes'
+        }
+      ]
     },
     {
       title: 'Documentação',
@@ -45,7 +90,7 @@ function WelcomePage() {
       icon: <FaBook size={32} />,
       subItems: [
         { 
-          name: 'Documentação API', 
+          name: 'Documentação', 
           icon: <FaBook size={16} />, 
           path: '#',  // mudado para '#' já que vamos usar handleDocClick
         },
@@ -56,7 +101,7 @@ function WelcomePage() {
         },
         { 
           name: 'Backend', 
-          icon: <FaCode size={16} />, 
+          icon: <FaPython size={16} />, 
           path: '/documentation/backend'
         },
         { 
