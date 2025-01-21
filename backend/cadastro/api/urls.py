@@ -15,27 +15,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
-from django.views.generic import RedirectView
-from django.views.static import serve
+from django.urls import path
+
+from . import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/access/", include("access.api.urls")),
-    path("api/cadastro/", include("cadastro.api.urls")),
     path(
-        "api/docs/<path:path>",
-        serve,
-        {
-            "document_root": settings.MKDOCS_BUILD_DIR,
-        },
+        "fila-atendimento/",
+        views.FilaAtendimentoListCreateView.as_view(),
+        name="fila-atendimento-list-create",
     ),
     path(
-        "api/docs/",
-        serve,
-        {"document_root": settings.MKDOCS_BUILD_DIR, "path": "index.html"},
+        "fila-atendimento/<int:pk>/",
+        views.FilaAtendimentoDetailView.as_view(),
+        name="fila-atendimento-detail",
     ),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path(
+        "empresa/",
+        views.EmpresaListCreateView.as_view(),
+        name="empresa-list-create",
+    ),
+    path(
+        "empresa/<int:pk>/",
+        views.EmpresaDetailView.as_view(),
+        name="empresa-detail",
+    ),
+]
