@@ -11,7 +11,7 @@ import { FaUserPlus } from 'react-icons/fa';
 const tabs = [
   { id: 'filas', label: 'Filas de Atendimento' },
   { id: 'empresas', label: 'Empresas' },
-  { id: 'tecnicos', label: 'Técnicos' }
+  { id: 'usuarios', label: 'Usuários' }
 ];
 
 function TecnicosPage() {
@@ -20,13 +20,13 @@ function TecnicosPage() {
   const [tableData, setTableData] = useState({
     filas: [],
     empresas: [],
-    tecnicos: []
+    usuarios: []
   });
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState({
     filas: 1,
     empresas: 1,
-    tecnicos: 1
+    usuarios: 1
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddUser, setShowAddUser] = useState(false);
@@ -41,10 +41,10 @@ function TecnicosPage() {
     setLoading(true);
     try {
       switch (type) {
-        case 'tecnicos':
+        case 'usuarios':
           const response = await api.get(`/access/users/?page=${page}`);
-          setTableData(prev => ({ ...prev, tecnicos: response.data.results }));
-          setTotalPages(prev => ({ ...prev, tecnicos: response.data.num_pages }));
+          setTableData(prev => ({ ...prev, usuarios: response.data.results }));
+          setTotalPages(prev => ({ ...prev, usuarios: response.data.num_pages }));
           break;
         case 'filas':
           // await api.get('/access/filas/');
@@ -73,7 +73,7 @@ function TecnicosPage() {
 
   const handleSuccess = () => {
     console.log('Chamando fetchData após criação do usuário');
-    fetchData('tecnicos', currentPage);
+    fetchData('usuarios', currentPage);
   };
 
   const renderTable = () => {
@@ -84,15 +84,15 @@ function TecnicosPage() {
         return <div>Tabela de Filas - Em desenvolvimento</div>;
       case 'empresas':
         return <div>Tabela de Empresas - Em desenvolvimento</div>;
-      case 'tecnicos':
+      case 'usuarios':
         return (
           <TecnicosTable 
-            data={tableData.tecnicos}
+            data={tableData.usuarios}
             loading={loading}
             onPageChange={(page) => setCurrentPage(page)}
-            totalPages={totalPages.tecnicos}
+            totalPages={totalPages.usuarios}
             currentPage={currentPage}
-            fetchData={(page) => fetchData('tecnicos', page)}
+            fetchData={(page) => fetchData('usuarios', page)}
           />
         );
       default:
@@ -119,7 +119,7 @@ function TecnicosPage() {
           </div>
         </div>
 
-        {activeTab === 'tecnicos' && (
+        {activeTab === 'usuarios' && (
           <div className="page-actions">
             <div className="dropdown-wrapper">
               <button className="add-user-button" onClick={() => setShowAddUser(true)}>

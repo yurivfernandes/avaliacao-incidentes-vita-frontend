@@ -1,13 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import LoginPage from './pages/LoginPage';
 import WelcomePage from './pages/WelcomePage';
 import PasswordPage from './pages/PasswordPage';
 import TecnicosPage from './pages/TecnicosPage';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+
+const ProtectedGestaoUsuariosRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user?.is_staff && !user?.is_gestor) {
+    return <Navigate to="/welcome" replace />;
+  }
+  return children;
+};
 
 ReactDOM.render(
   <React.StrictMode>
@@ -25,10 +33,12 @@ ReactDOM.render(
             }
           />
           <Route
-            path="/tecnicos"
+            path="/gestao-usuarios"
             element={
               <ProtectedRoute>
-                <TecnicosPage />
+                <ProtectedGestaoUsuariosRoute>
+                  <TecnicosPage />
+                </ProtectedGestaoUsuariosRoute>
               </ProtectedRoute>
             }
           />
