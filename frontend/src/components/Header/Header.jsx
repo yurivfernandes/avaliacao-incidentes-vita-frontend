@@ -1,6 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSignOutAlt, FaKey, FaUser } from 'react-icons/fa';
+import { 
+  FaSignOutAlt, 
+  FaKey, 
+  FaUser, 
+  FaUsers, 
+  FaFileAlt,
+  FaCode,
+  FaReact,
+  FaPython,
+  FaHeadset,
+  FaChartBar,
+  FaBook,
+  FaUserCog,
+  FaTicketAlt,
+  FaListAlt
+} from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo_header.svg';
 import './../../styles//Header.css';
@@ -34,6 +49,66 @@ function Header() {
 
         <nav className={`app-nav ${menuOpen ? 'active' : ''}`}>
           <ul className="app-menu">
+            <li className="app-menu-item user-menu">
+              <Link to="/tecnicos">
+                <FaUsers />
+                <span>Técnicos</span>
+              </Link>
+              <ul className="user-submenu">
+                <li>
+                  <Link to="/tecnicos/novo">
+                    <FaUserCog />
+                    <span>Novo Técnico</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tecnicos/lista">
+                    <FaUsers />
+                    <span>Lista de Técnicos</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+            <li className="app-menu-item user-menu">
+              <Link to="/avaliacoes">
+                <FaHeadset />
+                <span>Avaliação de Incidentes</span>
+              </Link>
+              <ul className="user-submenu">
+                <li>
+                  <Link to="/avaliacoes/novo">
+                    <FaTicketAlt />
+                    <span>Nova Avaliação</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/avaliacoes/lista">
+                    <FaListAlt />
+                    <span>Lista de Avaliações</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+            <li className="app-menu-item user-menu">
+              <Link to="/relatorios">
+                <FaChartBar />
+                <span>Relatórios</span>
+              </Link>
+              <ul className="user-submenu">
+                <li>
+                  <Link to="/relatorios/tecnicos">
+                    <FaUsers />
+                    <span>Técnicos</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/relatorios/equipes">
+                    <FaUserCog />
+                    <span>Equipes</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
             <li className="app-menu-divider" />
             <li className="app-menu-item user-menu">
               <span className="user-name">

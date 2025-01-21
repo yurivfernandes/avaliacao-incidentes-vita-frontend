@@ -6,7 +6,7 @@ import logo from '../assets/logo_login.svg';
 
 function LoginPage() {
   useEffect(() => {
-    document.title = 'Gestão de Inventário - Login';
+    document.title = 'Análise de Incidentes - Login';
     const savedFormData = localStorage.getItem('loginFormData');
     if (savedFormData) {
       setFormData(JSON.parse(savedFormData));
@@ -64,7 +64,7 @@ function LoginPage() {
       <div className="login-card">
         <div className="login-header">
           <Link to="/">
-            <img src={logo} alt="Gestão de Inventário Logo" height="40" />
+            <img src={logo} alt="Vita Logo" height="40" />
           </Link>
           <h2>Bem-vindo de volta</h2>
         </div>

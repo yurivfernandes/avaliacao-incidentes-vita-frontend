@@ -6,7 +6,7 @@ import '../styles/PasswordPage.css';
 
 function PasswordPage() {
   useEffect(() => {
-    document.title = 'Gestão de Inventário - Alterar Senha';
+    document.title = 'Análise de Incidentes - Alterar Senha';
   }, []);
 
   const [formData, setFormData] = useState({
