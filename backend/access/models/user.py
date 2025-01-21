@@ -12,6 +12,9 @@ class User(AbstractUser):
     )
     full_name = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255, blank=True)
+    fila_atendimento = models.CharField(max_length=255, blank=True)
+    is_gestor = models.BooleanField(default=False)
+    is_tecnico = models.BooleanField(default=False)
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="access_user_set",
