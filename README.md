@@ -1,7 +1,7 @@
 # Sistema de Análise de Incidentes
 
 <p align="center">
-    <img src="frontend/assets/images/logo_login.svg" alt="Logo" width="150" />
+    <img src="https://github.com/yurivfernandes/projeto-base-vita/blob/main/frontend/src/assets/logo_login.svg" alt="Logo" width="150" />
 </p>
 
 ## Sobre o Projeto
