@@ -1,0 +1,96 @@
+site_name: Avaliação de Incidentes
+site_description: Documentação do sistema de Avaliação de Incidentes.
+site_author: TI
+
+nav:
+  - Home: index.md
+  - Manual do Usuário:
+      - Login e Senha: manual/login-senha.md
+      - Página Inicial: manual/welcome.md
+      - Inventário:
+          - Gestão de Inventário: manual/inventario/gestao.md
+          - Fluxo de Inventário: manual/inventario/fluxo.md
+      - Gestão de Incidentes: manual/incidentes.md
+  - Backend:
+      - Introdução: backend/index.md
+      - Ambiente:
+          - Visão Geral: backend/ambiente/index.md
+          - Instalação do Python: backend/ambiente/instalacao-python.md
+          - Configuração do Projeto: backend/ambiente/configuracao-projeto.md
+          - VS Code e Extensões: backend/ambiente/vscode.md
+      - Stack Tecnológica:
+          - Visão Geral: backend/tecnologias/index.md
+          - Django Framework: backend/tecnologias/django.md
+          - Django REST Framework: backend/tecnologias/drf.md
+          - Pacotes e Dependências: backend/tecnologias/pacotes.md
+      - Fundamentos:
+          - Visão Geral: backend/conceitos/index.md
+          - Models e Banco de Dados: backend/conceitos/models-db.md
+          - Sistema de Migrations: backend/conceitos/migrations.md
+          - Queries e Views: backend/conceitos/queries.md
+          - Estrutura do Projeto: backend/conceitos/estrutura.md
+          - Boas Práticas: backend/conceitos/boas-praticas.md
+      - Módulos:
+          - Access:
+              - Visão Geral: backend/modulos/access.md
+              - Login: backend/modulos/access/login.md
+              - Perfil: backend/modulos/access/profile.md
+              - Permissões: backend/modulos/access/permissions.md
+              - URLs e Rotas: backend/modulos/access/urls.md
+          - App:
+              - Visão Geral: backend/modulos/app/app.md
+              - Configurações: backend/modulos/app/settings.md
+              - URLs e Rotas: backend/modulos/app/urls.md
+              - WSGI/ASGI: backend/modulos/app/wsgi_asgi.md
+          - Docs: backend/modulos/docs.md
+  - Frontend:
+      - Visão Geral: frontend/index.md
+      - Páginas:
+          - Visão Geral: frontend/páginas/index.md
+          - Autenticação:
+              - Login: frontend/páginas/paginas/login.md
+              - Password: frontend/páginas/paginas/password.md
+              - Welcome: frontend/páginas/paginas/welcome.md
+      - Componentes:
+          - Header:
+              - Visão Geral: frontend/componentes/header/header.md
+
+theme:
+  name: material
+  logo: assets/images/logo_header.svg
+  favicon: assets/images/favicon.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Mudar para modo escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Mudar para modo claro
+  language: pt-BR
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+
+extra:
+  assets_dir: assets
+
+extra_css:
+  - stylesheets/extra.css
+extra_javascript: []
+extra_files:
+  - assets/images/logo.svg
+  - assets/images/favicon.svg
+
+site_dir: ../backend/docs
+use_directory_urls: false

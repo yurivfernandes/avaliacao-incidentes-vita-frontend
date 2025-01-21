@@ -1,0 +1,39 @@
+# Django & DRF
+Django==4.2.10
+django-cors-headers==4.3.1
+django-filter==23.5
+django-rest-knox==4.2.0
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+drf-yasg==1.21.7
+djangorestframework-filters
+
+# Database
+psycopg2-binary==2.9.9
+
+# Data Processing
+polars==0.19.3
+
+# Authentication
+PyJWT
+
+# HTTP & Networking
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.6
+requests==2.31.0
+urllib3==2.2.0
+
+# Web Scraping
+lxml==5.1.0
+
+# Development Tools
+Faker==22.6.0
+python-dotenv==1.0.1
+
+# Biblioteca para validação de documentos brasileiros
+validate-docbr==1.10.0
+
+# Documentation
+mkdocs==1.4.3
+mkdocs-material==9.0.5
