@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 
-from .models import User
+from ...models import User
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -26,11 +26,6 @@ class CustomUserCreationForm(UserCreationForm):
             )
         if not re.search(r"[0-9]", password1):
             raise ValidationError("A senha deve conter pelo menos um número.")
-        if not re.search(r"[\W_]", password1):
-            raise ValidationError(
-                "A senha deve conter pelo menos um caractere especial."
-            )
-        return password1
         if not re.search(r"[\W_]", password1):
             raise ValidationError(
                 "A senha deve conter pelo menos um caractere especial."

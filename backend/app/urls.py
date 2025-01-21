@@ -24,7 +24,7 @@ from django.views.static import serve
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/access/", include("access.urls")),
+    path("api/access/", include("access.api.urls")),
     path(
         "api/docs/<path:path>",
         serve,
