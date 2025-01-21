@@ -1,0 +1,15 @@
+#doc-container {
+  background: #fff;
+  position: fixed;
+  top: 64px; /* Ajuste conforme a altura do seu header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+#doc-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
