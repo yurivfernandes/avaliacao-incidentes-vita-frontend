@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django_filters",  # Adicionar Django Filters
     "rest_framework.authtoken",  # Adicionar esta linha
     "access",
+    "cadastro",
 ]
 
 MIDDLEWARE = [
