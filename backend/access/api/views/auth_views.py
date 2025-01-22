@@ -7,6 +7,8 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 
+from ..serializers import UserSerializer
+
 
 @method_decorator(csrf_exempt, name="dispatch")
 class LoginView(View):
@@ -26,19 +28,12 @@ class LoginView(View):
         if user is not None:
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
+            serializer = UserSerializer(user)
             response = JsonResponse(
                 {
                     "message": "Login successful",
                     "token": token.key,
-                    "user": {
-                        "username": user.username,
-                        "full_name": user.full_name,
-                        "company_name": user.company_name,
-                        "is_gestor": user.is_gestor,
-                        "is_tecnico": user.is_tecnico,
-                        "fila_atendimento": user.fila_atendimento,
-                        "is_staff": user.is_staff,
-                    },
+                    "user": serializer.data,
                 }
             )
         else:

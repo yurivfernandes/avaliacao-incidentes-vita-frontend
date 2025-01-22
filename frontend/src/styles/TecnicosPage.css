@@ -604,6 +604,59 @@ input:checked + .slider:before {
 
 /* ...existing code... */
 
+.add-company-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.add-company-button:hover {
+  background: #4a006f;
+}
+
+.add-company-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 550px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* ...existing code... */
+
+.add-queue-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.add-queue-button:hover {
+  background: #4a006f;
+}
+
+/* ...rest of existing code... */
+
 .modal-actions {
   display: flex;
   justify-content: center;
@@ -613,6 +666,125 @@ input:checked + .slider:before {
 .modal-actions .button-primary {
   min-width: 120px;
   justify-content: center;
+}
+
+/* ...rest of existing code... */
+
+/* Estilização atualizada dos selects para manter padrão */
+.form-field select {
+  width: 100%;
+  height: 3rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 8px;
+  color: #333333;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z' fill='%23670099'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  max-width: 250px;
+  background-color: white;
+}
+
+/* Estilização do dropdown de opções */
+.form-field select option {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: #333333;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Estilização para o hover nas opções */
+.form-field select option:hover,
+.form-field select option:focus {
+  background-color: #f8f0ff !important;
+  color: #670099;
+}
+
+/* Estilização para a opção selecionada */
+.form-field select option:checked {
+  background: linear-gradient(20deg, rgba(103, 0, 153, 0.1) 60%, rgba(201, 44, 130, 0.1) 100%);
+  color: #670099;
+  font-weight: 500;
+}
+
+/* Customização do dropdown */
+.form-field select::-ms-expand {
+  display: none;
+}
+
+/* Estilização para Firefox */
+.form-field select {
+  -moz-appearance: none;
+  text-indent: 0.01px;
+  text-overflow: '';
+}
+
+/* Estilização para o primeiro option (placeholder) */
+.form-field select option:first-child {
+  font-style: italic;
+  color: #666;
+}
+
+/* Removendo outline padrão do sistema */
+.form-field select:focus {
+  outline: none;
+  border-color: #670099;
+  box-shadow: 0 0 0 3px rgba(103, 0, 153, 0.1);
+}
+
+/* Ajustando a seta do select */
+.form-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z' fill='%23670099'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+
+/* Container específico para os selects mantendo espaçamento */
+.select-container {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+/* Ajuste para quando o select está desabilitado */
+.form-field select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Mensagem de erro mantendo o padrão */
+.form-field .error-message {
+  color: #dc3545;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+/* ...existing code... */
+
+/* Estilos complementares para o React Select */
+.form-field .react-select-container {
+  width: 100%;
+  max-width: 250px;
+}
+
+.form-field .react-select__menu {
+  z-index: 1100;
+  border: 1px solid rgba(111, 15, 175, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.form-field .react-select__value-container {
+  font-size: 0.9rem;
 }
 
 /* ...rest of existing code... */

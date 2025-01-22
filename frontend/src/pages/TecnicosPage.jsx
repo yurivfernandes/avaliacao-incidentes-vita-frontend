@@ -3,20 +3,22 @@ import { Navigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import TecnicosTable from '../components/Tecnicos/TecnicosTable';
 import AddUserDropdown from '../components/Tecnicos/AddUserDropdown';
+import AddCompanyDropdown from '../components/Tecnicos/AddCompanyDropdown';
+import AddQueueDropdown from '../components/Tecnicos/AddQueueDropdown';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import '../styles/TecnicosPage.css';
-import { FaUserPlus } from 'react-icons/fa';
+import { FaUserPlus, FaListUl } from 'react-icons/fa';
 
 const tabs = [
-  { id: 'filas', label: 'Filas de Atendimento' },
   { id: 'empresas', label: 'Empresas' },
+  { id: 'filas', label: 'Filas de Atendimento' },
   { id: 'usuarios', label: 'Usuários' }
 ];
 
 function TecnicosPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('filas');
+  const [activeTab, setActiveTab] = useState('usuarios'); // Mudando a aba inicial para 'usuarios'
   const [tableData, setTableData] = useState({
     filas: [],
     empresas: [],
@@ -30,6 +32,8 @@ function TecnicosPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [showAddQueue, setShowAddQueue] = useState(false);
 
   useEffect(() => {
     if (!user?.is_gestor && !user?.is_staff) {
@@ -46,17 +50,48 @@ function TecnicosPage() {
           setTableData(prev => ({ ...prev, usuarios: response.data.results }));
           setTotalPages(prev => ({ ...prev, usuarios: response.data.num_pages }));
           break;
-        case 'filas':
-          // await api.get('/access/filas/');
-          break;
         case 'empresas':
-          // await api.get('/access/empresas/');
+          const responseEmpresas = await api.get(`/cadastro/empresa/?page=${page}`);
+          // Ajuste aqui: a API pode estar retornando diretamente o array de empresas
+          const empresasData = Array.isArray(responseEmpresas.data) 
+            ? responseEmpresas.data 
+            : responseEmpresas.data.results;
+          
+          setTableData(prev => ({ 
+            ...prev, 
+            empresas: empresasData 
+          }));
+          
+          // Se não houver paginação, assume 1 página
+          setTotalPages(prev => ({ 
+            ...prev, 
+            empresas: responseEmpresas.data.num_pages || 1 
+          }));
+          break;
+        case 'filas':
+          const responseFilas = await api.get(`/cadastro/fila-atendimento/?page=${page}`);
+          const filasData = Array.isArray(responseFilas.data) 
+            ? responseFilas.data 
+            : responseFilas.data.results;
+          
+          setTableData(prev => ({ 
+            ...prev, 
+            filas: filasData 
+          }));
+          
+          setTotalPages(prev => ({ 
+            ...prev, 
+            filas: responseFilas.data.num_pages || 1 
+          }));
           break;
         default:
           break;
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
+      // Limpar os dados em caso de erro
+      setTableData(prev => ({ ...prev, [type]: [] }));
+      setTotalPages(prev => ({ ...prev, [type]: 1 }));
     } finally {
       setLoading(false);
     }
@@ -71,9 +106,9 @@ function TecnicosPage() {
     setCurrentPage(1);
   };
 
-  const handleSuccess = () => {
-    console.log('Chamando fetchData após criação do usuário');
-    fetchData('usuarios', currentPage);
+  const handleSuccess = (type) => {
+    console.log(`Chamando fetchData após criação de ${type}`);
+    fetchData(type, currentPage);
   };
 
   const renderTable = () => {
@@ -81,12 +116,33 @@ function TecnicosPage() {
 
     switch (activeTab) {
       case 'filas':
-        return <div>Tabela de Filas - Em desenvolvimento</div>;
+        return (
+          <TecnicosTable 
+            type="filas"
+            data={tableData.filas}
+            loading={loading}
+            onPageChange={(page) => setCurrentPage(page)}
+            totalPages={totalPages.filas}
+            currentPage={currentPage}
+            fetchData={(page) => fetchData('filas', page)}
+          />
+        );
       case 'empresas':
-        return <div>Tabela de Empresas - Em desenvolvimento</div>;
+        return (
+          <TecnicosTable 
+            type="empresas"
+            data={tableData.empresas}
+            loading={loading}
+            onPageChange={(page) => setCurrentPage(page)}
+            totalPages={totalPages.empresas}
+            currentPage={currentPage}
+            fetchData={(page) => fetchData('empresas', page)}
+          />
+        );
       case 'usuarios':
         return (
           <TecnicosTable 
+            type="usuarios"
             data={tableData.usuarios}
             loading={loading}
             onPageChange={(page) => setCurrentPage(page)}
@@ -128,7 +184,39 @@ function TecnicosPage() {
               {showAddUser && (
                 <AddUserDropdown
                   onClose={() => setShowAddUser(false)}
-                  onSuccess={handleSuccess}
+                  onSuccess={() => handleSuccess('usuarios')}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'empresas' && (
+          <div className="page-actions">
+            <div className="dropdown-wrapper">
+              <button className="add-company-button" onClick={() => setShowAddCompany(true)}>
+                <FaUserPlus /> Adicionar empresa
+              </button>
+              {showAddCompany && (
+                <AddCompanyDropdown
+                  onClose={() => setShowAddCompany(false)}
+                  onSuccess={() => handleSuccess('empresas')}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'filas' && (
+          <div className="page-actions">
+            <div className="dropdown-wrapper">
+              <button className="add-queue-button" onClick={() => setShowAddQueue(true)}>
+                <FaListUl /> Adicionar fila
+              </button>
+              {showAddQueue && (
+                <AddQueueDropdown
+                  onClose={() => setShowAddQueue(false)}
+                  onSuccess={() => handleSuccess('filas')}
                 />
               )}
             </div>

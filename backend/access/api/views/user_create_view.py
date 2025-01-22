@@ -15,14 +15,24 @@ class UserCreateView(APIView):
 
     def post(self, request):
         try:
+            # Validar se gestor está criando usuário na própria fila
+            if request.user.is_gestor and not request.user.is_staff:
+                if str(request.user.fila_id) != str(request.data.get("fila")):
+                    return Response(
+                        {
+                            "error": "Gestor só pode criar usuários em sua própria fila"
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
             # Extrair dados do request
             username = request.data.get("username")
-            password = request.data.get("password")
+            password = request.data.get("password").strip()
             first_name = request.data.get("first_name", "")
             last_name = request.data.get("last_name", "")
             full_name = request.data.get("full_name", "")
-            company_name = request.data.get("company_name", "")
-            fila_atendimento = request.data.get("fila_atendimento", "")
+            empresa_id = request.data.get("empresa")
+            fila_id = request.data.get("fila")
             is_staff = request.data.get("is_staff", False)
             is_gestor = request.data.get("is_gestor", False)
             is_tecnico = request.data.get("is_tecnico", True)
@@ -40,18 +50,24 @@ class UserCreateView(APIView):
                 is_gestor = False
                 is_tecnico = True
 
-            # Criar usuário
+            # Garantir que first_access seja True
+            user_data = {
+                **request.data,
+                "first_access": True,  # Força primeiro acesso
+            }
+
             user = User.objects.create_user(
-                username=username,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                full_name=full_name,
-                company_name=company_name,
-                fila_atendimento=fila_atendimento,
-                is_staff=is_staff,
-                is_gestor=is_gestor,
-                is_tecnico=is_tecnico,
+                username=user_data["username"].lower(),
+                password=user_data["password"],
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                full_name=user_data["full_name"],
+                empresa_id=user_data["empresa"],
+                fila_id=user_data["fila"],
+                is_staff=user_data["is_staff"],
+                is_gestor=user_data["is_gestor"],
+                is_tecnico=user_data["is_tecnico"],
+                first_access=True,
             )
 
             return Response(
