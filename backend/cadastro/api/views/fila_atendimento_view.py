@@ -1,6 +1,6 @@
 from access.api.permissions import IsStaffOrGestor
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +18,8 @@ class FilaAtendimentoPagination(PageNumberPagination):
 class FilaAtendimentoListCreateView(APIView):
     permission_classes = [IsStaffOrGestor]
     pagination_class = FilaAtendimentoPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["nome", "codigo", "empresa__nome"]
 
     def get(self, request):
         queryset = FilaAtendimento.objects.all().order_by("nome")

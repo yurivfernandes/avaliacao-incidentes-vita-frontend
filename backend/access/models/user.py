@@ -16,6 +16,7 @@ class User(AbstractUser):
     is_gestor = models.BooleanField(default=False)
     is_tecnico = models.BooleanField(default=False)
     first_access = models.BooleanField(default=True)
+    is_ativo = models.BooleanField(default=True)
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="access_user_set",

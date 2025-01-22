@@ -26,19 +26,28 @@ class LoginView(View):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            login(request, user)
-            token, created = Token.objects.get_or_create(user=user)
-            serializer = UserSerializer(user)
-            response = JsonResponse(
-                {
-                    "message": "Login successful",
-                    "token": token.key,
-                    "user": serializer.data,
-                }
-            )
+            if user.is_ativo:  # Verificar se o usuário está ativo
+                login(request, user)
+                token, created = Token.objects.get_or_create(user=user)
+                serializer = UserSerializer(user)
+                response = JsonResponse(
+                    {
+                        "message": "Login successful",
+                        "token": token.key,
+                        "user": serializer.data,
+                        "first_access": user.first_access,
+                    }
+                )
+            else:
+                response = JsonResponse(
+                    {
+                        "error": "Usuário inativo. Entre em contato com o administrador."
+                    },
+                    status=403,
+                )
         else:
             response = JsonResponse(
-                {"error": "Invalid credentials"}, status=400
+                {"error": "Credenciais inválidas"}, status=400
             )
 
         response["Access-Control-Allow-Origin"] = "*"

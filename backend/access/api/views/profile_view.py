@@ -35,6 +35,8 @@ class ProfileView(APIView):
                 "is_gestor": user.is_gestor,
                 "is_tecnico": user.is_tecnico,
                 "is_staff": user.is_staff,
+                "is_ativo": user.is_ativo,
+                "first_access": user.first_access,  # Adicionado first_access
             }
         )
 
@@ -57,6 +59,8 @@ class ProfileView(APIView):
                 "fila",
                 "is_gestor",
                 "is_tecnico",
+                "is_ativo",  # Adicionado is_ativo
+                "first_access",  # Adicionado first_access
             ]
             for field in allowed_fields:
                 if field in request.data:

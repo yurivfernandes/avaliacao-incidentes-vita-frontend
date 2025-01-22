@@ -21,6 +21,7 @@ class UserListSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_gestor",
             "is_tecnico",
+            "is_ativo",
         ]
 
     def get_empresa_data(self, obj):

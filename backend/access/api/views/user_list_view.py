@@ -1,5 +1,5 @@
 from access.models import User
-from rest_framework import generics
+from rest_framework import filters, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
@@ -11,6 +11,8 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserListSerializer
     permission_classes = [IsAuthenticated, IsStaffOrGestor]
     pagination_class = PageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["username", "full_name", "empresa__nome", "fila__nome"]
 
     def get_queryset(self):
         queryset = User.objects.exclude(id=self.request.user.id)

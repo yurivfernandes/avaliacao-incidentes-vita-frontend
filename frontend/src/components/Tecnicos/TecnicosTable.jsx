@@ -43,7 +43,8 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
           fila: item.fila_data?.id,
           is_gestor: item.is_gestor,
           is_tecnico: item.is_tecnico,
-          is_staff: item.is_staff
+          is_staff: item.is_staff,
+          is_ativo: item.is_ativo  // Adicionado is_ativo
         });
         break;
       case 'empresas':
@@ -121,6 +122,15 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
           if (row.is_tecnico) return 'Técnico';
           return '-';
         }
+      },
+      { 
+        header: 'Ativo', 
+        key: 'is_ativo',
+        render: (row) => (
+          <span className={row.is_ativo ? 'status-active' : 'status-inactive'}>
+            {row.is_ativo ? 'Ativo' : 'Inativo'}
+          </span>
+        )
       },
       { header: 'Ações', key: 'actions' }
     ],
@@ -229,6 +239,12 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                   <option value="tecnico">Técnico</option>
                 </select>
               )}
+            </td>
+            <td>
+              <label className="switch">
+                <input type="checkbox" checked={editData.is_ativo} onChange={e => setEditData({...editData, is_ativo: e.target.checked})} />
+                <span className="slider"></span>
+              </label>
             </td>
             <td className="actions-column">
               <button className="save-button" onClick={() => handleSave(item.id)}><FaCheck /></button>

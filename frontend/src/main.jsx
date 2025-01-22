@@ -17,6 +17,14 @@ const ProtectedGestaoUsuariosRoute = ({ children }) => {
   return children;
 };
 
+const FirstAccessRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.first_access) {
+    return <Navigate to="/perfil/senha" replace />;
+  }
+  return children;
+};
+
 ReactDOM.render(
   <React.StrictMode>
     <AuthProvider>
@@ -28,7 +36,9 @@ ReactDOM.render(
             path="/welcome"
             element={
               <ProtectedRoute>
-                <WelcomePage />
+                <FirstAccessRoute>
+                  <WelcomePage />
+                </FirstAccessRoute>
               </ProtectedRoute>
             }
           />
@@ -36,9 +46,11 @@ ReactDOM.render(
             path="/gestao-usuarios"
             element={
               <ProtectedRoute>
-                <ProtectedGestaoUsuariosRoute>
-                  <TecnicosPage />
-                </ProtectedGestaoUsuariosRoute>
+                <FirstAccessRoute>
+                  <ProtectedGestaoUsuariosRoute>
+                    <TecnicosPage />
+                  </ProtectedGestaoUsuariosRoute>
+                </FirstAccessRoute>
               </ProtectedRoute>
             }
           />

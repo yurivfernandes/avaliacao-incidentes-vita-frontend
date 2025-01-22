@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [firstAccess, setFirstAccess] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }) => {
         },
       });
       setUser(response.data);
+      setFirstAccess(response.data.first_access);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       setUser(null);
@@ -43,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, firstAccess }}>
       {children}
     </AuthContext.Provider>
   );

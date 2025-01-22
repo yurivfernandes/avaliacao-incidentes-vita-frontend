@@ -36,6 +36,9 @@ class UserCreateView(APIView):
             is_staff = request.data.get("is_staff", False)
             is_gestor = request.data.get("is_gestor", False)
             is_tecnico = request.data.get("is_tecnico", True)
+            is_ativo = request.data.get(
+                "is_ativo", True
+            )  # Adicionado is_ativo
 
             # Validações
             if not username or not password:
@@ -68,6 +71,7 @@ class UserCreateView(APIView):
                 is_gestor=user_data["is_gestor"],
                 is_tecnico=user_data["is_tecnico"],
                 first_access=True,
+                is_ativo=is_ativo,  # Adicionado is_ativo
             )
 
             return Response(
