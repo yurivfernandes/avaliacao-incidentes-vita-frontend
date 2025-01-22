@@ -8,7 +8,7 @@ import AddQueueDropdown from '../components/Tecnicos/AddQueueDropdown';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import '../styles/TecnicosPage.css';
-import { FaUserPlus, FaListUl } from 'react-icons/fa';
+import { FaUserPlus, FaListUl, FaSearch } from 'react-icons/fa';
 
 const tabs = [
   { id: 'empresas', label: 'Empresas' },
@@ -34,6 +34,7 @@ function TecnicosPage() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [showAddQueue, setShowAddQueue] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!user?.is_gestor && !user?.is_staff) {
@@ -41,17 +42,17 @@ function TecnicosPage() {
     }
   }, [user]);
 
-  const fetchData = async (type, page = 1) => {
+  const fetchData = async (type, page = 1, search = '') => {
     setLoading(true);
     try {
       switch (type) {
         case 'usuarios':
-          const response = await api.get(`/access/users/?page=${page}`);
+          const response = await api.get(`/access/users/?page=${page}&search=${search}`);
           setTableData(prev => ({ ...prev, usuarios: response.data.results }));
           setTotalPages(prev => ({ ...prev, usuarios: response.data.num_pages }));
           break;
         case 'empresas':
-          const responseEmpresas = await api.get(`/cadastro/empresa/?page=${page}`);
+          const responseEmpresas = await api.get(`/cadastro/empresa/?page=${page}&search=${search}`);
           // Ajuste aqui: a API pode estar retornando diretamente o array de empresas
           const empresasData = Array.isArray(responseEmpresas.data) 
             ? responseEmpresas.data 
@@ -69,7 +70,7 @@ function TecnicosPage() {
           }));
           break;
         case 'filas':
-          const responseFilas = await api.get(`/cadastro/fila-atendimento/?page=${page}`);
+          const responseFilas = await api.get(`/cadastro/fila-atendimento/?page=${page}&search=${search}`);
           const filasData = Array.isArray(responseFilas.data) 
             ? responseFilas.data 
             : responseFilas.data.results;
@@ -98,8 +99,12 @@ function TecnicosPage() {
   };
 
   useEffect(() => {
-    fetchData(activeTab, currentPage);
-  }, [activeTab, currentPage]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData(activeTab, currentPage, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [activeTab, currentPage, searchTerm]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -175,53 +180,62 @@ function TecnicosPage() {
           </div>
         </div>
 
-        {activeTab === 'usuarios' && (
+        <div className="page-header">
           <div className="page-actions">
-            <div className="dropdown-wrapper">
-              <button className="add-user-button" onClick={() => setShowAddUser(true)}>
-                <FaUserPlus /> Adicionar usuário
-              </button>
-              {showAddUser && (
-                <AddUserDropdown
-                  onClose={() => setShowAddUser(false)}
-                  onSuccess={() => handleSuccess('usuarios')}
-                />
-              )}
-            </div>
+            {activeTab === 'usuarios' && (
+              <div className="dropdown-wrapper">
+                <button className="add-user-button" onClick={() => setShowAddUser(true)}>
+                  <FaUserPlus /> Adicionar usuário
+                </button>
+                {showAddUser && (
+                  <AddUserDropdown
+                    onClose={() => setShowAddUser(false)}
+                    onSuccess={() => handleSuccess('usuarios')}
+                  />
+                )}
+              </div>
+            )}
+            {activeTab === 'empresas' && (
+              <div className="dropdown-wrapper">
+                <button className="add-company-button" onClick={() => setShowAddCompany(true)}>
+                  <FaUserPlus /> Adicionar empresa
+                </button>
+                {showAddCompany && (
+                  <AddCompanyDropdown
+                    onClose={() => setShowAddCompany(false)}
+                    onSuccess={() => handleSuccess('empresas')}
+                  />
+                )}
+              </div>
+            )}
+            {activeTab === 'filas' && (
+              <div className="dropdown-wrapper">
+                <button className="add-queue-button" onClick={() => setShowAddQueue(true)}>
+                  <FaListUl /> Adicionar fila
+                </button>
+                {showAddQueue && (
+                  <AddQueueDropdown
+                    onClose={() => setShowAddQueue(false)}
+                    onSuccess={() => handleSuccess('filas')}
+                  />
+                )}
+              </div>
+            )}
           </div>
-        )}
 
-        {activeTab === 'empresas' && (
-          <div className="page-actions">
-            <div className="dropdown-wrapper">
-              <button className="add-company-button" onClick={() => setShowAddCompany(true)}>
-                <FaUserPlus /> Adicionar empresa
-              </button>
-              {showAddCompany && (
-                <AddCompanyDropdown
-                  onClose={() => setShowAddCompany(false)}
-                  onSuccess={() => handleSuccess('empresas')}
-                />
-              )}
+          <div className="search-container">
+            <div className="search-wrapper">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
             </div>
           </div>
-        )}
-
-        {activeTab === 'filas' && (
-          <div className="page-actions">
-            <div className="dropdown-wrapper">
-              <button className="add-queue-button" onClick={() => setShowAddQueue(true)}>
-                <FaListUl /> Adicionar fila
-              </button>
-              {showAddQueue && (
-                <AddQueueDropdown
-                  onClose={() => setShowAddQueue(false)}
-                  onSuccess={() => handleSuccess('filas')}
-                />
-              )}
-            </div>
-          </div>
-        )}
+        </div>
 
         <div className="table-container">
           {renderTable()}

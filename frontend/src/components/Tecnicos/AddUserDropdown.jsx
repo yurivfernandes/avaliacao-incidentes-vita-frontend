@@ -98,7 +98,8 @@ function AddUserDropdown({ onClose, onSuccess }) {
         is_staff: currentUser?.is_staff ? formData.is_staff : false,
         is_gestor: currentUser?.is_staff ? formData.is_gestor : false,
         is_tecnico: currentUser?.is_staff ? formData.is_tecnico : true,
-        first_access: true
+        first_access: true,
+        is_ativo: true  // Adicionado is_ativo
       };
 
       await api.post('/access/create/', userData);

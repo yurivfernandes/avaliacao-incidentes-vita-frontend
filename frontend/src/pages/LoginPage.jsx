@@ -50,7 +50,11 @@ function LoginPage() {
         await login(data.token);
         navigate('/welcome');
       } else {
-        setError('Credenciais inválidas. Por favor, tente novamente.');
+        if (data.error === 'Usuário inativo') {
+          setError('Sua conta está inativa. Por favor, entre em contato com o suporte.');
+        } else {
+          setError(data.error || 'Credenciais inválidas. Por favor, tente novamente.');
+        }
       }
     } catch (error) {
       setError('Erro ao conectar com o servidor. Tente novamente mais tarde.');

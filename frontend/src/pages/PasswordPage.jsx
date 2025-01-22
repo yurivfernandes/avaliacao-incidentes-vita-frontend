@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header/Header';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import '../styles/PasswordPage.css';
 
 function PasswordPage() {
@@ -17,7 +18,7 @@ function PasswordPage() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -43,22 +44,12 @@ function PasswordPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/access/change-password/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          current_password: formData.currentPassword,
-          new_password: formData.newPassword
-        })
+      const response = await api.patch('/access/profile/', {
+        password: formData.newPassword,
+        first_access: false  // Atualizar first_access para false
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         setMessage({ type: 'success', text: 'Senha alterada com sucesso! Você será redirecionado para fazer login novamente.' });
         setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         
@@ -75,7 +66,7 @@ function PasswordPage() {
         } else {
           setMessage({ 
             type: 'error', 
-            text: data.message || 'Erro ao alterar senha. Verifique os dados e tente novamente.' 
+            text: response.data.message || 'Erro ao alterar senha. Verifique os dados e tente novamente.' 
           });
         }
       }
