@@ -1,44 +1,62 @@
 import React from 'react';
-import { FaCopy, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaCopy, FaTimes } from 'react-icons/fa';
 
-function PasswordResetModal({ password, onClose, title = "Senha Resetada com Sucesso", subtitle }) {
-  const handleCopy = () => {
-    const textToCopy = subtitle 
-      ? `${subtitle}\nSenha: ${password}` 
-      : password;
-    navigator.clipboard.writeText(textToCopy);
+function PasswordResetModal({ title = "Senha Resetada", subtitle, password, onClose }) {
+  const handleCopyPassword = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await navigator.clipboard.writeText(password);
+      alert('Senha copiada com sucesso!');
+    } catch (err) {
+      console.error('Erro ao copiar senha:', err);
+      alert('Erro ao copiar senha');
+    }
+  };
+
+  const handleClose = (e) => {
+    if (e) e.preventDefault();
+    onClose();
   };
 
   return (
-    <>
-      <div className="modal-overlay" />
-      <div className="password-modal">
+    <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+      <div className="password-modal" onClick={(e) => e.stopPropagation()}>
         <div className="password-modal-header">
           <h3>{title}</h3>
           <button className="modal-close" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
+        
         <div className="password-modal-content">
           {subtitle && <p>{subtitle}</p>}
-          <p>Senha gerada:</p>
           <div className="password-display">
             <span>{password}</span>
-            <button className="copy-button" onClick={handleCopy} title="Copiar credenciais">
+            <button 
+              type="button"
+              className="copy-button" 
+              onClick={handleCopyPassword}
+            >
               <FaCopy />
             </button>
           </div>
           <p className="password-warning">
-            Por favor, copie estas informações antes de fechar.
+            Certifique-se de copiar esta senha antes de fechar.
           </p>
           <div className="modal-actions">
-            <button className="button-primary" onClick={onClose}>
-              <FaCheck /> OK
+            <button 
+              type="button"
+              className="button-primary" 
+              onClick={handleClose}
+            >
+              OK
             </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

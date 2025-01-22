@@ -49,14 +49,14 @@ function WelcomePage() {
       icon: <FaHeadset size={32} />, // Ícone principal alterado para headset
       subItems: [
         { 
-          name: 'Avaliações', 
-          icon: <FaListAlt size={16} />, // Lista de avaliações
-          path: '/avaliacoes'
-        },
-        { 
           name: 'Nova Avaliação', 
           icon: <FaTicketAlt size={16} />, // Novo ticket/chamado
           path: '/avaliacoes/nova'
+        },
+        { 
+          name: 'Avaliações', 
+          icon: <FaListAlt size={16} />, // Lista de avaliações
+          path: '/avaliacoes'
         }
       ]
     },

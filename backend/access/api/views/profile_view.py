@@ -18,10 +18,22 @@ class ProfileView(APIView):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "full_name": user.full_name,
-                "company_name": user.company_name,
+                "empresa": {
+                    "id": user.empresa.id,
+                    "nome": user.empresa.nome,
+                    "codigo": user.empresa.codigo,
+                }
+                if user.empresa
+                else None,
+                "fila": {
+                    "id": user.fila.id,
+                    "nome": user.fila.nome,
+                    "codigo": user.fila.codigo,
+                }
+                if user.fila
+                else None,
                 "is_gestor": user.is_gestor,
                 "is_tecnico": user.is_tecnico,
-                "fila_atendimento": user.fila_atendimento,
                 "is_staff": user.is_staff,
             }
         )
@@ -41,8 +53,8 @@ class ProfileView(APIView):
             # Atualiza outros campos
             allowed_fields = [
                 "full_name",
-                "company_name",
-                "fila_atendimento",
+                "empresa",
+                "fila",
                 "is_gestor",
                 "is_tecnico",
             ]
@@ -54,7 +66,12 @@ class ProfileView(APIView):
                         and not request.user.is_staff
                     ):
                         continue
-                    setattr(user, field, request.data[field])
+                    if field == "empresa" and request.data[field]:
+                        user.empresa_id = request.data[field]
+                    elif field == "fila" and request.data[field]:
+                        user.fila_id = request.data[field]
+                    else:
+                        setattr(user, field, request.data[field])
 
             user.save()
             return Response({"message": "Atualizado com sucesso"})

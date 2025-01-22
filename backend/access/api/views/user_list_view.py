@@ -13,16 +13,26 @@ class UserListView(generics.ListAPIView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-        # Excluir o usuário atual da query
-        queryset = User.objects.exclude(id=self.request.user.id).order_by(
-            "username"
-        )
+        queryset = User.objects.exclude(id=self.request.user.id)
 
-        # Aplicar filtros
-        is_staff = self.request.query_params.get("is_staff", None)
-        is_gestor = self.request.query_params.get("is_gestor", None)
-        is_tecnico = self.request.query_params.get("is_tecnico", None)
+        # Se for gestor, filtrar apenas usuários da mesma fila
+        if self.request.user.is_gestor and not self.request.user.is_staff:
+            queryset = queryset.filter(
+                fila=self.request.user.fila,
+                is_staff=False,  # Gestor não pode ver usuários staff
+            )
 
+        # Filtros
+        empresa_id = self.request.query_params.get("empresa")
+        fila_id = self.request.query_params.get("fila")
+        is_staff = self.request.query_params.get("is_staff")
+        is_gestor = self.request.query_params.get("is_gestor")
+        is_tecnico = self.request.query_params.get("is_tecnico")
+
+        if empresa_id:
+            queryset = queryset.filter(empresa_id=empresa_id)
+        if fila_id:
+            queryset = queryset.filter(fila_id=fila_id)
         if is_staff is not None:
             queryset = queryset.filter(is_staff=is_staff.lower() == "true")
         if is_gestor is not None:
@@ -30,4 +40,4 @@ class UserListView(generics.ListAPIView):
         if is_tecnico is not None:
             queryset = queryset.filter(is_tecnico=is_tecnico.lower() == "true")
 
-        return queryset
+        return queryset.order_by("username")
