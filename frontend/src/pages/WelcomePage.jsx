@@ -14,6 +14,7 @@ import {
   FaTicketAlt, // Ícone de ticket/chamado
   FaListAlt,   // Ícone de lista de chamados
   FaHeadset,   // Ícone relacionado a suporte
+  FaClipboardList, // Novo ícone para premissas
 } from 'react-icons/fa';
 
 function WelcomePage() {
@@ -42,17 +43,30 @@ function WelcomePage() {
         }
       ]
     }] : []),
+    ...(user?.is_staff || user?.is_gestor ? [{
+      title: 'Premissas',
+      description: 'Edite as premissas do sistema',
+      active: true,
+      icon: <FaClipboardList size={32} />,
+      subItems: [
+        { 
+          name: 'Editar Premissas', 
+          icon: <FaClipboardList size={16} />, 
+          path: '/premissas/editar'
+        }
+      ]
+    }] : []),
     {
       title: 'Avaliação de Incidentes',
       description: 'Realize avaliações de incidentes',
       active: true,
       icon: <FaHeadset size={32} />, // Ícone principal alterado para headset
       subItems: [
-        { 
-          name: 'Nova Avaliação', 
+        ...(user?.is_staff || user?.is_gestor ? [{
+          name: 'Avaliar Atendimentos', 
           icon: <FaTicketAlt size={16} />, // Novo ticket/chamado
           path: '/avaliacoes/nova'
-        },
+        }] : []),
         { 
           name: 'Avaliações', 
           icon: <FaListAlt size={16} />, // Lista de avaliações
