@@ -10,36 +10,18 @@ import Select from 'react-select';
 function AddUserDropdown({ onClose, onSuccess }) {
   const { user: currentUser } = useAuth();
   const dropdownRef = useRef(null);
-  const [empresas, setEmpresas] = useState([]);
   const [filas, setFilas] = useState([]);
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
     last_name: '',
     full_name: '',
-    company_name: '',
-    fila_atendimento: '',
     is_staff: false,
     is_gestor: false,
-    is_tecnico: !currentUser?.is_staff, // Se não for staff, sempre será técnico
-    empresa: '',
+    is_tecnico: !currentUser?.is_staff,
     fila: '',
   });
   const [resetPassword, setResetPassword] = useState({ show: false, username: '', password: '' });
-
-  // Preencher empresa e fila automaticamente para gestor
-  useEffect(() => {
-    if (currentUser?.is_gestor && !currentUser?.is_staff) {
-      setFormData(prev => ({
-        ...prev,
-        empresa: currentUser.empresa?.id || '',
-        fila: currentUser.fila?.id || '',
-        is_tecnico: true, // Gestor só pode criar técnico
-        is_gestor: false,
-        is_staff: false
-      }));
-    }
-  }, [currentUser]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,27 +36,10 @@ function AddUserDropdown({ onClose, onSuccess }) {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        // Se for gestor, não precisa buscar as opções pois serão fixas
-        if (currentUser?.is_gestor && !currentUser?.is_staff) {
-          if (currentUser.empresa) {
-            setEmpresas([currentUser.empresa]);
-          }
-          if (currentUser.fila) {
-            setFilas([currentUser.fila]);
-          }
-          return;
-        }
-
-        // Para staff, busca todas as opções
-        const [empresasResponse, filasResponse] = await Promise.all([
-          api.get('/cadastro/empresa/'),
-          api.get('/cadastro/fila-atendimento/')
-        ]);
-        
-        setEmpresas(empresasResponse.data.results || empresasResponse.data);
-        setFilas(filasResponse.data.results || filasResponse.data);
+        const response = await api.get('/cadastro/fila-atendimento/');
+        setFilas(response.data.results || response.data);
       } catch (error) {
-        console.error('Erro ao carregar opções:', error);
+        console.error('Erro ao carregar filas:', error);
       }
     };
 
@@ -93,8 +58,7 @@ function AddUserDropdown({ onClose, onSuccess }) {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         full_name: `${formData.first_name} ${formData.last_name}`.trim(),
-        empresa: formData.empresa,
-        fila: formData.fila,
+        filas: [formData.fila], // Ajustado para enviar como array
         is_staff: currentUser?.is_staff ? formData.is_staff : false,
         is_gestor: currentUser?.is_staff ? formData.is_gestor : false,
         is_tecnico: currentUser?.is_staff ? formData.is_tecnico : true,
@@ -215,23 +179,6 @@ function AddUserDropdown({ onClose, onSuccess }) {
           <div className="form-row">
             <div className="form-field select-container">
               <Select
-                value={empresas.find(emp => emp.id === formData.empresa)}
-                onChange={(option) => setFormData({...formData, empresa: option?.id || ''})}
-                options={empresas}
-                getOptionLabel={(option) => option.nome}
-                getOptionValue={(option) => option.id}
-                placeholder="Selecione uma empresa"
-                styles={customStyles}
-                isSearchable
-                isClearable={!currentUser?.is_gestor}
-                isDisabled={currentUser?.is_gestor}
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
-              <label>Empresa*</label>
-            </div>
-            <div className="form-field select-container">
-              <Select
                 value={filas.find(fila => fila.id === formData.fila)}
                 onChange={(option) => setFormData({...formData, fila: option?.id || ''})}
                 options={filas}
@@ -240,8 +187,7 @@ function AddUserDropdown({ onClose, onSuccess }) {
                 placeholder="Selecione uma fila"
                 styles={customStyles}
                 isSearchable
-                isClearable={!currentUser?.is_gestor}
-                isDisabled={currentUser?.is_gestor}
+                isClearable
                 className="react-select-container"
                 classNamePrefix="react-select"
               />

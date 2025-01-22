@@ -6,7 +6,6 @@ function AddCompanyDropdown({ onClose, onSuccess }) {
   const dropdownRef = useRef(null);
   const [formData, setFormData] = useState({
     nome: '',
-    codigo: '',
     status: true,
   });
 
@@ -65,18 +64,6 @@ function AddCompanyDropdown({ onClose, onSuccess }) {
               maxLength={50}
             />
             <label>Nome da Empresa*</label>
-          </div>
-          <div className="form-field">
-            <input
-              type="text"
-              name="codigo"
-              value={formData.codigo}
-              onChange={handleChange}
-              placeholder="Digite o código"
-              required
-              maxLength={20}
-            />
-            <label>Código*</label>
           </div>
         </div>
 

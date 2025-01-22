@@ -1,4 +1,3 @@
-from cadastro.models.empresa import Empresa
 from cadastro.models.fila_atendimento import FilaAtendimento
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -29,19 +28,10 @@ class User(AbstractUser):
         related_query_name="access_user",
         blank=True,
     )
-    empresa = models.ForeignKey(
-        Empresa,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="users",
-    )
-    fila = models.ForeignKey(
+    filas = models.ManyToManyField(
         FilaAtendimento,
-        on_delete=models.SET_NULL,
-        null=True,
+        related_name="usuarios",
         blank=True,
-        related_name="users",
     )
 
     def save(self, *args, **kwargs):

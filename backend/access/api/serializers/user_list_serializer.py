@@ -1,12 +1,10 @@
 from access.models import User
-from cadastro.models.empresa import Empresa
-from cadastro.models.fila_atendimento import FilaAtendimento
 from rest_framework import serializers
 
 
 class UserListSerializer(serializers.ModelSerializer):
     empresa_data = serializers.SerializerMethodField()
-    fila_data = serializers.SerializerMethodField()
+    filas_data = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -17,7 +15,7 @@ class UserListSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "empresa_data",
-            "fila_data",
+            "filas_data",
             "is_staff",
             "is_gestor",
             "is_tecnico",
@@ -25,19 +23,20 @@ class UserListSerializer(serializers.ModelSerializer):
         ]
 
     def get_empresa_data(self, obj):
-        if obj.empresa:
+        # Pega a empresa da primeira fila
+        if obj.filas.exists() and obj.filas.first().empresa:
+            fila = obj.filas.first()
             return {
-                "id": obj.empresa.id,
-                "nome": obj.empresa.nome,
-                "codigo": obj.empresa.codigo,
+                "id": fila.empresa.id,
+                "nome": fila.empresa.nome,
             }
         return None
 
-    def get_fila_data(self, obj):
-        if obj.fila:
-            return {
-                "id": obj.fila.id,
-                "nome": obj.fila.nome,
-                "codigo": obj.fila.codigo,
+    def get_filas_data(self, obj):
+        return [
+            {
+                "id": fila.id,
+                "nome": fila.nome,
             }
-        return None
+            for fila in obj.filas.all()
+        ]

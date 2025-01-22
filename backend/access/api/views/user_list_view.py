@@ -1,4 +1,5 @@
 from access.models import User
+from django.db.models import Q
 from rest_framework import filters, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -12,34 +13,33 @@ class UserListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsStaffOrGestor]
     pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ["username", "full_name", "empresa__nome", "fila__nome"]
+    search_fields = ["username", "full_name"]
 
     def get_queryset(self):
         queryset = User.objects.exclude(id=self.request.user.id)
+        search = self.request.query_params.get("search", "")
 
-        # Se for gestor, filtrar apenas usuários da mesma fila
+        # Se for gestor, filtrar apenas usuários das suas filas
         if self.request.user.is_gestor and not self.request.user.is_staff:
+            gestor_filas = self.request.user.filas.all()
             queryset = queryset.filter(
-                fila=self.request.user.fila,
+                filas__in=gestor_filas,
                 is_staff=False,  # Gestor não pode ver usuários staff
-            )
+            ).distinct()
 
-        # Filtros
-        empresa_id = self.request.query_params.get("empresa")
-        fila_id = self.request.query_params.get("fila")
-        is_staff = self.request.query_params.get("is_staff")
-        is_gestor = self.request.query_params.get("is_gestor")
-        is_tecnico = self.request.query_params.get("is_tecnico")
-
-        if empresa_id:
-            queryset = queryset.filter(empresa_id=empresa_id)
-        if fila_id:
-            queryset = queryset.filter(fila_id=fila_id)
-        if is_staff is not None:
-            queryset = queryset.filter(is_staff=is_staff.lower() == "true")
-        if is_gestor is not None:
-            queryset = queryset.filter(is_gestor=is_gestor.lower() == "true")
-        if is_tecnico is not None:
-            queryset = queryset.filter(is_tecnico=is_tecnico.lower() == "true")
+            if search:
+                queryset = queryset.filter(
+                    Q(username__icontains=search)
+                    | Q(full_name__icontains=search)
+                )
+        else:
+            # Para staff, permite busca em todos os campos
+            if search:
+                queryset = queryset.filter(
+                    Q(username__icontains=search)
+                    | Q(full_name__icontains=search)
+                    | Q(filas__nome__icontains=search)
+                    | Q(filas__empresa__nome__icontains=search)
+                ).distinct()
 
         return queryset.order_by("username")

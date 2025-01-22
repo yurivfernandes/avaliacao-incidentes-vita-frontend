@@ -37,44 +37,27 @@ function PasswordPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        logout();
-        navigate('/login');
-        return;
+      const requestData = {
+        new_password: formData.newPassword
+      };
+
+      // Adiciona senha atual apenas se não for primeiro acesso
+      if (!user?.first_access) {
+        requestData.current_password = formData.currentPassword;
       }
 
-      const response = await api.patch('/access/profile/', {
-        password: formData.newPassword,
-        first_access: false  // Atualizar first_access para false
-      });
+      const response = await api.post('/access/change-password/', requestData);
 
       if (response.status === 200) {
         setMessage({ type: 'success', text: 'Senha alterada com sucesso! Você será redirecionado para fazer login novamente.' });
-        setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        
-        // Aguarda 2 segundos antes de fazer logout e redirecionar
         setTimeout(() => {
           logout();
           navigate('/login');
         }, 2000);
-      } else {
-        // Trata diferentes tipos de erro
-        if (response.status === 401) {
-          logout();
-          navigate('/login');
-        } else {
-          setMessage({ 
-            type: 'error', 
-            text: response.data.message || 'Erro ao alterar senha. Verifique os dados e tente novamente.' 
-          });
-        }
       }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Erro ao conectar com o servidor. Tente novamente mais tarde.' 
-      });
+      const errorMessage = error.response?.data?.error || 'Erro ao alterar a senha. Tente novamente.';
+      setMessage({ type: 'error', text: errorMessage });
     }
   };
 
@@ -94,18 +77,20 @@ function PasswordPage() {
           </div>
           
           <form onSubmit={handleSubmit} className="password-form">
-            <div className="form-group">
-              <input
-                type="password"
-                id="currentPassword"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                required
-                placeholder=" "
-              />
-              <label htmlFor="currentPassword">Senha Atual</label>
-            </div>
+            {!user?.first_access && (
+              <div className="form-group">
+                <input
+                  type="password"
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleChange}
+                  required
+                  placeholder=" "
+                />
+                <label htmlFor="currentPassword">Senha Atual</label>
+              </div>
+            )}
 
             <div className="form-group">
               <input
@@ -117,11 +102,10 @@ function PasswordPage() {
                 required
                 placeholder=" "
                 minLength="8"
-                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
               />
               <label htmlFor="newPassword">Nova Senha</label>
               <span className="password-hint">
-                Mínimo 8 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial
+                Mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais
               </span>
             </div>
 
@@ -135,7 +119,6 @@ function PasswordPage() {
                 required
                 placeholder=" "
                 minLength="8"
-                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
               />
               <label htmlFor="confirmPassword">Confirmar Nova Senha</label>
               <span className="password-hint">

@@ -6,5 +6,5 @@ from ...models import Empresa
 class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
-        fields = ["id", "nome", "codigo", "status"]
+        fields = ["id", "nome", "status"]
         read_only_fields = ["id"]

@@ -5,7 +5,6 @@ from .empresa import Empresa
 
 class FilaAtendimento(models.Model):
     nome = models.CharField(max_length=255)
-    codigo = models.CharField(max_length=50)
     status = models.BooleanField(default=True)
     empresa = models.ForeignKey(
         Empresa, on_delete=models.CASCADE, related_name="filas"
@@ -13,9 +12,6 @@ class FilaAtendimento(models.Model):
 
     def __str__(self):
         return self.nome
-
-    class Meta:
-        db_table = "cadastro_fila_atendimento"
 
     class Meta:
         db_table = "cadastro_fila_atendimento"
