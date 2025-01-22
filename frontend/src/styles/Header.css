@@ -63,7 +63,8 @@
 }
 
 .app-menu li a,
-.app-logout {
+.app-logout,
+.app-premissas {
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-size: 0.9rem;
@@ -89,6 +90,14 @@
 }
 
 .app-logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.app-premissas {
   background: none;
   border: none;
   cursor: pointer;

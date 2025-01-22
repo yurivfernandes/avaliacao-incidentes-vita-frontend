@@ -14,7 +14,8 @@ import {
   FaBook,
   FaUserCog,
   FaTicketAlt,
-  FaListAlt
+  FaListAlt,
+  FaClipboardList
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo_header.svg';
@@ -63,6 +64,14 @@ function Header() {
                     </Link>
                   </li>
                 </ul>
+              </li>
+            )}
+            {(user?.is_staff || user?.is_gestor) && (
+              <li className="app-menu-item user-menu">
+                <Link to="/premissas/editar">
+                  <FaClipboardList />
+                  <span>Premissas</span>
+                </Link>
               </li>
             )}
             <li className="app-menu-item user-menu">
