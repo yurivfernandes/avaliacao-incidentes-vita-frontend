@@ -19,4 +19,10 @@ from django.urls import path
 
 from . import views
 
-urlpatterns = []
+urlpatterns = [
+    path(
+        "sortear-tickets/",
+        views.SorteioTicketsView.as_view(),
+        name="sortear-tickets",
+    ),
+]
