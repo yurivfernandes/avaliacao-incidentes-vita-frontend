@@ -6,7 +6,6 @@ import api from '../../services/api';
 function AddQueueDropdown({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     nome: '',
-    codigo: '',
     status: true,
     empresa: ''
   });
@@ -63,15 +62,6 @@ function AddQueueDropdown({ onClose, onSuccess }) {
             />
             <label>Nome*</label>
           </div>
-          <div className="form-field">
-            <input
-              required
-              value={formData.codigo}
-              onChange={e => setFormData({...formData, codigo: e.target.value})}
-              placeholder="Digite o código"
-            />
-            <label>Código*</label>
-          </div>
         </div>
 
         <div className="form-row">
@@ -81,7 +71,7 @@ function AddQueueDropdown({ onClose, onSuccess }) {
               onChange={(option) => setFormData({...formData, empresa: option?.id})}
               options={empresas}
               getOptionLabel={(option) => option.nome}
-              getOptionValue={(option) => option.id}
+              getOptionValue={(option) => option.id} // Corrigido: removido parêntese extra
               placeholder="Selecione uma empresa"
               styles={customStyles}
               isSearchable

@@ -19,19 +19,38 @@ class EmpresaListCreateView(APIView):
     permission_classes = [IsStaffOrGestor]
     pagination_class = EmpresaPagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ["nome", "codigo"]
+    search_fields = ["nome"]
 
     def get(self, request):
-        queryset = Empresa.objects.all().order_by("nome")
+        if request.user.is_staff:
+            queryset = Empresa.objects.all()
+        elif request.user.is_gestor:
+            # Buscar empresas associadas às filas do gestor
+            queryset = Empresa.objects.filter(
+                filaatendimento__in=request.user.filas.all()
+            ).distinct()
+        else:
+            queryset = Empresa.objects.none()
+
+        queryset = queryset.order_by("nome")
+
+        # Aplicar busca se houver termo de pesquisa
+        search = request.query_params.get("search", "")
+        if search:
+            queryset = queryset.filter(nome__icontains=search)
 
         # Implementar paginação
         paginator = self.pagination_class()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
-
         serializer = EmpresaSerializer(paginated_queryset, many=True)
         return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "Apenas administradores podem criar empresas."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = EmpresaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

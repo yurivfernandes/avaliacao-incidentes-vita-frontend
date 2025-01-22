@@ -15,12 +15,18 @@ class UserCreateView(APIView):
 
     def post(self, request):
         try:
-            # Validar se gestor está criando usuário na própria fila
+            # Validar se gestor está criando usuário em suas filas
             if request.user.is_gestor and not request.user.is_staff:
-                if str(request.user.fila_id) != str(request.data.get("fila")):
+                filas_ids = request.data.get("filas", [])
+                gestor_filas_ids = set(
+                    request.user.filas.values_list("id", flat=True)
+                )
+                if not all(
+                    int(fila_id) in gestor_filas_ids for fila_id in filas_ids
+                ):
                     return Response(
                         {
-                            "error": "Gestor só pode criar usuários em sua própria fila"
+                            "error": "Gestor só pode criar usuários em suas próprias filas"
                         },
                         status=status.HTTP_403_FORBIDDEN,
                     )
@@ -36,9 +42,7 @@ class UserCreateView(APIView):
             is_staff = request.data.get("is_staff", False)
             is_gestor = request.data.get("is_gestor", False)
             is_tecnico = request.data.get("is_tecnico", True)
-            is_ativo = request.data.get(
-                "is_ativo", True
-            )  # Adicionado is_ativo
+            is_ativo = request.data.get("is_ativo", True)
 
             # Validações
             if not username or not password:
@@ -53,26 +57,23 @@ class UserCreateView(APIView):
                 is_gestor = False
                 is_tecnico = True
 
-            # Garantir que first_access seja True
-            user_data = {
-                **request.data,
-                "first_access": True,  # Força primeiro acesso
-            }
-
             user = User.objects.create_user(
-                username=user_data["username"].lower(),
-                password=user_data["password"],
-                first_name=user_data["first_name"],
-                last_name=user_data["last_name"],
-                full_name=user_data["full_name"],
-                empresa_id=user_data["empresa"],
-                fila_id=user_data["fila"],
-                is_staff=user_data["is_staff"],
-                is_gestor=user_data["is_gestor"],
-                is_tecnico=user_data["is_tecnico"],
+                username=username.lower(),
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                full_name=full_name,
+                is_staff=is_staff,
+                is_gestor=is_gestor,
+                is_tecnico=is_tecnico,
                 first_access=True,
-                is_ativo=is_ativo,  # Adicionado is_ativo
+                is_ativo=is_ativo,
             )
+
+            # Adicionar filas ao usuário
+            filas_ids = request.data.get("filas", [])
+            if filas_ids:
+                user.filas.set(filas_ids)
 
             return Response(
                 {"message": "Usuário criado com sucesso", "id": user.id},

@@ -33,6 +33,11 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
   }, [type, editingId]);
 
   const handleEdit = (item) => {
+    // Verificar permissões antes de permitir edição
+    if (!currentUser.is_staff && (type === 'empresas' || type === 'filas')) {
+      return;
+    }
+    
     setEditingId(item.id);
     switch(type) {
       case 'usuarios':
@@ -40,7 +45,7 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
           username: item.username,
           full_name: item.full_name,
           empresa: item.empresa_data?.id,
-          fila: item.fila_data?.id,
+          filas: item.filas_data?.map(f => f.id) || [],
           is_gestor: item.is_gestor,
           is_tecnico: item.is_tecnico,
           is_staff: item.is_staff,
@@ -109,9 +114,12 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
         render: (row) => row.empresa_data ? row.empresa_data.nome : '-'
       },
       { 
-        header: 'Fila', 
-        key: 'fila_data',
-        render: (row) => row.fila_data ? row.fila_data.nome : '-'
+        header: 'Filas', 
+        key: 'filas_data',
+        render: (row) => {
+          if (!row.filas_data || row.filas_data.length === 0) return '-';
+          return row.filas_data.map(fila => fila.nome).join(', ');
+        }
       },
       { 
         header: 'Tipo', 
@@ -136,7 +144,6 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
     ],
     empresas: [
       { header: 'Nome', key: 'nome' },
-      { header: 'Código', key: 'codigo' },
       { 
         header: 'Status', 
         key: 'status',
@@ -150,8 +157,11 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
     ],
     filas: [
       { header: 'Nome', key: 'nome' },
-      { header: 'Código', key: 'codigo' },
-      { header: 'Empresa', key: 'empresa' },
+      { 
+        header: 'Empresa', 
+        key: 'empresa_data',
+        render: (row) => row.empresa_data ? row.empresa_data.nome : '-'
+      },
       { 
         header: 'Status', 
         key: 'status',
@@ -168,6 +178,26 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
   const renderCell = (row, column) => {
     if (column.render) {
       return column.render(row);
+    }
+    if (column.key === 'actions') {
+      // Só mostrar ações de edição para staff ou para usuários (se for gestor)
+      const canEdit = currentUser.is_staff || 
+        (type === 'usuarios' && !row.is_staff && !row.is_gestor);
+      
+      return (
+        <div className="actions-column">
+          {canEdit && (
+            <button className="edit-button" onClick={() => handleEdit(row)}>
+              <FaEdit />
+            </button>
+          )}
+          {type === 'usuarios' && canEdit && (
+            <button className="reset-button" onClick={() => handleResetPassword(row.id)}>
+              <FaKey />
+            </button>
+          )}
+        </div>
+      );
     }
     return row[column.key] ?? '-';
   };
@@ -199,16 +229,19 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
               {currentUser.is_staff ? (
                 <select 
                   className="edit-input"
-                  value={editData.fila}
-                  onChange={e => setEditData({...editData, fila: e.target.value})}
+                  multiple
+                  value={editData.filas || []}
+                  onChange={e => {
+                    const selectedFilas = Array.from(e.target.selectedOptions, option => option.value);
+                    setEditData({...editData, filas: selectedFilas});
+                  }}
                 >
-                  <option value="">Selecione uma fila</option>
                   {filas?.map(fila => (
                     <option key={fila.id} value={fila.id}>{fila.nome}</option>
                   ))}
                 </select>
               ) : (
-                item.fila_data?.nome || '-'
+                item.filas_data?.map(f => f.nome).join(', ') || '-'
               )}
             </td>
             <td>
@@ -273,7 +306,6 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
         return (
           <>
             <td><input className="edit-input" value={editData.nome} onChange={e => setEditData({...editData, nome: e.target.value})} /></td>
-            <td><input className="edit-input" value={editData.codigo} onChange={e => setEditData({...editData, codigo: e.target.value})} /></td>
             <td><input className="edit-input" value={editData.empresa} onChange={e => setEditData({...editData, empresa: e.target.value})} /></td>
             <td>
               <label className="switch">
@@ -323,16 +355,7 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                 ) : (
                   columns[type].map((column) => (
                     <td key={column.key}>
-                      {column.key === 'actions' ? (
-                        <div className="actions-column">
-                          <button className="edit-button" onClick={() => handleEdit(row)}><FaEdit /></button>
-                          {type === 'usuarios' && (
-                            <button className="reset-button" onClick={() => handleResetPassword(row.id)}><FaKey /></button>
-                          )}
-                        </div>
-                      ) : (
-                        renderCell(row, column)
-                      )}
+                      {renderCell(row, column)}
                     </td>
                   ))
                 )}

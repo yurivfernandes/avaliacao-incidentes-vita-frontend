@@ -13,15 +13,35 @@ class ChangePasswordView(APIView):
         current_password = request.data.get("current_password")
         new_password = request.data.get("new_password")
 
-        if not user.check_password(current_password):
+        if not new_password:
             return Response(
-                {"error": "Current password is incorrect"}, status=400
+                {"error": "Nova senha é obrigatória"},
+                status=400,
             )
+
+        # Verifica senha atual apenas se não for primeiro acesso
+        if not user.first_access:
+            if not current_password:
+                return Response(
+                    {"error": "Senha atual é obrigatória"},
+                    status=400,
+                )
+            if not user.check_password(current_password):
+                return Response(
+                    {"error": "Senha atual está incorreta"},
+                    status=400,
+                )
 
         try:
             validate_password(new_password)
             user.set_password(new_password)
+            user.first_access = False
             user.save()
-            return Response({"message": "Password changed successfully"})
+            return Response({"message": "Senha alterada com sucesso"})
         except ValidationError as e:
-            return Response({"error": str(e)}, status=400)
+            return Response(
+                {
+                    "error": "A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais"
+                },
+                status=400,
+            )

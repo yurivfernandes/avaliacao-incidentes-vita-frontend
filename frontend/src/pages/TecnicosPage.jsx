@@ -52,34 +52,32 @@ function TecnicosPage() {
           setTotalPages(prev => ({ ...prev, usuarios: response.data.num_pages }));
           break;
         case 'empresas':
-          const responseEmpresas = await api.get(`/cadastro/empresa/?page=${page}&search=${search}`);
-          // Ajuste aqui: a API pode estar retornando diretamente o array de empresas
+          const empresasUrl = user.is_staff 
+            ? `/cadastro/empresa/?page=${page}&search=${search}`
+            : `/cadastro/empresa/${user.empresa}/`; // Endpoint para buscar apenas a empresa do gestor
+          const responseEmpresas = await api.get(empresasUrl);
+          
           const empresasData = Array.isArray(responseEmpresas.data) 
             ? responseEmpresas.data 
-            : responseEmpresas.data.results;
+            : user.is_staff ? responseEmpresas.data.results : [responseEmpresas.data];
           
-          setTableData(prev => ({ 
-            ...prev, 
-            empresas: empresasData 
-          }));
-          
-          // Se não houver paginação, assume 1 página
+          setTableData(prev => ({ ...prev, empresas: empresasData }));
           setTotalPages(prev => ({ 
             ...prev, 
-            empresas: responseEmpresas.data.num_pages || 1 
+            empresas: user.is_staff ? (responseEmpresas.data.num_pages || 1) : 1 
           }));
           break;
         case 'filas':
-          const responseFilas = await api.get(`/cadastro/fila-atendimento/?page=${page}&search=${search}`);
+          const filasUrl = user.is_staff 
+            ? `/cadastro/fila-atendimento/?page=${page}&search=${search}`
+            : `/cadastro/fila-atendimento/?empresa=${user.empresa}`;
+          const responseFilas = await api.get(filasUrl);
+          
           const filasData = Array.isArray(responseFilas.data) 
             ? responseFilas.data 
             : responseFilas.data.results;
           
-          setTableData(prev => ({ 
-            ...prev, 
-            filas: filasData 
-          }));
-          
+          setTableData(prev => ({ ...prev, filas: filasData }));
           setTotalPages(prev => ({ 
             ...prev, 
             filas: responseFilas.data.num_pages || 1 
@@ -182,7 +180,7 @@ function TecnicosPage() {
 
         <div className="page-header">
           <div className="page-actions">
-            {activeTab === 'usuarios' && (
+            {activeTab === 'usuarios' && user?.is_staff && (
               <div className="dropdown-wrapper">
                 <button className="add-user-button" onClick={() => setShowAddUser(true)}>
                   <FaUserPlus /> Adicionar usuário
@@ -195,7 +193,7 @@ function TecnicosPage() {
                 )}
               </div>
             )}
-            {activeTab === 'empresas' && (
+            {activeTab === 'empresas' && user?.is_staff && (
               <div className="dropdown-wrapper">
                 <button className="add-company-button" onClick={() => setShowAddCompany(true)}>
                   <FaUserPlus /> Adicionar empresa
@@ -208,7 +206,7 @@ function TecnicosPage() {
                 )}
               </div>
             )}
-            {activeTab === 'filas' && (
+            {activeTab === 'filas' && user?.is_staff && (
               <div className="dropdown-wrapper">
                 <button className="add-queue-button" onClick={() => setShowAddQueue(true)}>
                   <FaListUl /> Adicionar fila

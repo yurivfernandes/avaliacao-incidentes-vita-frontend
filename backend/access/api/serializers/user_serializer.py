@@ -4,39 +4,33 @@ from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
-    empresa = serializers.SerializerMethodField()
-    fila = serializers.SerializerMethodField()
+    empresa = serializers.SerializerMethodField(read_only=True)
+    filas = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id",
             "username",
-            "full_name",
+            "email",
             "first_name",
             "last_name",
             "empresa",
-            "fila",
+            "filas",
             "is_gestor",
             "is_tecnico",
             "is_staff",
             "is_ativo",
+            "first_access",
         ]
+        read_only_fields = ["id"]
 
     def get_empresa(self, obj):
-        if obj.empresa:
-            return {
-                "id": obj.empresa.id,
-                "nome": obj.empresa.nome,
-                "codigo": obj.empresa.codigo,
-            }
+        # Pega a empresa da primeira fila (assumindo que todas as filas são da mesma empresa)
+        if obj.filas.exists() and obj.filas.first().empresa:
+            fila = obj.filas.first()
+            return {"id": fila.empresa.id, "nome": fila.empresa.nome}
         return None
 
-    def get_fila(self, obj):
-        if obj.fila:
-            return {
-                "id": obj.fila.id,
-                "nome": obj.fila.nome,
-                "codigo": obj.fila.codigo,
-            }
-        return None
+    def get_filas(self, obj):
+        return [{"id": fila.id, "nome": fila.nome} for fila in obj.filas.all()]

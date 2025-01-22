@@ -9,7 +9,7 @@ class FilaAtendimentoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FilaAtendimento
-        fields = ["id", "nome", "codigo", "status", "empresa", "empresa_data"]
+        fields = ["id", "nome", "status", "empresa", "empresa_data"]
         read_only_fields = ["id"]
 
     def create(self, validated_data):
@@ -17,12 +17,9 @@ class FilaAtendimentoSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.nome = validated_data.get("nome", instance.nome)
-        instance.codigo = validated_data.get("codigo", instance.codigo)
         instance.status = validated_data.get("status", instance.status)
         instance.empresa_id = validated_data.get(
             "empresa", instance.empresa_id
         )
-        instance.save()
-        return instance
         instance.save()
         return instance
