@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",  # Adicionar esta linha
     "access",
     "cadastro",
-    "tickets",
+    "dw_analystics",
+    "premissas",
 ]
 
 MIDDLEWARE = [

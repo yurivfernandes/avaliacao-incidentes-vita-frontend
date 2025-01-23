@@ -78,3 +78,11 @@ __pycache__
 .pytest_cache/
 .coverage
 htmlcov/
+
+.venv/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
+*.sqlite3
