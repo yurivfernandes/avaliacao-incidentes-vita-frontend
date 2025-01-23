@@ -21,22 +21,4 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.static import serve
 
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/access/", include("access.api.urls")),
-    path("api/cadastro/", include("cadastro.api.urls")),
-    path("api/dw_analystics/", include("dw_analystics.api.urls")),
-    path("api/premissas/", include("premissas.api.urls")),
-    path(
-        "api/docs/<path:path>",
-        serve,
-        {
-            "document_root": settings.MKDOCS_BUILD_DIR,
-        },
-    ),
-    path(
-        "api/docs/",
-        serve,
-        {"document_root": settings.MKDOCS_BUILD_DIR, "path": "index.html"},
-    ),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns = []
