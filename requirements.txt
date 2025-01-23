@@ -38,3 +38,7 @@ validate-docbr==1.10.0
 mkdocs==1.4.3
 mkdocs-material==9.0.5
 psycopg2-binary
+
+# Celery
+celery==5.2.7
+redis==5.0.1
