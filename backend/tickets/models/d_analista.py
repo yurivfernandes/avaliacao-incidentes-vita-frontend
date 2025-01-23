@@ -5,10 +5,13 @@ from .d_fila import DFila
 
 class DAnalista(models.Model):
     nome = models.CharField(max_length=80)
-    fila = models.ForeignKey(DFila, on_delete=models.PROTECT)
+    filas = models.ManyToManyField(
+        DFila, related_name="analistas", verbose_name="Filas"
+    )
 
     def __str__(self):
-        return f"{self.nome} - {self.fila}"
+        filas = ", ".join([fila.nome for fila in self.filas.all()])
+        return f"{self.nome} - [{filas}]"
 
     class Meta:
         db_table = "d_analista"
