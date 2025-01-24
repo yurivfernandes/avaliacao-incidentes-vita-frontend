@@ -3,37 +3,30 @@ import { Navigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import TecnicosTable from '../components/Tecnicos/TecnicosTable';
 import AddUserDropdown from '../components/Tecnicos/AddUserDropdown';
-import AddCompanyDropdown from '../components/Tecnicos/AddCompanyDropdown';
-import AddQueueDropdown from '../components/Tecnicos/AddQueueDropdown';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import '../styles/TecnicosPage.css';
-import { FaUserPlus, FaListUl, FaSearch } from 'react-icons/fa';
+import { FaUserPlus, FaSearch } from 'react-icons/fa';
 
 const tabs = [
-  { id: 'empresas', label: 'Empresas' },
-  { id: 'filas', label: 'Filas de Atendimento' },
-  { id: 'usuarios', label: 'Usuários' }
+  { id: 'usuarios', label: 'Usuários' },
+  { id: 'assignment_groups', label: 'Assignment Groups' }
 ];
 
 function TecnicosPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('usuarios'); // Mudando a aba inicial para 'usuarios'
+  const [activeTab, setActiveTab] = useState('usuarios');
   const [tableData, setTableData] = useState({
-    filas: [],
-    empresas: [],
-    usuarios: []
+    usuarios: [],
+    assignment_groups: []
   });
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState({
-    filas: 1,
-    empresas: 1,
-    usuarios: 1
+    usuarios: 1,
+    assignment_groups: 1
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddUser, setShowAddUser] = useState(false);
-  const [showAddCompany, setShowAddCompany] = useState(false);
-  const [showAddQueue, setShowAddQueue] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -51,37 +44,10 @@ function TecnicosPage() {
           setTableData(prev => ({ ...prev, usuarios: response.data.results }));
           setTotalPages(prev => ({ ...prev, usuarios: response.data.num_pages }));
           break;
-        case 'empresas':
-          const empresasUrl = user.is_staff 
-            ? `/cadastro/empresa/?page=${page}&search=${search}`
-            : `/cadastro/empresa/${user.empresa}/`; // Endpoint para buscar apenas a empresa do gestor
-          const responseEmpresas = await api.get(empresasUrl);
-          
-          const empresasData = Array.isArray(responseEmpresas.data) 
-            ? responseEmpresas.data 
-            : user.is_staff ? responseEmpresas.data.results : [responseEmpresas.data];
-          
-          setTableData(prev => ({ ...prev, empresas: empresasData }));
-          setTotalPages(prev => ({ 
-            ...prev, 
-            empresas: user.is_staff ? (responseEmpresas.data.num_pages || 1) : 1 
-          }));
-          break;
-        case 'filas':
-          const filasUrl = user.is_staff 
-            ? `/cadastro/fila-atendimento/?page=${page}&search=${search}`
-            : `/cadastro/fila-atendimento/?empresa=${user.empresa}`;
-          const responseFilas = await api.get(filasUrl);
-          
-          const filasData = Array.isArray(responseFilas.data) 
-            ? responseFilas.data 
-            : responseFilas.data.results;
-          
-          setTableData(prev => ({ ...prev, filas: filasData }));
-          setTotalPages(prev => ({ 
-            ...prev, 
-            filas: responseFilas.data.num_pages || 1 
-          }));
+        case 'assignment_groups':
+          const responseGroups = await api.get(`/dw_analytics/assignment-group/?page=${page}&search=${search}`);
+          setTableData(prev => ({ ...prev, assignment_groups: responseGroups.data.results }));
+          setTotalPages(prev => ({ ...prev, assignment_groups: responseGroups.data.num_pages }));
           break;
         default:
           break;
@@ -118,28 +84,16 @@ function TecnicosPage() {
     if (loading) return <div>Carregando...</div>;
 
     switch (activeTab) {
-      case 'filas':
+      case 'assignment_groups':
         return (
           <TecnicosTable 
-            type="filas"
-            data={tableData.filas}
+            type="assignment_groups"
+            data={tableData.assignment_groups}
             loading={loading}
             onPageChange={(page) => setCurrentPage(page)}
-            totalPages={totalPages.filas}
+            totalPages={totalPages.assignment_groups}
             currentPage={currentPage}
-            fetchData={(page) => fetchData('filas', page)}
-          />
-        );
-      case 'empresas':
-        return (
-          <TecnicosTable 
-            type="empresas"
-            data={tableData.empresas}
-            loading={loading}
-            onPageChange={(page) => setCurrentPage(page)}
-            totalPages={totalPages.empresas}
-            currentPage={currentPage}
-            fetchData={(page) => fetchData('empresas', page)}
+            fetchData={(page) => fetchData('assignment_groups', page)}
           />
         );
       case 'usuarios':
@@ -189,32 +143,6 @@ function TecnicosPage() {
                   <AddUserDropdown
                     onClose={() => setShowAddUser(false)}
                     onSuccess={() => handleSuccess('usuarios')}
-                  />
-                )}
-              </div>
-            )}
-            {activeTab === 'empresas' && user?.is_staff && (
-              <div className="dropdown-wrapper">
-                <button className="add-company-button" onClick={() => setShowAddCompany(true)}>
-                  <FaUserPlus /> Adicionar empresa
-                </button>
-                {showAddCompany && (
-                  <AddCompanyDropdown
-                    onClose={() => setShowAddCompany(false)}
-                    onSuccess={() => handleSuccess('empresas')}
-                  />
-                )}
-              </div>
-            )}
-            {activeTab === 'filas' && user?.is_staff && (
-              <div className="dropdown-wrapper">
-                <button className="add-queue-button" onClick={() => setShowAddQueue(true)}>
-                  <FaListUl /> Adicionar fila
-                </button>
-                {showAddQueue && (
-                  <AddQueueDropdown
-                    onClose={() => setShowAddQueue(false)}
-                    onSuccess={() => handleSuccess('filas')}
                   />
                 )}
               </div>

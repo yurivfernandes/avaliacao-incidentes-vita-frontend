@@ -10,7 +10,7 @@ import Select from 'react-select';
 function AddUserDropdown({ onClose, onSuccess }) {
   const { user: currentUser } = useAuth();
   const dropdownRef = useRef(null);
-  const [filas, setFilas] = useState([]);
+  const [assignmentGroups, setAssignmentGroups] = useState([]);
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
@@ -19,7 +19,7 @@ function AddUserDropdown({ onClose, onSuccess }) {
     is_staff: false,
     is_gestor: false,
     is_tecnico: !currentUser?.is_staff,
-    fila: '',
+    assignment_groups: []
   });
   const [resetPassword, setResetPassword] = useState({ show: false, username: '', password: '' });
 
@@ -36,10 +36,10 @@ function AddUserDropdown({ onClose, onSuccess }) {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const response = await api.get('/cadastro/fila-atendimento/');
-        setFilas(response.data.results || response.data);
+        const response = await api.get('/dw_analytics/assignment-group/');
+        setAssignmentGroups(response.data.results || response.data);
       } catch (error) {
-        console.error('Erro ao carregar filas:', error);
+        console.error('Erro ao carregar assignment groups:', error);
       }
     };
 
@@ -48,6 +48,10 @@ function AddUserDropdown({ onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.assignment_groups.length === 0) {
+      alert('É necessário selecionar ao menos um grupo.');
+      return;
+    }
     try {
       const password = generateStrongPassword();
       const username = formatUsername(formData.first_name, formData.last_name);
@@ -58,7 +62,7 @@ function AddUserDropdown({ onClose, onSuccess }) {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         full_name: `${formData.first_name} ${formData.last_name}`.trim(),
-        filas: [formData.fila], // Ajustado para enviar como array
+        assignment_groups: formData.assignment_groups.map(group => group.id),
         is_staff: currentUser?.is_staff ? formData.is_staff : false,
         is_gestor: currentUser?.is_staff ? formData.is_gestor : false,
         is_tecnico: currentUser?.is_staff ? formData.is_tecnico : true,
@@ -97,8 +101,8 @@ function AddUserDropdown({ onClose, onSuccess }) {
   const customStyles = {
     control: (base, state) => ({
       ...base,
-      height: '2.5rem',
       minHeight: '2.5rem',
+      height: 'auto',
       background: '#f8f9fa',
       borderColor: state.isFocused ? '#6F0FAF' : 'rgba(111, 15, 175, 0.2)',
       boxShadow: state.isFocused ? '0 0 0 3px rgba(111, 15, 175, 0.1)' : 'none',
@@ -125,9 +129,20 @@ function AddUserDropdown({ onClose, onSuccess }) {
       margin: 0,
       padding: 0,
     }),
-    valueContainer: base => ({
+    valueContainer: (base) => ({
       ...base,
-      padding: '0 8px',
+      padding: '2px 6px',
+      maxHeight: '100px',
+      overflow: 'auto',
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
+      '&::-webkit-scrollbar': {
+        width: '4px'
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: 'rgba(111, 15, 175, 0.2)',
+        borderRadius: '4px'
+      }
     }),
     singleValue: base => ({
       ...base,
@@ -136,7 +151,30 @@ function AddUserDropdown({ onClose, onSuccess }) {
     placeholder: base => ({
       ...base,
       color: '#666666',
-    })
+    }),
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: 'rgba(111, 15, 175, 0.1)',
+      borderRadius: '4px',
+      margin: '2px',
+      maxWidth: 'calc(100% - 4px)',
+    }),
+    multiValueLabel: (base) => ({
+      ...base,
+      color: '#670099',
+      padding: '2px 6px',
+      fontSize: '0.85em',
+      whiteSpace: 'normal',
+      wordWrap: 'break-word'
+    }),
+    multiValueRemove: (base) => ({
+      ...base,
+      color: '#670099',
+      ':hover': {
+        backgroundColor: 'rgba(111, 15, 175, 0.2)',
+        color: '#670099',
+      },
+    }),
   };
 
   return (
@@ -179,19 +217,20 @@ function AddUserDropdown({ onClose, onSuccess }) {
           <div className="form-row">
             <div className="form-field select-container">
               <Select
-                value={filas.find(fila => fila.id === formData.fila)}
-                onChange={(option) => setFormData({...formData, fila: option?.id || ''})}
-                options={filas}
-                getOptionLabel={(option) => option.nome}
+                value={formData.assignment_groups}
+                onChange={(options) => setFormData({...formData, assignment_groups: options || []})}
+                options={assignmentGroups}
+                getOptionLabel={(option) => option.dv_assignment_group}
                 getOptionValue={(option) => option.id}
-                placeholder="Selecione uma fila"
+                placeholder="Selecione um ou mais Assignment Groups"
                 styles={customStyles}
                 isSearchable
                 isClearable
+                isMulti
                 className="react-select-container"
                 classNamePrefix="react-select"
               />
-              <label>Fila de Atendimento*</label>
+              <label>Assignment Groups*</label>
             </div>
           </div>
 

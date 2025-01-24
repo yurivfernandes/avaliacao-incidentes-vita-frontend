@@ -844,3 +844,23 @@ input:checked + .slider:before {
 }
 
 /* ...rest of existing styles... */
+
+/* ...existing code... */
+
+.assignment-groups-select {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.assignment-groups-select option {
+  padding: 5px;
+}
+
+.assignment-groups-select option:checked {
+  background-color: #6F0FAF;
+  color: white;
+}
+
+/* ...existing code... */
