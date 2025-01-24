@@ -12,27 +12,13 @@ class ProfileView(APIView):
 
     def get(self, request):
         user = request.user
-        empresa = None
-        filas = []
-
-        if user.filas.exists():
-            primeira_fila = user.filas.first()
-            empresa = (
-                {
-                    "id": primeira_fila.empresa.id,
-                    "nome": primeira_fila.empresa.nome,
-                }
-                if primeira_fila.empresa
-                else None
-            )
-
-            filas = [
-                {
-                    "id": fila.id,
-                    "nome": fila.nome,
-                }
-                for fila in user.filas.all()
-            ]
+        assignment_groups = [
+            {
+                "id": group.id,
+                "nome": group.dv_assignment_group,
+            }
+            for group in user.assignment_groups.all()
+        ]
 
         return Response(
             {
@@ -40,8 +26,7 @@ class ProfileView(APIView):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "full_name": user.full_name,
-                "empresa": empresa,
-                "filas": filas,
+                "assignment_groups": assignment_groups,
                 "is_gestor": user.is_gestor,
                 "is_tecnico": user.is_tecnico,
                 "is_staff": user.is_staff,
@@ -56,12 +41,20 @@ class ProfileView(APIView):
             if user_id and (request.user.is_staff or request.user.is_gestor):
                 user = User.objects.get(id=user_id)
 
-                # Validar se gestor está atualizando usuário da própria fila
+                # Validar se gestor está atualizando usuário dos próprios grupos
                 if request.user.is_gestor and not request.user.is_staff:
-                    if user.fila_id != request.user.fila_id:
+                    gestor_groups = set(
+                        request.user.assignment_groups.values_list(
+                            "id", flat=True
+                        )
+                    )
+                    user_groups = set(
+                        user.assignment_groups.values_list("id", flat=True)
+                    )
+                    if not user_groups.issubset(gestor_groups):
                         return Response(
                             {
-                                "error": "Gestor só pode atualizar usuários de sua própria fila"
+                                "error": "Gestor só pode atualizar usuários de seus grupos"
                             },
                             status=status.HTTP_403_FORBIDDEN,
                         )
@@ -75,10 +68,10 @@ class ProfileView(APIView):
             # Atualiza outros campos
             allowed_fields = [
                 "full_name",
-                "fila",
                 "is_gestor",
                 "is_tecnico",
                 "is_ativo",
+                "is_staff",
                 "first_access",
             ]
 
@@ -91,44 +84,27 @@ class ProfileView(APIView):
                     ):
                         continue
 
-                    # Validação especial para fila
-                    if field == "fila" and request.data[field]:
-                        # Gestor só pode atribuir sua própria fila
-                        if (
-                            request.user.is_gestor
-                            and not request.user.is_staff
-                        ):
-                            if str(request.data[field]) != str(
-                                request.user.fila_id
-                            ):
-                                return Response(
-                                    {
-                                        "error": "Gestor só pode atribuir sua própria fila"
-                                    },
-                                    status=status.HTTP_403_FORBIDDEN,
-                                )
-                        user.fila_id = request.data[field]
-                    else:
-                        setattr(user, field, request.data[field])
+                    setattr(user, field, request.data[field])
 
-            # Atualização das filas
-            if "filas" in request.data:
-                # Validar se gestor está atualizando para suas próprias filas
+            # Atualização dos assignment groups
+            if "assignment_groups" in request.data:
                 if request.user.is_gestor and not request.user.is_staff:
-                    gestor_filas_ids = set(
-                        request.user.filas.values_list("id", flat=True)
+                    gestor_groups = set(
+                        request.user.assignment_groups.values_list(
+                            "id", flat=True
+                        )
                     )
                     if not all(
-                        int(fila_id) in gestor_filas_ids
-                        for fila_id in request.data["filas"]
+                        int(group_id) in gestor_groups
+                        for group_id in request.data["assignment_groups"]
                     ):
                         return Response(
                             {
-                                "error": "Gestor só pode atribuir suas próprias filas"
+                                "error": "Gestor só pode atribuir seus próprios grupos"
                             },
                             status=status.HTTP_403_FORBIDDEN,
                         )
-                user.filas.set(request.data["filas"])
+                user.assignment_groups.set(request.data["assignment_groups"])
 
             user.save()
             return Response({"message": "Atualizado com sucesso"})

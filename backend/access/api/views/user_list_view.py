@@ -1,8 +1,9 @@
 from access.models import User
 from django.db.models import Q
-from rest_framework import filters, generics
+from rest_framework import filters, generics, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from ..permissions import IsStaffOrGestor
 from ..serializers import UserListSerializer
@@ -16,30 +17,36 @@ class UserListView(generics.ListAPIView):
     search_fields = ["username", "full_name"]
 
     def get_queryset(self):
+        if self.request.user.is_tecnico:
+            return User.objects.none()
+
         queryset = User.objects.exclude(id=self.request.user.id)
         search = self.request.query_params.get("search", "")
 
-        # Se for gestor, filtrar apenas usuários das suas filas
         if self.request.user.is_gestor and not self.request.user.is_staff:
-            gestor_filas = self.request.user.filas.all()
+            # Gestor só vê usuários que compartilham pelo menos uma fila com ele
+            gestor_groups = self.request.user.assignment_groups.all()
             queryset = queryset.filter(
-                filas__in=gestor_filas,
+                assignment_groups__in=gestor_groups,
                 is_staff=False,  # Gestor não pode ver usuários staff
             ).distinct()
 
-            if search:
+        # Aplicar busca se houver termo de pesquisa
+        if search:
+            if self.request.user.is_staff:
+                # Staff pode buscar em todos os campos
                 queryset = queryset.filter(
                     Q(username__icontains=search)
                     | Q(full_name__icontains=search)
-                )
-        else:
-            # Para staff, permite busca em todos os campos
-            if search:
+                    | Q(
+                        assignment_groups__dv_assignment_group__icontains=search
+                    )
+                ).distinct()
+            else:
+                # Gestor só busca nos campos básicos
                 queryset = queryset.filter(
                     Q(username__icontains=search)
                     | Q(full_name__icontains=search)
-                    | Q(filas__nome__icontains=search)
-                    | Q(filas__empresa__nome__icontains=search)
                 ).distinct()
 
         return queryset.order_by("username")

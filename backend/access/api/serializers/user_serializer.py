@@ -1,36 +1,35 @@
 from access.models import User
-from cadastro.models import Empresa, FilaAtendimento
 from rest_framework import serializers
+
+from .assignment_group_serializer import AssignmentGroupSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
-    empresa = serializers.SerializerMethodField(read_only=True)
-    filas = serializers.SerializerMethodField()
+    assignment_groups = AssignmentGroupSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             "id",
             "username",
-            "email",
-            "first_name",
-            "last_name",
-            "empresa",
-            "filas",
+            "full_name",
+            "is_staff",
             "is_gestor",
             "is_tecnico",
-            "is_staff",
-            "is_ativo",
-            "first_access",
-        ]
-        read_only_fields = ["id"]
+            "is_active",
+            "assignment_groups",
+        )
 
-    def get_empresa(self, obj):
-        # Pega a empresa da primeira fila (assumindo que todas as filas são da mesma empresa)
-        if obj.filas.exists() and obj.filas.first().empresa:
-            fila = obj.filas.first()
-            return {"id": fila.empresa.id, "nome": fila.empresa.nome}
-        return None
+    def update(self, instance, validated_data):
+        # Garantir que apenas um tipo de usuário está ativo
+        if validated_data.get("is_staff"):
+            validated_data["is_gestor"] = False
+            validated_data["is_tecnico"] = False
+        elif validated_data.get("is_gestor"):
+            validated_data["is_staff"] = False
+            validated_data["is_tecnico"] = False
+        elif validated_data.get("is_tecnico"):
+            validated_data["is_staff"] = False
+            validated_data["is_gestor"] = False
 
-    def get_filas(self, obj):
-        return [{"id": fila.id, "nome": fila.nome} for fila in obj.filas.all()]
+        return super().update(instance, validated_data)

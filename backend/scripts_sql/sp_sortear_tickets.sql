@@ -54,6 +54,8 @@ BEGIN
                 AND YEAR(i.closed_at) = @ano
                 AND MONTH(i.closed_at) = @mes
                 AND i.closed_at IS NOT NULL
+                AND i.company <> 'VITA IT - SP'
+                AND i.u_origem <> 'vita_it'
                 AND NOT EXISTS (
                     SELECT 1 
                     FROM dw_analytics.d_sorted_ticket st 

@@ -25,4 +25,14 @@ urlpatterns = [
         views.SorteioTicketsView.as_view(),
         name="sortear-tickets",
     ),
+    path(
+        "assignment-group/",
+        views.AssignmentGroupListView.as_view(),
+        name="assignment-group-list",
+    ),
+    path(
+        "assignment-group/<int:pk>/",
+        views.AssignmentGroupListView.as_view(),
+        name="assignment-group-detail",
+    ),
 ]

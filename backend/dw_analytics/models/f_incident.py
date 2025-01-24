@@ -4,8 +4,6 @@ from django.db import models
 from .d_contract import Contract
 from .d_resolved_by import ResolvedBy
 
-User = get_user_model()
-
 
 class Incident(models.Model):
     id = models.CharField(
