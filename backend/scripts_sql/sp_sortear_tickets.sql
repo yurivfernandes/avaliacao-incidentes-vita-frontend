@@ -3,108 +3,98 @@ CREATE OR ALTER PROCEDURE dw_analytics.sp_sortear_tickets
 AS
 BEGIN
     SET NOCOUNT ON;
-
+    
     DECLARE @ano INT = CAST(LEFT(@data_sorteio, 4) AS INT)
     DECLARE @mes INT = CAST(RIGHT(@data_sorteio, 2) AS INT)
 
-    -- Tabela temporária para armazenar os tickets sorteados
-    CREATE TABLE #tickets_sorteados (
-        incident_id NVARCHAR(50),
-        mes_ano VARCHAR(7)
-    )
-
-    -- Cursor para processar cada premissa
-    DECLARE @assignment_id INT
-    DECLARE @qtd_incidents INT
-    
-    DECLARE cursor_premissas CURSOR FOR
-    SELECT 
-        assignment_id,
-        qtd_incidents
-    FROM dw_analytics.d_premissas
-
-    OPEN cursor_premissas
-    FETCH NEXT FROM cursor_premissas INTO @assignment_id, @qtd_incidents
-
-    WHILE @@FETCH_STATUS = 0
+    -- Validar formato da data
+    IF @data_sorteio NOT LIKE '[0-9][0-9][0-9][0-9]-[0-9][0-9]'
     BEGIN
-        -- Para cada técnico do assignment group
-        DECLARE @resolved_by_id INT
-        
-        DECLARE cursor_tecnicos CURSOR FOR
-        SELECT DISTINCT rb.id
-        FROM dw_analytics.d_resolved_by rb
-        JOIN dw_analytics.d_resolved_by_assignment_group rbag 
-            ON rbag.resolved_by_id = rb.id
-        WHERE rbag.assignment_group_id = @assignment_id
-
-        OPEN cursor_tecnicos
-        FETCH NEXT FROM cursor_tecnicos INTO @resolved_by_id
-
-        WHILE @@FETCH_STATUS = 0
-        BEGIN
-            -- Insere na tabela temporária os tickets sorteados
-            -- usando TABLESAMPLE para fazer o sorteio aleatório
-            INSERT INTO #tickets_sorteados (incident_id, mes_ano)
-            SELECT TOP (@qtd_incidents)
-                i.id,
-                @data_sorteio
-            FROM dw_analytics.f_incident i
-            WHERE i.resolved_by_id = @resolved_by_id
-                AND YEAR(i.closed_at) = @ano
-                AND MONTH(i.closed_at) = @mes
-                AND i.closed_at IS NOT NULL
-                AND i.company <> 'VITA IT - SP'
-                AND i.u_origem <> 'vita_it'
-                AND NOT EXISTS (
-                    SELECT 1 
-                    FROM dw_analytics.d_sorted_ticket st 
-                    WHERE st.incident_id = i.id 
-                    AND st.mes_ano = @data_sorteio
-                )
-                AND EXISTS (
-                    SELECT 1
-                    FROM dw_analytics.d_resolved_by_assignment_group rbag
-                    WHERE rbag.resolved_by_id = i.resolved_by_id
-                    AND rbag.assignment_group_id = @assignment_id
-                )
-            ORDER BY NEWID()
-
-            FETCH NEXT FROM cursor_tecnicos INTO @resolved_by_id
-        END
-
-        CLOSE cursor_tecnicos
-        DEALLOCATE cursor_tecnicos
-
-        FETCH NEXT FROM cursor_premissas INTO @assignment_id, @qtd_incidents
+        RAISERROR('Formato de data inválido. Use YYYY-MM', 16, 1)
+        RETURN
     END
 
-    CLOSE cursor_premissas
-    DEALLOCATE cursor_premissas
+    -- Tabela temporária com índice clustered para melhor performance
+    CREATE TABLE #tickets_sorteados (
+        incident_id NVARCHAR(50),
+        mes_ano VARCHAR(7),
+        resolved_by_id INT,
+        assignment_group_id INT,
+        CONSTRAINT PK_tickets_temp PRIMARY KEY CLUSTERED (incident_id)
+    )
 
-    -- Insere os tickets sorteados na tabela final
+    -- Processar cada combinação única de técnico e fila
+    INSERT INTO #tickets_sorteados (incident_id, mes_ano, resolved_by_id, assignment_group_id)
+    SELECT DISTINCT
+        i.id,
+        @data_sorteio,
+        i.resolved_by_id,
+        rbag.assignment_group_id
+    FROM dw_analytics.d_premissas p
+    INNER JOIN dw_analytics.d_resolved_by_assignment_group rbag 
+        ON rbag.assignment_group_id = p.assignment_id
+    INNER JOIN dw_analytics.f_incident i 
+        ON i.resolved_by_id = rbag.resolved_by_id
+    WHERE 
+        YEAR(i.closed_at) = @ano
+        AND MONTH(i.closed_at) = @mes
+        AND i.closed_at IS NOT NULL
+        AND i.company <> 'VITA IT - SP'
+        AND i.u_origem <> 'vita_it'
+        AND NOT EXISTS (
+            SELECT 1 
+            FROM dw_analytics.d_sorted_ticket st 
+            WHERE st.incident_id = i.id 
+            AND st.mes_ano = @data_sorteio
+        )
+    ORDER BY NEWID()
+
+    -- Aplicar as premissas de quantidade por fila
+    ;WITH LimitedTickets AS (
+        SELECT 
+            ts.*,
+            ROW_NUMBER() OVER (
+                PARTITION BY ts.resolved_by_id, ts.assignment_group_id 
+                ORDER BY NEWID()
+            ) as RowNum,
+            p.qtd_incidents as MaxTickets
+        FROM #tickets_sorteados ts
+        INNER JOIN dw_analytics.d_premissas p 
+            ON p.assignment_id = ts.assignment_group_id
+    )
+    DELETE FROM LimitedTickets 
+    WHERE RowNum > MaxTickets
+
+    -- Inserir tickets sorteados na tabela final
     INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
     SELECT incident_id, mes_ano
     FROM #tickets_sorteados
 
-    -- Gera o resumo do sorteio
+    -- Gerar resumo do sorteio
     SELECT 
-        ag.dv_assignment_group AS fila,
-        rb.dv_resolved_by AS tecnico,
-        COUNT(*) AS qtd_sorteados
-    FROM #tickets_sorteados ts
-    JOIN dw_analytics.f_incident i ON i.id = ts.incident_id
-    JOIN dw_analytics.d_resolved_by rb ON rb.id = i.resolved_by_id
-    JOIN dw_analytics.d_resolved_by_assignment_group rbag ON rbag.resolved_by_id = rb.id
-    JOIN dw_analytics.d_assignment_group ag ON ag.id = rbag.assignment_group_id
+        ag.dv_assignment_group AS Fila,
+        rb.dv_resolved_by AS Tecnico,
+        COUNT(ts.incident_id) AS Quantidade_Sorteada,
+        p.qtd_incidents AS Quantidade_Esperada
+    FROM dw_analytics.d_assignment_group ag
+    INNER JOIN dw_analytics.d_premissas p 
+        ON p.assignment_id = ag.id
+    INNER JOIN dw_analytics.d_resolved_by_assignment_group rbag 
+        ON rbag.assignment_group_id = ag.id
+    INNER JOIN dw_analytics.d_resolved_by rb 
+        ON rb.id = rbag.resolved_by_id
+    LEFT JOIN #tickets_sorteados ts 
+        ON ts.resolved_by_id = rb.id 
+        AND ts.assignment_group_id = ag.id
     GROUP BY 
         ag.dv_assignment_group,
-        rb.dv_resolved_by
+        rb.dv_resolved_by,
+        p.qtd_incidents
     ORDER BY 
         ag.dv_assignment_group,
         rb.dv_resolved_by
 
-    -- Limpa a tabela temporária
+    -- Limpar tabela temporária
     DROP TABLE #tickets_sorteados
 END
 GO
