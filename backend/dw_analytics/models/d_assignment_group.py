@@ -6,6 +6,7 @@ class AssignmentGroup(models.Model):
         max_length=50,
         help_text="Nome da fila de atendimento",
     )
+    status = models.BooleanField(default=True)
 
     def __str__(self):
         return self.dv_assignment_group

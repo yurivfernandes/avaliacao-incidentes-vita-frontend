@@ -28,7 +28,11 @@ class SorteioTicketsTask:
                 closed_at__month=self.data.month,
                 closed_at__isnull=False,
             )
-            .exclude(sorted_tickets__mes_ano=self.mes_ano_fmt)
+            .exclude(
+                sorted_tickets__mes_ano=self.mes_ano_fmt,
+                company="VITA IT - SP",
+                u_origem="vita_it",
+            )
             .filter(resolved_by__assignment_group=assignment_group)
         )
 

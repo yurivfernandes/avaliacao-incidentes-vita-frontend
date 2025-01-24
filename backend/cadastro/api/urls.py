@@ -19,25 +19,4 @@ from django.urls import path
 
 from . import views
 
-urlpatterns = [
-    path(
-        "fila-atendimento/",
-        views.FilaAtendimentoListCreateView.as_view(),
-        name="fila-atendimento-list-create",
-    ),
-    path(
-        "fila-atendimento/<int:pk>/",
-        views.FilaAtendimentoDetailView.as_view(),
-        name="fila-atendimento-detail",
-    ),
-    path(
-        "empresa/",
-        views.EmpresaListCreateView.as_view(),
-        name="empresa-list-create",
-    ),
-    path(
-        "empresa/<int:pk>/",
-        views.EmpresaDetailView.as_view(),
-        name="empresa-detail",
-    ),
-]
+urlpatterns = []

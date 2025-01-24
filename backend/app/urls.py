@@ -25,7 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/access/", include("access.api.urls")),
     path("api/cadastro/", include("cadastro.api.urls")),
-    path("api/dw_analystics/", include("dw_analystics.api.urls")),
+    path("api/dw_analytics/", include("dw_analytics.api.urls")),
     path("api/premissas/", include("premissas.api.urls")),
     path(
         "api/docs/<path:path>",

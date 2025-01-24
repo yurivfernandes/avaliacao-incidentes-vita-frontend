@@ -45,8 +45,8 @@ INSTALLED_APPS = [
     "django_filters",  # Adicionar Django Filters
     "rest_framework.authtoken",  # Adicionar esta linha
     "access",
+    "dw_analytics",
     "cadastro",
-    "dw_analystics",
     "premissas",
 ]
 

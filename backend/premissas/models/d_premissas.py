@@ -1,5 +1,5 @@
 from django.db import models
-from dw_analystics.models import AssignmentGroup
+from dw_analytics.models import AssignmentGroup
 
 
 class Premissas(models.Model):
