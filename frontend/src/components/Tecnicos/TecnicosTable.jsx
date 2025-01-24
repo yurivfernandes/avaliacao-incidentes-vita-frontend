@@ -4,89 +4,99 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { generateStrongPassword } from '../../utils/passwordGenerator';
 import PasswordResetModal from './PasswordResetModal';
+import '../../styles/TecnicosTable.css';
+import Select from 'react-select';
 
 function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentPage, fetchData }) {
   const { user: currentUser } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [resetPassword, setResetPassword] = useState({ show: false, password: '' });
-  const [empresas, setEmpresas] = useState([]);
-  const [filas, setFilas] = useState([]);
+  const [assignmentGroups, setAssignmentGroups] = useState([]);
 
-  // Carregar empresas e filas quando necessário
+  // Carregar grupos quando o componente montar
   useEffect(() => {
-    const loadOptions = async () => {
-      if (type === 'usuarios' && editingId) {
-        try {
-          const [empresasRes, filasRes] = await Promise.all([
-            api.get('/cadastro/empresa/'),
-            api.get('/cadastro/fila-atendimento/')
-          ]);
-          setEmpresas(empresasRes.data.results || empresasRes.data);
-          setFilas(filasRes.data.results || filasRes.data);
-        } catch (error) {
-          console.error('Erro ao carregar opções:', error);
-        }
+    const loadAssignmentGroups = async () => {
+      try {
+        const assignmentGroupsRes = await api.get('/dw_analytics/assignment-group/');
+        setAssignmentGroups(assignmentGroupsRes.data.results || assignmentGroupsRes.data);
+      } catch (error) {
+        console.error('Erro ao carregar grupos:', error);
       }
     };
-    loadOptions();
-  }, [type, editingId]);
+
+    if (type === 'usuarios') {
+      loadAssignmentGroups();
+    }
+  }, [type]);
 
   const handleEdit = (item) => {
     // Verificar permissões antes de permitir edição
-    if (!currentUser.is_staff && (type === 'empresas' || type === 'filas')) {
+    if (!currentUser.is_staff && type === 'assignment_groups') {
       return;
     }
     
+    console.log('Item para editar:', item);
     setEditingId(item.id);
     switch(type) {
       case 'usuarios':
+        const groups = item.assignment_groups?.map(g => g.id) || [];
+        console.log('Grupos selecionados:', groups);
         setEditData({
           username: item.username,
           full_name: item.full_name,
-          empresa: item.empresa_data?.id,
-          filas: item.filas_data?.map(f => f.id) || [],
+          assignment_groups: groups,
           is_gestor: item.is_gestor,
           is_tecnico: item.is_tecnico,
           is_staff: item.is_staff,
-          is_ativo: item.is_ativo  // Adicionado is_ativo
+          is_ativo: item.is_ativo
         });
         break;
-      case 'empresas':
+      case 'assignment_groups':
         setEditData({
-          nome: item.nome,
-          codigo: item.codigo,
-          status: item.status,
-        });
-        break;
-      case 'filas':
-        setEditData({
-          nome: item.nome,
-          codigo: item.codigo,
-          empresa: item.empresa,
-          status: item.status,
+          dv_assignment_group: item.dv_assignment_group,
+          status: item.status
         });
         break;
     }
   };
 
+  const tipoOptions = [
+    { value: 'tecnico', label: 'Técnico' },
+    { value: 'gestor', label: 'Gestor' },
+    ...(currentUser.is_staff ? [{ value: 'staff', label: 'Staff' }] : [])
+  ];
+
   const handleSave = async (id) => {
     try {
       switch(type) {
         case 'usuarios':
-          await api.patch(`/access/profile/${id}/`, editData);
+          console.log('Dados sendo enviados:', {
+            full_name: editData.full_name,
+            assignment_groups: editData.assignment_groups,
+            is_staff: editData.is_staff,
+            is_gestor: editData.is_gestor,
+            is_tecnico: editData.is_tecnico,
+            is_active: editData.is_ativo
+          });
+          
+          await api.patch(`/access/profile/${id}/`, {
+            full_name: editData.full_name,
+            assignment_groups: editData.assignment_groups,
+            is_staff: editData.is_staff,
+            is_gestor: editData.is_gestor,
+            is_tecnico: editData.is_tecnico,
+            is_active: editData.is_ativo // Mudando para is_active
+          });
           break;
-        case 'empresas':
-          await api.patch(`/cadastro/empresa/${id}/`, editData);
-          break;
-        case 'filas':
-          await api.patch(`/cadastro/fila-atendimento/${id}/`, editData);
+        case 'assignment_groups':
+          await api.patch(`/dw_analytics/assignment-group/${id}/`, editData);
           break;
       }
       setEditingId(null);
       fetchData(currentPage);
     } catch (error) {
-      console.error('Erro ao atualizar:', error);
+      console.error('Erro ao atualizar:', error.response?.data || error);
     }
   };
 
@@ -109,16 +119,11 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
       { header: 'Username', key: 'username' },
       { header: 'Nome', key: 'full_name' },
       { 
-        header: 'Empresa', 
-        key: 'empresa_data',
-        render: (row) => row.empresa_data ? row.empresa_data.nome : '-'
-      },
-      { 
-        header: 'Filas', 
-        key: 'filas_data',
+        header: 'Assignment Groups', 
+        key: 'assignment_groups',
         render: (row) => {
-          if (!row.filas_data || row.filas_data.length === 0) return '-';
-          return row.filas_data.map(fila => fila.nome).join(', ');
+          if (!row.assignment_groups || row.assignment_groups.length === 0) return '-';
+          return row.assignment_groups.map(group => group.dv_assignment_group).join(', ');
         }
       },
       { 
@@ -142,26 +147,8 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
       },
       { header: 'Ações', key: 'actions' }
     ],
-    empresas: [
-      { header: 'Nome', key: 'nome' },
-      { 
-        header: 'Status', 
-        key: 'status',
-        render: (row) => (
-          <span className={row.status ? 'status-active' : 'status-inactive'}>
-            {row.status ? 'Ativo' : 'Inativo'}
-          </span>
-        )
-      },
-      { header: 'Ações', key: 'actions' }
-    ],
-    filas: [
-      { header: 'Nome', key: 'nome' },
-      { 
-        header: 'Empresa', 
-        key: 'empresa_data',
-        render: (row) => row.empresa_data ? row.empresa_data.nome : '-'
-      },
+    assignment_groups: [
+      { header: 'Nome', key: 'dv_assignment_group' },
       { 
         header: 'Status', 
         key: 'status',
@@ -202,6 +189,20 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
     return row[column.key] ?? '-';
   };
 
+  const handleUserTypeChange = (selectedOption) => {
+    console.log('Tipo selecionado:', selectedOption);
+    const updatedData = {
+      ...editData,
+      is_staff: false,
+      is_gestor: false,
+      is_tecnico: false,
+      [selectedOption.value === 'staff' ? 'is_staff' : 
+       selectedOption.value === 'gestor' ? 'is_gestor' : 'is_tecnico']: true
+    };
+    console.log('Dados atualizados:', updatedData);
+    setEditData(updatedData);
+  };
+
   const renderEditRow = (item) => {
     switch(type) {
       case 'usuarios':
@@ -210,72 +211,46 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
             <td>{editData.username}</td>
             <td><input className="edit-input" value={editData.full_name} onChange={e => setEditData({...editData, full_name: e.target.value})} /></td>
             <td>
-              {currentUser.is_staff ? (
-                <select 
-                  className="edit-input"
-                  value={editData.empresa}
-                  onChange={e => setEditData({...editData, empresa: e.target.value})}
-                >
-                  <option value="">Selecione uma empresa</option>
-                  {empresas?.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.nome}</option>
-                  ))}
-                </select>
-              ) : (
-                item.empresa_data?.nome || '-'
-              )}
+              <Select
+                isMulti
+                value={assignmentGroups
+                  ?.filter(group => editData.assignment_groups?.includes(group.id))
+                  .map(group => ({
+                    value: group.id,
+                    label: group.dv_assignment_group
+                  }))}
+                onChange={(selectedOptions) => {
+                  const selectedGroups = selectedOptions?.map(option => option.value) || [];
+                  setEditData({...editData, assignment_groups: selectedGroups});
+                }}
+                options={assignmentGroups?.map(group => ({
+                  value: group.id,
+                  label: group.dv_assignment_group
+                }))}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
             </td>
             <td>
-              {currentUser.is_staff ? (
-                <select 
-                  className="edit-input"
-                  multiple
-                  value={editData.filas || []}
-                  onChange={e => {
-                    const selectedFilas = Array.from(e.target.selectedOptions, option => option.value);
-                    setEditData({...editData, filas: selectedFilas});
-                  }}
-                >
-                  {filas?.map(fila => (
-                    <option key={fila.id} value={fila.id}>{fila.nome}</option>
-                  ))}
-                </select>
-              ) : (
-                item.filas_data?.map(f => f.nome).join(', ') || '-'
-              )}
-            </td>
-            <td>
-              {currentUser.is_staff ? (
-                <select 
-                  className="edit-input"
-                  value={editData.is_staff ? 'staff' : editData.is_gestor ? 'gestor' : 'tecnico'}
-                  onChange={e => {
-                    const value = e.target.value;
-                    setEditData({
-                      ...editData,
-                      is_staff: value === 'staff',
-                      is_gestor: value === 'gestor',
-                      is_tecnico: value === 'tecnico'
-                    });
-                  }}
-                >
-                  <option value="tecnico">Técnico</option>
-                  <option value="gestor">Gestor</option>
-                  <option value="staff">Staff</option>
-                </select>
-              ) : (
-                <select 
-                  className="edit-input"
-                  value="tecnico"
-                  disabled
-                >
-                  <option value="tecnico">Técnico</option>
-                </select>
-              )}
+              <Select
+                value={tipoOptions.find(opt => 
+                  (editData.is_staff && opt.value === 'staff') ||
+                  (editData.is_gestor && opt.value === 'gestor') ||
+                  (editData.is_tecnico && opt.value === 'tecnico')
+                )}
+                onChange={handleUserTypeChange}
+                options={tipoOptions}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
             </td>
             <td>
               <label className="switch">
-                <input type="checkbox" checked={editData.is_ativo} onChange={e => setEditData({...editData, is_ativo: e.target.checked})} />
+                <input 
+                  type="checkbox" 
+                  checked={editData.is_ativo} 
+                  onChange={e => setEditData({...editData, is_ativo: e.target.checked})} 
+                />
                 <span className="slider"></span>
               </label>
             </td>
@@ -285,31 +260,24 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
             </td>
           </>
         );
-      case 'empresas':
+      case 'assignment_groups':
         return (
           <>
-            <td><input className="edit-input" value={editData.nome} onChange={e => setEditData({...editData, nome: e.target.value})} /></td>
-            <td><input className="edit-input" value={editData.codigo} onChange={e => setEditData({...editData, codigo: e.target.value})} /></td>
+            <td>
+              <input 
+                className="edit-input"
+                style={{ width: '100%', maxWidth: '300px' }}
+                value={editData.dv_assignment_group} 
+                onChange={e => setEditData({...editData, dv_assignment_group: e.target.value})} 
+              />
+            </td>
             <td>
               <label className="switch">
-                <input type="checkbox" checked={editData.status} onChange={e => setEditData({...editData, status: e.target.checked})} />
-                <span className="slider"></span>
-              </label>
-            </td>
-            <td className="actions-column">
-              <button className="save-button" onClick={() => handleSave(item.id)}><FaCheck /></button>
-              <button className="cancel-button" onClick={() => setEditingId(null)}><FaTimes /></button>
-            </td>
-          </>
-        );
-      case 'filas':
-        return (
-          <>
-            <td><input className="edit-input" value={editData.nome} onChange={e => setEditData({...editData, nome: e.target.value})} /></td>
-            <td><input className="edit-input" value={editData.empresa} onChange={e => setEditData({...editData, empresa: e.target.value})} /></td>
-            <td>
-              <label className="switch">
-                <input type="checkbox" checked={editData.status} onChange={e => setEditData({...editData, status: e.target.checked})} />
+                <input 
+                  type="checkbox" 
+                  checked={editData.status} 
+                  onChange={e => setEditData({...editData, status: e.target.checked})} 
+                />
                 <span className="slider"></span>
               </label>
             </td>
@@ -331,7 +299,6 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
   if (!Array.isArray(data) || data.length === 0) {
     return <div className="inventory-table-empty">
       {type === 'usuarios' ? 'Nenhum usuário encontrado.' :
-       type === 'empresas' ? 'Nenhuma empresa encontrada.' :
        'Nenhum registro encontrado.'}
     </div>;
   }

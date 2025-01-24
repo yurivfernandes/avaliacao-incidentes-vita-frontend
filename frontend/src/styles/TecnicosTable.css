@@ -1,0 +1,70 @@
+.assignment-groups-select {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.assignment-groups-select option {
+  padding: 5px;
+}
+
+.assignment-groups-select option:checked {
+  background-color: #6F0FAF;
+  color: white;
+}
+
+/* Estilos para React Select */
+.react-select-container {
+  min-width: 200px;
+}
+
+.react-select__control {
+  background-color: #f8f9fa !important;
+  border: 1px solid rgba(111, 15, 175, 0.2) !important;
+  border-radius: 8px !important;
+  min-height: 35px !important;
+}
+
+.react-select__control:hover {
+  border-color: #670099 !important;
+}
+
+.react-select__control--is-focused {
+  box-shadow: 0 0 0 1px #670099 !important;
+  border-color: #670099 !important;
+}
+
+.react-select__menu {
+  border-radius: 8px !important;
+  border: 1px solid rgba(111, 15, 175, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-select__option {
+  padding: 8px 12px !important;
+}
+
+.react-select__option--is-selected {
+  background-color: #670099 !important;
+}
+
+.react-select__option--is-focused {
+  background-color: rgba(103, 0, 153, 0.1) !important;
+  color: #670099 !important;
+}
+
+.react-select__multi-value {
+  background-color: rgba(103, 0, 153, 0.1) !important;
+}
+
+.react-select__multi-value__label {
+  color: #670099 !important;
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: #670099 !important;
+  color: white !important;
+}
+
+/* ...existing code... */
