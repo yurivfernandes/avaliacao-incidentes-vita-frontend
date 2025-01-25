@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "dw_analytics",
     "cadastro",
     "premissas",
+    "service_now",
 ]
 
 MIDDLEWARE = [
