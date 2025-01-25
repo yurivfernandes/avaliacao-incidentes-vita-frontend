@@ -1,26 +1,31 @@
 import random
 from datetime import datetime
+from typing import Dict, List
 
 from celery import shared_task
+from django.db import transaction
 from premissas.models import Premissas
 
 from ..models import Incident, ResolvedBy, SortedTicket
 
 
 class SorteioTicketsTask:
-    """
-    Classe responsável pelo sorteio de tickets para avaliação.
-    Sorteia X tickets por analista, por fila e por data.
-    """
+    """Classe responsável pelo sorteio de tickets para avaliação."""
 
     def __init__(self, data_sorteio: str):
         self.data = datetime.strptime(data_sorteio, "%Y-%m")
         self.mes_ano_fmt = self.data.strftime("%Y-%m")
+        self.log = {
+            "n_deleted": 0,
+            "n_inserted": 0,
+            "resumo_sorteio": [],
+        }
+        self.dataset = []
 
-    def _get_tickets_disponiveis(self, resolved_by, assignment_group):
-        """
-        Obtém os tickets disponíveis para sorteio de um técnico em uma fila específica
-        """
+    def _get_tickets_disponiveis(
+        self, resolved_by, assignment_group
+    ) -> List[Incident]:
+        """Obtém os tickets disponíveis para sorteio"""
         return (
             Incident.objects.filter(
                 resolved_by=resolved_by,
@@ -36,75 +41,83 @@ class SorteioTicketsTask:
             .filter(resolved_by__assignment_group=assignment_group)
         )
 
-    def _sortear_tickets(self, tickets_query, quantidade):
-        """
-        Sorteia uma quantidade específica de tickets
-        """
-        tickets_disponiveis = list(tickets_query)
-        quantidade_real = min(len(tickets_disponiveis), quantidade)
-        return (
-            random.sample(tickets_disponiveis, quantidade_real)
-            if quantidade_real > 0
-            else []
-        )
-
-    def _salvar_tickets_sorteados(self, tickets):
-        """
-        Salva os tickets sorteados
-        """
-        sorted_tickets = [
-            SortedTicket(incident=ticket, mes_ano=self.mes_ano_fmt)
-            for ticket in tickets
-        ]
-        SortedTicket.objects.bulk_create(sorted_tickets)
-
-    def executar(self):
-        """
-        Executa o processo de sorteio baseado nas premissas definidas
-        """
-        resumo_sorteio = []
-
-        # Busca todas as premissas cadastradas
+    def extract_and_transform_dataset(self) -> None:
+        """Extrai e transforma os dados para o sorteio"""
         premissas = Premissas.objects.all().select_related("assignment")
 
         for premissa in premissas:
             assignment_group = premissa.assignment
             qtd_tickets = premissa.qtd_incidents
-
-            # Busca todos os técnicos da fila
             tecnicos = ResolvedBy.objects.filter(
                 assignment_group=assignment_group
             )
 
             for tecnico in tecnicos:
-                # Busca tickets disponíveis para o técnico na fila
                 tickets_disponiveis = self._get_tickets_disponiveis(
                     tecnico, assignment_group
                 )
+                tickets_disponiveis = list(tickets_disponiveis)
 
-                # Sorteia os tickets conforme quantidade definida na premissa
-                tickets_sorteados = self._sortear_tickets(
-                    tickets_disponiveis, qtd_tickets
-                )
+                # Realiza o sorteio
+                quantidade_real = min(len(tickets_disponiveis), qtd_tickets)
+                if quantidade_real > 0:
+                    tickets_sorteados = random.sample(
+                        tickets_disponiveis, quantidade_real
+                    )
 
-                if tickets_sorteados:
-                    self._salvar_tickets_sorteados(tickets_sorteados)
-                    resumo_sorteio.append(
+                    # Adiciona ao dataset
+                    self.dataset.extend(
+                        [
+                            {"incident": ticket, "mes_ano": self.mes_ano_fmt}
+                            for ticket in tickets_sorteados
+                        ]
+                    )
+
+                    # Adiciona ao log
+                    self.log["resumo_sorteio"].append(
                         f"Fila {assignment_group.dv_assignment_group} - "
                         f"Técnico {tecnico.dv_resolved_by}: "
                         f"{len(tickets_sorteados)} tickets sorteados"
                     )
 
-        if not resumo_sorteio:
-            return "Nenhum ticket encontrado para sorteio"
+    @transaction.atomic
+    def load(self) -> None:
+        """Carrega os dados transformados"""
+        self._delete()
+        self._save()
 
-        return "\n".join(
-            [
-                f"Sorteio realizado com sucesso para {self.mes_ano_fmt}",
-                "Resumo do sorteio:",
-                *resumo_sorteio,
-            ]
-        )
+    def _delete(self) -> None:
+        """Remove os registros existentes do período"""
+        n_deleted, _ = SortedTicket.objects.filter(
+            mes_ano=self.mes_ano_fmt
+        ).delete()
+        self.log["n_deleted"] = n_deleted
+
+    def _save(self) -> None:
+        """Salva os novos registros sorteados"""
+        if not self.dataset:
+            return
+
+        objs = [SortedTicket(**data) for data in self.dataset]
+        created = SortedTicket.objects.bulk_create(objs=objs, batch_size=1000)
+        self.log["n_inserted"] = len(created)
+
+    def run(self) -> Dict:
+        """Executa o processo completo de sorteio"""
+        self.extract_and_transform_dataset()
+        self.load()
+
+        if not self.log["resumo_sorteio"]:
+            return {"message": "Nenhum ticket encontrado para sorteio"}
+
+        return {
+            "message": f"Sorteio realizado com sucesso para {self.mes_ano_fmt}",
+            "resumo": self.log["resumo_sorteio"],
+            "estatisticas": {
+                "deletados": self.log["n_deleted"],
+                "inseridos": self.log["n_inserted"],
+            },
+        }
 
 
 @shared_task(
@@ -116,4 +129,4 @@ class SorteioTicketsTask:
 )
 def sortear_tickets_async(self, filtros: dict) -> dict:
     task = SorteioTicketsTask(filtros["data_sorteio"])
-    return task.executar()
+    return task.run()

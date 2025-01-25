@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/cadastro/", include("cadastro.api.urls")),
     path("api/dw_analytics/", include("dw_analytics.api.urls")),
     path("api/premissas/", include("premissas.api.urls")),
+    path("api/service_now/", include("service_now.api.urls")),
     path(
         "api/docs/<path:path>",
         serve,
