@@ -10,7 +10,7 @@ BEGIN
     MERGE dw_analytics.d_assignment_group AS target
     USING (
         SELECT DISTINCT assignment_group
-        FROM [SERVICE NOW].incident inc
+        FROM SERVICENOW.dbo.incident inc
         WHERE assignment_group IS NOT NULL
         AND assignment_group NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_assignment_group dag WHERE dag.id = inc.assignment_group)
@@ -24,7 +24,7 @@ BEGIN
     MERGE dw_analytics.d_resolved_by AS target
     USING (
         SELECT DISTINCT resolved_by
-        FROM [SERVICE NOW].incident inc
+        FROM SERVICENOW.dbo.incident inc
         WHERE resolved_by IS NOT NULL
         AND resolved_by NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_resolved_by drb WHERE drb.id = inc.resolved_by)
@@ -38,7 +38,7 @@ BEGIN
     MERGE dw_analytics.d_contract AS target
     USING (
         SELECT DISTINCT contract
-        FROM [SERVICE NOW].incident inc
+        FROM SERVICENOW.dbo.incident inc
         WHERE contract IS NOT NULL
         AND contract NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_contract dc WHERE dc.id = inc.contract)
@@ -52,7 +52,7 @@ BEGIN
     MERGE dw_analytics.d_company AS target
     USING (
         SELECT DISTINCT company, company_cnpj
-        FROM [SERVICE NOW].incident inc
+        FROM SERVICENOW.dbo.incident inc
         WHERE company IS NOT NULL
         AND company NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_company dco WHERE dco.id = inc.company)
@@ -68,7 +68,7 @@ BEGIN
         SELECT DISTINCT 
             rb.id AS resolved_by_id,
             ag.id AS assignment_group_id
-        FROM [SERVICE NOW].incident inc
+        FROM SERVICENOW.dbo.incident inc
         JOIN dw_analytics.d_resolved_by rb ON rb.dv_resolved_by = inc.resolved_by
         JOIN dw_analytics.d_assignment_group ag ON ag.dv_assignment_group = inc.assignment_group
         WHERE inc.resolved_by IS NOT NULL
@@ -88,7 +88,7 @@ BEGIN
     MERGE dw_analytics.f_incident AS target
     USING (
         SELECT 
-            i.sys_id AS id,
+            i.number AS id,
             rb.id AS resolved_by_id,
             i.opened_at,
             i.closed_at,
@@ -106,13 +106,13 @@ BEGIN
             i.category AS dv_u_categoria_falha,
             i.subcategory AS dv_u_sub_categoria_da_falha,
             i.u_detail AS dv_u_detalhe_sub_categoria_da_falha
-        FROM [SERVICE NOW].incident i
+        FROM SERVICENOW.dbo.incident i
         LEFT JOIN dw_analytics.d_resolved_by rb ON rb.dv_resolved_by = i.resolved_by
         LEFT JOIN dw_analytics.d_contract c ON c.dv_contract = i.contract
-        LEFT JOIN [SERVICE NOW].incident_sla sla_atend 
+        LEFT JOIN SERVICENOW.dbo.incident_sla sla_atend 
             ON i.sys_id = sla_atend.task 
             AND sla_atend.dv_sla = '%VITA] FIRST%'
-        LEFT JOIN [SERVICE NOW].incident_sla sla_resol 
+        LEFT JOIN SERVICENOW.dbo.incident_sla sla_resol 
             ON i.sys_id = sla_resol.task 
             AND sla_resol.dv_sla = '%VITA] RESOLVED%'
         /* Filtro para atualização incremental - descomentar após carga inicial
