@@ -6,63 +6,59 @@ BEGIN
     -- Variável para controle de atualização incremental
     -- DECLARE @data_corte DATETIME = DATEADD(DAY, -10, GETDATE())
     
-    -- Inserir ou atualizar Assignment Groups
+    -- Inserir novos Assignment Groups
     INSERT INTO dw_analytics.d_assignment_group (id, dv_assignment_group)
-    SELECT id, dv_assignment_group
-    FROM (
-        SELECT 
-            LTRIM(RTRIM(assignment_group)) AS id,
-            LTRIM(RTRIM(dv_assignment_group)) AS dv_assignment_group,
-            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(assignment_group)) ORDER BY (SELECT NULL)) AS rn
-        FROM SERVICE_NOW.dbo.incident
-        WHERE LTRIM(RTRIM(assignment_group)) != ''
-          AND LTRIM(RTRIM(dv_assignment_group)) != ''
-    ) AS SubQuery
-    WHERE rn = 1;
+    SELECT DISTINCT 
+        LTRIM(RTRIM(inc.assignment_group)) AS id,
+        LTRIM(RTRIM(inc.dv_assignment_group)) AS dv_assignment_group
+    FROM SERVICE_NOW.dbo.incident inc
+    LEFT JOIN dw_analytics.d_assignment_group ag 
+        ON LTRIM(RTRIM(inc.assignment_group)) = ag.id
+    WHERE ag.id IS NULL
+        AND inc.assignment_group IS NOT NULL
+        AND inc.assignment_group != ''
+        AND inc.dv_assignment_group != '';
 
-    -- Inserir ou atualizar Resolved By
+    -- Inserir novos Resolved By
     INSERT INTO dw_analytics.d_resolved_by (id, dv_resolved_by)
-    SELECT id, dv_resolved_by
-    FROM (
-        SELECT 
-            LTRIM(RTRIM(resolved_by)) AS id,
-            LTRIM(RTRIM(dv_resolved_by)) AS dv_resolved_by,
-            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(resolved_by)) ORDER BY (SELECT NULL)) AS rn
-        FROM SERVICE_NOW.dbo.incident
-        WHERE LTRIM(RTRIM(resolved_by)) != ''
-          AND LTRIM(RTRIM(dv_resolved_by)) != ''
-    ) AS SubQuery
-    WHERE rn = 1;
+    SELECT DISTINCT
+        LTRIM(RTRIM(inc.resolved_by)) AS id,
+        LTRIM(RTRIM(inc.dv_resolved_by)) AS dv_resolved_by
+    FROM SERVICE_NOW.dbo.incident inc
+    LEFT JOIN dw_analytics.d_resolved_by rb 
+        ON LTRIM(RTRIM(inc.resolved_by)) = rb.id
+    WHERE rb.id IS NULL
+        AND inc.resolved_by IS NOT NULL
+        AND inc.resolved_by != ''
+        AND inc.dv_resolved_by != '';
 
-    -- Inserir ou atualizar Contract
+    -- Inserir novos Contracts
     INSERT INTO dw_analytics.d_contract (id, dv_contract)
-    SELECT id, dv_contract
-    FROM (
-        SELECT 
-            LTRIM(RTRIM(contract)) AS id,
-            LTRIM(RTRIM(dv_contract)) AS dv_contract,
-            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(contract)) ORDER BY (SELECT NULL)) AS rn
-        FROM SERVICE_NOW.dbo.incident
-        WHERE LTRIM(RTRIM(contract)) != ''
-          AND LTRIM(RTRIM(dv_contract)) != ''
-    ) AS SubQuery
-    WHERE rn = 1;
+    SELECT DISTINCT
+        LTRIM(RTRIM(inc.contract)) AS id,
+        LTRIM(RTRIM(inc.dv_contract)) AS dv_contract
+    FROM SERVICE_NOW.dbo.incident inc
+    LEFT JOIN dw_analytics.d_contract c 
+        ON LTRIM(RTRIM(inc.contract)) = c.id
+    WHERE c.id IS NULL
+        AND inc.contract IS NOT NULL
+        AND inc.contract != ''
+        AND inc.dv_contract != '';
 
-    -- Inserir ou atualizar Company
+    -- Inserir novas Companies
     INSERT INTO dw_analytics.d_company (id, dv_company, u_cnpj)
-    SELECT id, dv_company, u_cnpj
-    FROM (
-        SELECT 
-            LTRIM(RTRIM(company)) AS id,
-            LTRIM(RTRIM(dv_company)) AS dv_company,
-            REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(u_cnpj)), '.', ''), '/', ''), '-', '') AS u_cnpj,
-            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(company)) ORDER BY (SELECT NULL)) AS rn
-        FROM SERVICE_NOW.dbo.incident
-        WHERE LTRIM(RTRIM(company)) != ''
-          AND LTRIM(RTRIM(dv_company)) != ''
-          AND LTRIM(RTRIM(u_cnpj)) != ''
-    ) AS SubQuery
-    WHERE rn = 1;
+    SELECT DISTINCT
+        LTRIM(RTRIM(inc.company)) AS id,
+        LTRIM(RTRIM(inc.dv_company)) AS dv_company,
+        REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(inc.u_cnpj)), '.', ''), '/', ''), '-', '') AS u_cnpj
+    FROM SERVICE_NOW.dbo.incident inc
+    LEFT JOIN dw_analytics.d_company c 
+        ON LTRIM(RTRIM(inc.company)) = c.id
+    WHERE c.id IS NULL
+        AND inc.company IS NOT NULL
+        AND inc.company != ''
+        AND inc.dv_company != ''
+        AND inc.u_cnpj != '';
 
     -- Relacionamento Resolved By - Assignment Group
     INSERT INTO dw_analytics.d_resolved_by_assignment_group (resolved_by_id, assignment_group_id)
@@ -85,23 +81,29 @@ BEGIN
     WHERE rn = 1;
 
     -- Inserir ou atualizar Incidents na tabela fato
-    MERGE f_incident AS target
+    MERGE dw_analytics.f_incident AS target
     USING (
         SELECT 
             inc.number as id,
-            inc.resolved_by as resolved_by_id,
-            inc.assignment_group as assignment_group_id,
+            LTRIM(RTRIM(inc.resolved_by)) as resolved_by_id,
+            LTRIM(RTRIM(inc.assignment_group)) as assignment_group_id,
             inc.opened_at,
             inc.closed_at,
-            inc.contract as contract_id,
-            inc.sla_atendimento,
-            inc.sla_resolucao,
+            LTRIM(RTRIM(inc.contract)) as contract_id,
+            sla_first.has_breached as sla_atendimento,
+            sla_resolved.has_breached as sla_resolucao,
             inc.company,
             inc.u_origem,
             inc.dv_u_categoria_falha,
             inc.dv_u_sub_categoria_da_falha,
             inc.dv_u_detalhe_sub_categoria_da_falha
         FROM SERVICE_NOW.dbo.incident inc
+        LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_first 
+            ON inc.sys_id = sla_first.task 
+            AND sla_first.dv_sla LIKE '%VITA] FIRST%'
+        LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_resolved 
+            ON inc.sys_id = sla_resolved.task 
+            AND sla_resolved.dv_sla LIKE '%VITA] RESOLVED%'
         WHERE inc.number IS NOT NULL
     ) AS source
     ON target.id = source.id
