@@ -29,36 +29,36 @@ GO
 
 -- Criar tabelas dimensões
 CREATE TABLE dw_analytics.d_assignment_group (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+    id NVARCHAR(50) PRIMARY KEY,
     dv_assignment_group NVARCHAR(50) NOT NULL,
     status BIT NOT NULL DEFAULT 1
 )
 GO
 
 CREATE TABLE dw_analytics.d_company (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+    id NVARCHAR(50) PRIMARY KEY,
     dv_company NVARCHAR(50) NOT NULL,
     u_cnpj NVARCHAR(14)
 )
 GO
 
 CREATE TABLE dw_analytics.d_contract (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+    id NVARCHAR(50) PRIMARY KEY,
     dv_contract NVARCHAR(150) NOT NULL
 )
 GO
 
 CREATE TABLE dw_analytics.d_resolved_by (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+    id NVARCHAR(50) PRIMARY KEY,
     dv_resolved_by NVARCHAR(80) NOT NULL
 )
 GO
 
 -- Tabela de relacionamento N:N entre resolved_by e assignment_group
 CREATE TABLE dw_analytics.d_resolved_by_assignment_group (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    resolved_by_id INT NOT NULL,
-    assignment_group_id INT NOT NULL,
+    id UNIQUEIDENTIFIER PRIMARY KEY,
+    resolved_by_id NVARCHAR(50) NOT NULL,
+    assignment_group_id NVARCHAR(50) NOT NULL,
     CONSTRAINT FK_resolved_by FOREIGN KEY (resolved_by_id) 
         REFERENCES dw_analytics.d_resolved_by(id),
     CONSTRAINT FK_assignment_group FOREIGN KEY (assignment_group_id) 
