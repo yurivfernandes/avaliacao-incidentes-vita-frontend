@@ -56,7 +56,7 @@ GO
 
 -- Tabela de relacionamento N:N entre resolved_by e assignment_group
 CREATE TABLE dw_analytics.d_resolved_by_assignment_group (
-    id UNIQUEIDENTIFIER PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     resolved_by_id NVARCHAR(50) NOT NULL,
     assignment_group_id NVARCHAR(50) NOT NULL,
     CONSTRAINT FK_resolved_by FOREIGN KEY (resolved_by_id) 

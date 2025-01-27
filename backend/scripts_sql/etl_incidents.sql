@@ -65,20 +65,18 @@ BEGIN
     WHERE rn = 1;
 
     -- Relacionamento Resolved By - Assignment Group
-    INSERT INTO d_resolved_by_assignment_group (id, resolved_by_id, assignment_group_id)
-    SELECT NEWID() AS ID, resolved_by_id, assignment_group_id
+    INSERT INTO d_resolved_by_assignment_group (resolved_by_id, assignment_group_id)
+    SELECT resolved_by_id, assignment_group_id
     FROM (
         SELECT 
-            rb.id AS resolved_by_id,
-            ag.id AS assignment_group_id,
-            ROW_NUMBER() OVER (PARTITION BY rb.id, ag.id ORDER BY (SELECT NULL)) AS rn
+            LTRIM(RTRIM(resolved_by)) AS resolved_by_id,
+            LTRIM(RTRIM(assignment_group)) AS assignment_group_id,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(resolved_by)), LTRIM(RTRIM(assignment_group)) ORDER BY (SELECT NULL)) AS rn
         FROM SERVICE_NOW.dbo.incident inc
-        JOIN d_resolved_by rb ON rb.dv_resolved_by = inc.resolved_by
-        JOIN d_assignment_group ag ON ag.dv_assignment_group = inc.assignment_group
         WHERE inc.resolved_by IS NOT NULL
         AND inc.assignment_group IS NOT NULL
-        AND inc.resolved_by NOT IN ('')
-        AND inc.assignment_group NOT IN ('')
+        AND inc.resolved_by != ''
+        AND inc.assignment_group != ''
     ) AS SubQuery
     WHERE rn = 1;
 
