@@ -111,10 +111,10 @@ BEGIN
         LEFT JOIN dw_analytics.d_contract c ON c.dv_contract = i.contract
         LEFT JOIN [SERVICE NOW].incident_sla sla_atend 
             ON i.sys_id = sla_atend.task 
-            AND sla_atend.dv_sla = 'First Response Time'
+            AND sla_atend.dv_sla = '%VITA] FIRST%'
         LEFT JOIN [SERVICE NOW].incident_sla sla_resol 
             ON i.sys_id = sla_resol.task 
-            AND sla_resol.dv_sla = 'Resolution Time'
+            AND sla_resol.dv_sla = '%VITA] RESOLVED%'
         /* Filtro para atualização incremental - descomentar após carga inicial
         WHERE 
             i.opened_at >= @data_corte
