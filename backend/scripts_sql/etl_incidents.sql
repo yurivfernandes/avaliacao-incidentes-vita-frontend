@@ -135,14 +135,14 @@ BEGIN
             sla_resolucao = source.sla_resolucao,
             company = source.company,
             u_origem = source.u_origem,
-            dv_u_categoria_falha = source.dv_u_categoria_da_falha,
+            dv_u_categoria_da_falha = source.dv_u_categoria_da_falha,
             dv_u_sub_categoria_da_falha = source.dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
         INSERT (
             id, resolved_by_id, assignment_group_id, opened_at, closed_at,
             contract_id, sla_atendimento, sla_resolucao, company,
-            u_origem, dv_u_categoria_falha, dv_u_sub_categoria_da_falha,
+            u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         )
         VALUES (
