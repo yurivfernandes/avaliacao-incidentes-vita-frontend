@@ -32,9 +32,11 @@ class Incident(models.Model):
         help_text="ID Do Contrato",
     )
     sla_atendimento = models.BooleanField(
+        null=True, blank=True,
         help_text="Identifica se o SLA de atendimento foi atendido."
     )
     sla_resolucao = models.BooleanField(
+        null=True, blank=True,
         help_text="Identifica se o SLA de resolução foi atendido."
     )
     company = models.CharField(
