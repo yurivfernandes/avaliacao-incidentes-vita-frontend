@@ -94,7 +94,7 @@ BEGIN
             sla_resolved.has_breached as sla_resolucao,
             inc.company,
             inc.u_origem,
-            inc.dv_u_categoria_falha,
+            inc.dv_u_categoria_da_falha,
             inc.dv_u_sub_categoria_da_falha,
             inc.dv_u_detalhe_sub_categoria_da_falha
         FROM SERVICE_NOW.dbo.incident inc
@@ -118,21 +118,21 @@ BEGIN
             sla_resolucao = source.sla_resolucao,
             company = source.company,
             u_origem = source.u_origem,
-            dv_u_categoria_falha = source.dv_u_categoria_falha,
+            dv_u_categoria_da_falha = source.dv_u_categoria_da_falha,
             dv_u_sub_categoria_da_falha = source.dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
         INSERT (
             id, resolved_by_id, assignment_group_id, opened_at, closed_at,
             contract_id, sla_atendimento, sla_resolucao, company,
-            u_origem, dv_u_categoria_falha, dv_u_sub_categoria_da_falha,
+            u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         )
         VALUES (
             source.id, source.resolved_by_id, source.assignment_group_id,
             source.opened_at, source.closed_at, source.contract_id,
             source.sla_atendimento, source.sla_resolucao, source.company,
-            source.u_origem, source.dv_u_categoria_falha,
+            source.u_origem, source.dv_u_categoria_da_falha,
             source.dv_u_sub_categoria_da_falha,
             source.dv_u_detalhe_sub_categoria_da_falha
         );
@@ -162,3 +162,38 @@ NOTAS SOBRE ATUALIZAÇÃO INCREMENTAL:
 4. Considerar adicionar índices em opened_at, closed_at e sys_updated_on na tabela fonte
 5. Monitorar performance e ajustar conforme necessário
 */
+
+-- Script para verificar duplicações no SELECT dos incidentes
+WITH IncidentesDuplicados AS (
+    SELECT 
+        inc.number as id,
+        inc.resolved_by as resolved_by_id,
+        inc.assignment_group as assignment_group_id,
+        inc.opened_at,
+        inc.closed_at,
+        inc.contract as contract_id,
+        sla_first.has_breached as sla_atendimento,
+        sla_resolved.has_breached as sla_resolucao,
+        inc.company,
+        inc.u_origem,
+        inc.dv_u_categoria_da_falha,
+        inc.dv_u_sub_categoria_da_falha,
+        inc.dv_u_detalhe_sub_categoria_da_falha,
+        ROW_NUMBER() OVER (PARTITION BY inc.number ORDER BY (SELECT NULL)) as contagem
+    FROM SERVICE_NOW.dbo.incident inc
+    LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_first 
+        ON inc.sys_id = sla_first.task 
+        AND sla_first.dv_sla LIKE '%VITA] FIRST%'
+    LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_resolved 
+        ON inc.sys_id = sla_resolved.task 
+        AND sla_resolved.dv_sla LIKE '%VITA] RESOLVED%'
+    WHERE inc.number IS NOT NULL
+)
+SELECT 
+    id,
+    COUNT(*) as quantidade_duplicados,
+    MAX(contagem) as numero_duplicacoes
+FROM IncidentesDuplicados
+GROUP BY id
+HAVING COUNT(*) > 1
+ORDER BY COUNT(*) DESC;

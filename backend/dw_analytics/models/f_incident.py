@@ -8,7 +8,7 @@ from .d_resolved_by import ResolvedBy
 class Incident(models.Model):
     id = models.CharField(
         primary_key=True,
-        max_length=50,
+        max_length=255,
         help_text="Número do chamado no ServiceNow",
     )
     resolved_by = models.ForeignKey(
@@ -48,23 +48,27 @@ class Incident(models.Model):
         help_text="Identifica se o SLA de resolução foi atendido.",
     )
     company = models.CharField(
-        max_length=150,
+        max_length=255,
         help_text="ID Do Cliente",
     )
     u_origem = models.CharField(
-        max_length=150,
+        max_length=255,
         help_text="Torre de atendimento",
     )
-    dv_u_categoria_falha = models.CharField(
-        max_length=150,
+    dv_u_categoria_da_falha = models.CharField(
+        null=True,
+        blank=True,
+        max_length=255,
         help_text="Categoria da falha",
     )
     dv_u_sub_categoria_da_falha = models.CharField(
-        max_length=150,
+        null=True,
+        blank=True,
+        max_length=255,
         help_text="Sub Categoria da falha",
     )
     dv_u_detalhe_sub_categoria_da_falha = models.CharField(
-        max_length=150,
+        max_length=255,
         help_text="Detalhe da SubCategoria da flaha.",
     )
 
