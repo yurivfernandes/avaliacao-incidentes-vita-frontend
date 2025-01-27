@@ -44,7 +44,7 @@ GO
 
 CREATE TABLE dw_analytics.d_contract (
     id NVARCHAR(50) PRIMARY KEY,
-    dv_contract NVARCHAR(150) NOT NULL
+    dv_contract NVARCHAR(255) NOT NULL
 )
 GO
 
@@ -78,25 +78,20 @@ GO
 
 -- Criar tabela fato
 CREATE TABLE dw_analytics.f_incident (
-    id NVARCHAR(50) PRIMARY KEY,
-    resolved_by_id NVARCHAR(50) NOT NULL,
-    assignment_group_id NVARCHAR(50) NOT NULL,
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    number NVARCHAR(255) UNIQUE NOT NULL,
+    resolved_by_id NVARCHAR(255) NULL,
+    assignment_group_id NVARCHAR(255) NULL,
     opened_at DATETIME NOT NULL,
-    closed_at DATETIME,
-    contract_id NVARCHAR(50) NOT NULL,
-    sla_atendimento BIT NOT NULL,
-    sla_resolucao BIT NOT NULL,
-    company NVARCHAR(150) NOT NULL,
-    u_origem NVARCHAR(150) NOT NULL,
-    dv_u_categoria_falha NVARCHAR(150) NOT NULL,
-    dv_u_sub_categoria_da_falha NVARCHAR(150) NOT NULL,
-    dv_u_detalhe_sub_categoria_da_falha NVARCHAR(150) NOT NULL,
-    CONSTRAINT FK_incident_resolved_by FOREIGN KEY (resolved_by_id) 
-        REFERENCES dw_analytics.d_resolved_by(id),
-    CONSTRAINT FK_incident_contract FOREIGN KEY (contract_id) 
-        REFERENCES dw_analytics.d_contract(id),
-    CONSTRAINT FK_incident_assignment_group FOREIGN KEY (assignment_group_id)
-        REFERENCES dw_analytics.d_assignment_group(id)
+    closed_at DATETIME NULL,
+    contract_id NVARCHAR(255) NULL,
+    sla_atendimento BIT NULL,
+    sla_resolucao BIT NULL,
+    company NVARCHAR(255) NULL,
+    u_origem NVARCHAR(255) NULL,
+    dv_u_categoria_da_falha NVARCHAR(255) NULL,
+    dv_u_sub_categoria_da_falha NVARCHAR(255) NULL,
+    dv_u_detalhe_sub_categoria_da_falha NVARCHAR(255) NULL
 )
 GO
 
@@ -107,7 +102,7 @@ CREATE TABLE dw_analytics.d_sorted_ticket (
     mes_ano NVARCHAR(7) NOT NULL,
     CONSTRAINT CK_mes_ano_format CHECK (mes_ano LIKE '[0-9][0-9][0-9][0-9]-[0-9][0-9]'),
     CONSTRAINT FK_sorted_incident FOREIGN KEY (incident_id) 
-        REFERENCES dw_analytics.f_incident(id)
+        REFERENCES dw_analytics.f_incident(number)
 )
 GO
 

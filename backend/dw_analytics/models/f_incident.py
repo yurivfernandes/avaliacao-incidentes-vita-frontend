@@ -1,26 +1,27 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from .d_assignment_group import AssignmentGroup
 from .d_contract import Contract
 from .d_resolved_by import ResolvedBy
 
 
 class Incident(models.Model):
-    id = models.CharField(
-        primary_key=True,
+    number = models.CharField(
+        unique=True,
         max_length=255,
         help_text="Número do chamado no ServiceNow",
     )
-    resolved_by = models.ForeignKey(
-        ResolvedBy,
-        on_delete=models.PROTECT,
-        related_name="incidents",
+    resolved_by_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
         help_text="ID Do analista",
     )
-    assignment_group = models.ForeignKey(
-        "AssignmentGroup",
-        on_delete=models.PROTECT,
-        related_name="incidents",
+    assignment_group_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
         help_text="Grupo de atendimento",
     )
     opened_at = models.DateTimeField(
@@ -31,10 +32,10 @@ class Incident(models.Model):
         blank=True,
         help_text="Data do fechamento do ticket",
     )
-    contract = models.ForeignKey(
-        Contract,
-        on_delete=models.PROTECT,
-        related_name="incidents",
+    contract_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
         help_text="ID Do Contrato",
     )
     sla_atendimento = models.BooleanField(
@@ -48,10 +49,14 @@ class Incident(models.Model):
         help_text="Identifica se o SLA de resolução foi atendido.",
     )
     company = models.CharField(
+        null=True,
+        blank=True,
         max_length=255,
         help_text="ID Do Cliente",
     )
     u_origem = models.CharField(
+        null=True,
+        blank=True,
         max_length=255,
         help_text="Torre de atendimento",
     )
@@ -68,8 +73,10 @@ class Incident(models.Model):
         help_text="Sub Categoria da falha",
     )
     dv_u_detalhe_sub_categoria_da_falha = models.CharField(
+        null=True,
+        blank=True,
         max_length=255,
-        help_text="Detalhe da SubCategoria da flaha.",
+        help_text="Detalhe da SubCategoria da falha",
     )
 
     def __str__(self):
