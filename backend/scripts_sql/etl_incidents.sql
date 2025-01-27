@@ -65,14 +65,18 @@ BEGIN
     WHERE rn = 1;
 
     -- Relacionamento Resolved By - Assignment Group
-    INSERT INTO d_resolved_by_assignment_group (resolved_by_id, assignment_group_id)
+    INSERT INTO dw_analytics.d_resolved_by_assignment_group (resolved_by_id, assignment_group_id)
     SELECT resolved_by_id, assignment_group_id
     FROM (
         SELECT 
-            LTRIM(RTRIM(resolved_by)) AS resolved_by_id,
-            LTRIM(RTRIM(assignment_group)) AS assignment_group_id,
-            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(resolved_by)), LTRIM(RTRIM(assignment_group)) ORDER BY (SELECT NULL)) AS rn
+            LTRIM(RTRIM(inc.resolved_by)) AS resolved_by_id,
+            LTRIM(RTRIM(inc.assignment_group)) AS assignment_group_id,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(inc.resolved_by)), LTRIM(RTRIM(inc.assignment_group)) ORDER BY (SELECT NULL)) AS rn
         FROM SERVICE_NOW.dbo.incident inc
+        INNER JOIN dw_analytics.d_resolved_by rb 
+            ON LTRIM(RTRIM(inc.resolved_by)) = rb.id
+        INNER JOIN dw_analytics.d_assignment_group ag 
+            ON LTRIM(RTRIM(inc.assignment_group)) = ag.id
         WHERE inc.resolved_by IS NOT NULL
         AND inc.assignment_group IS NOT NULL
         AND inc.resolved_by != ''
