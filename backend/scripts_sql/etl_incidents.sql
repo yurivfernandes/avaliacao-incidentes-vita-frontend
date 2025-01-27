@@ -95,81 +95,53 @@ BEGIN
     -- Inserir ou atualizar Incidents na tabela fato
     MERGE f_incident AS target
     USING (
-        SELECT
-            inc.sys_id AS id,
-            inc.number,
-            inc.sys_created_on,
-            inc.sys_updated_on,
+        SELECT 
+            inc.number as id,
+            inc.resolved_by as resolved_by_id,
+            inc.assignment_group as assignment_group_id,
             inc.opened_at,
             inc.closed_at,
-            inc.resolved_at,
-            inc.state,
-            inc.priority,
-            inc.impact,
-            inc.urgency,
-            inc.incident_state,
-            CAST(inc.short_description AS nvarchar(max)) AS short_description,
-            CAST(inc.description AS nvarchar(max)) AS description,
-            CAST(inc.close_notes AS nvarchar(max)) AS close_notes,
-            inc.assigned_to,
-            inc.assignment_group,
-            inc.resolved_by,
-            inc.contract,
+            inc.contract as contract_id,
+            inc.sla_atendimento,
+            inc.sla_resolucao,
             inc.company,
-            MAX(CASE WHEN sla.dv_sla LIKE '%VITA] FIRST' THEN sla.has_breached ELSE NULL END) AS sla_atendimento,
-            MAX(CASE WHEN sla.dv_sla LIKE '%VITA] RESOLVED' THEN sla.has_breached ELSE NULL END) AS sla_resolucao
+            inc.u_origem,
+            inc.dv_u_categoria_falha,
+            inc.dv_u_sub_categoria_da_falha,
+            inc.dv_u_detalhe_sub_categoria_da_falha
         FROM SERVICE_NOW.dbo.incident inc
-        LEFT JOIN SERVICE_NOW.dbo.incident_sla sla ON sla.task = inc.sys_id
-        WHERE inc.sys_id IS NOT NULL
-        GROUP BY
-            inc.sys_id,
-            inc.number,
-            inc.sys_created_on,
-            inc.sys_updated_on,
-            inc.opened_at,
-            inc.closed_at,
-            inc.resolved_at,
-            inc.state,
-            inc.priority,
-            inc.impact,
-            inc.urgency,
-            inc.incident_state,
-            inc.short_description,
-            inc.description,
-            inc.close_notes,
-            inc.assigned_to,
-            inc.assignment_group,
-            inc.resolved_by,
-            inc.contract,
-            inc.company
+        WHERE inc.number IS NOT NULL
     ) AS source
     ON target.id = source.id
     WHEN MATCHED THEN
         UPDATE SET
-            number = source.number,
-            sys_created_on = source.sys_created_on,
-            sys_updated_on = source.sys_updated_on,
+            resolved_by_id = source.resolved_by_id,
+            assignment_group_id = source.assignment_group_id,
             opened_at = source.opened_at,
             closed_at = source.closed_at,
-            resolved_at = source.resolved_at,
-            state = source.state,
-            priority = source.priority,
-            impact = source.impact,
-            urgency = source.urgency,
-            incident_state = source.incident_state,
-            short_description = source.short_description,
-            description = source.description,
-            close_notes = source.close_notes,
-            assigned_to = source.assigned_to,
-            assignment_group = source.assignment_group,
-            resolved_by = source.resolved_by,
-            contract = source.contract,
-            company = source.company,
+            contract_id = source.contract_id,
             sla_atendimento = source.sla_atendimento,
-            sla_resolucao = source.sla_resolucao
+            sla_resolucao = source.sla_resolucao,
+            company = source.company,
+            u_origem = source.u_origem,
+            dv_u_categoria_falha = source.dv_u_categoria_falha,
+            dv_u_sub_categoria_da_falha = source.dv_u_sub_categoria_da_falha,
+            dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
-        INSERT (id, number, sys_created_on, sys_updated_on, opened_at, closed_at, resolved_at, state, priority, impact, urgency, incident_state, short_description, description, close_notes, assigned_to, assignment_group, resolved_by, contract, company, sla_atendimento, sla_resolucao)
-        VALUES (source.id, source.number, source.sys_created_on, source.sys_updated_on, source.opened_at, source.closed_at, source.resolved_at, source.state, source.priority, source.impact, source.urgency, source.incident_state, source.short_description, source.description, source.close_notes, source.assigned_to, source.assignment_group, source.resolved_by, source.contract, source.company, source.sla_atendimento, source.sla_resolucao);
+        INSERT (
+            id, resolved_by_id, assignment_group_id, opened_at, closed_at,
+            contract_id, sla_atendimento, sla_resolucao, company,
+            u_origem, dv_u_categoria_falha, dv_u_sub_categoria_da_falha,
+            dv_u_detalhe_sub_categoria_da_falha
+        )
+        VALUES (
+            source.id, source.resolved_by_id, source.assignment_group_id,
+            source.opened_at, source.closed_at, source.contract_id,
+            source.sla_atendimento, source.sla_resolucao, source.company,
+            source.u_origem, source.dv_u_categoria_falha,
+            source.dv_u_sub_categoria_da_falha,
+            source.dv_u_detalhe_sub_categoria_da_falha
+        );
 
     -- Atualizar Sorted Tickets para chamados fechados
     INSERT INTO d_sorted_ticket (incident_id, mes_ano)

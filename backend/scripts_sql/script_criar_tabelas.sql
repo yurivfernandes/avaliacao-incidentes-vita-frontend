@@ -79,10 +79,11 @@ GO
 -- Criar tabela fato
 CREATE TABLE dw_analytics.f_incident (
     id NVARCHAR(50) PRIMARY KEY,
-    resolved_by_id INT NOT NULL,
+    resolved_by_id NVARCHAR(50) NOT NULL,
+    assignment_group_id NVARCHAR(50) NOT NULL,
     opened_at DATETIME NOT NULL,
     closed_at DATETIME,
-    contract_id INT NOT NULL,
+    contract_id NVARCHAR(50) NOT NULL,
     sla_atendimento BIT NOT NULL,
     sla_resolucao BIT NOT NULL,
     company NVARCHAR(150) NOT NULL,
@@ -93,7 +94,9 @@ CREATE TABLE dw_analytics.f_incident (
     CONSTRAINT FK_incident_resolved_by FOREIGN KEY (resolved_by_id) 
         REFERENCES dw_analytics.d_resolved_by(id),
     CONSTRAINT FK_incident_contract FOREIGN KEY (contract_id) 
-        REFERENCES dw_analytics.d_contract(id)
+        REFERENCES dw_analytics.d_contract(id),
+    CONSTRAINT FK_incident_assignment_group FOREIGN KEY (assignment_group_id)
+        REFERENCES dw_analytics.d_assignment_group(id)
 )
 GO
 

@@ -17,6 +17,12 @@ class Incident(models.Model):
         related_name="incidents",
         help_text="ID Do analista",
     )
+    assignment_group = models.ForeignKey(
+        "AssignmentGroup",
+        on_delete=models.PROTECT,
+        related_name="incidents",
+        help_text="Grupo de atendimento",
+    )
     opened_at = models.DateTimeField(
         help_text="Data da Abertura do Ticket",
     )
@@ -32,12 +38,14 @@ class Incident(models.Model):
         help_text="ID Do Contrato",
     )
     sla_atendimento = models.BooleanField(
-        null=True, blank=True,
-        help_text="Identifica se o SLA de atendimento foi atendido."
+        null=True,
+        blank=True,
+        help_text="Identifica se o SLA de atendimento foi atendido.",
     )
     sla_resolucao = models.BooleanField(
-        null=True, blank=True,
-        help_text="Identifica se o SLA de resolução foi atendido."
+        null=True,
+        blank=True,
+        help_text="Identifica se o SLA de resolução foi atendido.",
     )
     company = models.CharField(
         max_length=150,
