@@ -69,7 +69,7 @@ GO
 -- Criar tabela de premissas
 CREATE TABLE dw_analytics.d_premissas (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    assignment_id INT NOT NULL,
+    assignment_id NVARCHAR(50) NOT NULL,
     qtd_incidents INT NOT NULL,
     CONSTRAINT FK_premissas_assignment FOREIGN KEY (assignment_id) 
         REFERENCES dw_analytics.d_assignment_group(id)

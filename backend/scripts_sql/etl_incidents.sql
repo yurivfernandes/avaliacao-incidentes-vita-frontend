@@ -7,74 +7,62 @@ BEGIN
     -- DECLARE @data_corte DATETIME = DATEADD(DAY, -10, GETDATE())
     
     -- Inserir ou atualizar Assignment Groups
-    MERGE d_assignment_group AS target
-    USING (
-        SELECT DISTINCT assignment_group AS id, dv_assignment_group
-        FROM (
-            SELECT 
-                assignment_group, 
-                CAST(dv_assignment_group AS nvarchar(max)) AS dv_assignment_group,
-                ROW_NUMBER() OVER (PARTITION BY assignment_group ORDER BY (SELECT NULL)) AS rn
-            FROM SERVICE_NOW.dbo.incident inc
-            WHERE assignment_group IS NOT NULL
-            AND assignment_group NOT IN ('')
-        ) AS SubQuery
-        WHERE rn = 1
-    ) AS source
-    ON target.id = source.id
-    WHEN NOT MATCHED THEN
-        INSERT (id, dv_assignment_group)
-        VALUES (source.id, source.dv_assignment_group);
+    INSERT INTO dw_analytics.d_assignment_group (id, dv_assignment_group)
+    SELECT id, dv_assignment_group
+    FROM (
+        SELECT 
+            LTRIM(RTRIM(assignment_group)) AS id,
+            LTRIM(RTRIM(dv_assignment_group)) AS dv_assignment_group,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(assignment_group)) ORDER BY (SELECT NULL)) AS rn
+        FROM SERVICE_NOW.dbo.incident
+        WHERE LTRIM(RTRIM(assignment_group)) != ''
+          AND LTRIM(RTRIM(dv_assignment_group)) != ''
+    ) AS SubQuery
+    WHERE rn = 1;
 
     -- Inserir ou atualizar Resolved By
-    MERGE d_resolved_by AS target
-    USING (
-        SELECT DISTINCT resolved_by AS id, dv_resolved_by
-        FROM (
-            SELECT 
-                resolved_by, 
-                CAST(dv_resolved_by AS nvarchar(max)) AS dv_resolved_by,
-                ROW_NUMBER() OVER (PARTITION BY resolved_by ORDER BY (SELECT NULL)) AS rn
-            FROM SERVICE_NOW.dbo.incident inc
-            WHERE resolved_by IS NOT NULL
-            AND resolved_by NOT IN ('')
-        ) AS SubQuery
-        WHERE rn = 1
-    ) AS source
-    ON target.id = source.id
-    WHEN NOT MATCHED THEN
-        INSERT (id, dv_resolved_by)
-        VALUES (source.id, source.dv_resolved_by);
+    INSERT INTO dw_analytics.d_resolved_by (id, dv_resolved_by)
+    SELECT id, dv_resolved_by
+    FROM (
+        SELECT 
+            LTRIM(RTRIM(resolved_by)) AS id,
+            LTRIM(RTRIM(dv_resolved_by)) AS dv_resolved_by,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(resolved_by)) ORDER BY (SELECT NULL)) AS rn
+        FROM SERVICE_NOW.dbo.incident
+        WHERE LTRIM(RTRIM(resolved_by)) != ''
+          AND LTRIM(RTRIM(dv_resolved_by)) != ''
+    ) AS SubQuery
+    WHERE rn = 1;
 
     -- Inserir ou atualizar Contract
-    MERGE d_contract AS target
-    USING (
-        SELECT DISTINCT contract
-        FROM SERVICE_NOW.dbo.incident inc
-        WHERE contract IS NOT NULL
-        AND contract NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_contract dc WHERE dc.id = inc.contract)
-    ) AS source (dv_contract)
-    ON target.dv_contract = source.dv_contract
-    WHEN NOT MATCHED THEN
-        INSERT (dv_contract)
-        VALUES (source.dv_contract);
+    INSERT INTO dw_analytics.d_contract (id, dv_contract)
+    SELECT id, dv_contract
+    FROM (
+        SELECT 
+            LTRIM(RTRIM(contract)) AS id,
+            LTRIM(RTRIM(dv_contract)) AS dv_contract,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(contract)) ORDER BY (SELECT NULL)) AS rn
+        FROM SERVICE_NOW.dbo.incident
+        WHERE LTRIM(RTRIM(contract)) != ''
+          AND LTRIM(RTRIM(dv_contract)) != ''
+    ) AS SubQuery
+    WHERE rn = 1;
 
     -- Inserir ou atualizar Company
-    INSERT INTO dw_analitycs.d_company (id, dv_company, u_cnpj)
+    INSERT INTO dw_analytics.d_company (id, dv_company, u_cnpj)
     SELECT id, dv_company, u_cnpj
     FROM (
-       SELECT 
-           LTRIM(RTRIM(dv_company)) AS dv_company, 
-           LTRIM(RTRIM(company)) AS id,
-           LTRIM(RTRIM(u_cnpj)) AS u_cnpj,
-           ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(dv_company)), LTRIM(RTRIM(company)) ORDER BY (SELECT NULL)) AS rn
-       FROM SERVICE_NOW.dbo.incident
-       WHERE LTRIM(RTRIM(dv_company)) != ''
-         AND LTRIM(RTRIM(company)) != ''
-         AND LTRIM(RTRIM(u_cnpj)) != ''
+        SELECT 
+            LTRIM(RTRIM(company)) AS id,
+            LTRIM(RTRIM(dv_company)) AS dv_company,
+            LTRIM(RTRIM(u_cnpj)) AS u_cnpj,
+            ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(company)) ORDER BY (SELECT NULL)) AS rn
+        FROM SERVICE_NOW.dbo.incident
+        WHERE LTRIM(RTRIM(company)) != ''
+          AND LTRIM(RTRIM(dv_company)) != ''
+          AND LTRIM(RTRIM(u_cnpj)) != ''
     ) AS SubQuery
-    WHERE rn = 1
+    WHERE rn = 1;
 
     -- Relacionamento Resolved By - Assignment Group
     INSERT INTO d_resolved_by_assignment_group (id, resolved_by_id, assignment_group_id)
