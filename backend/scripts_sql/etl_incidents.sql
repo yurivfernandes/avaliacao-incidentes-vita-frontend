@@ -13,9 +13,9 @@ BEGIN
         FROM (
             SELECT 
                 assignment_group, 
-                dv_assignment_group,
+                CAST(dv_assignment_group AS nvarchar(max)) AS dv_assignment_group,
                 ROW_NUMBER() OVER (PARTITION BY assignment_group ORDER BY (SELECT NULL)) AS rn
-            FROM SERVICENOW.dbo.incident inc
+            FROM SERVICE_NOW.dbo.incident inc
             WHERE assignment_group IS NOT NULL
             AND assignment_group NOT IN ('')
         ) AS SubQuery
@@ -33,9 +33,9 @@ BEGIN
         FROM (
             SELECT 
                 resolved_by, 
-                dv_resolved_by,
+                CAST(dv_resolved_by AS nvarchar(max)) AS dv_resolved_by,
                 ROW_NUMBER() OVER (PARTITION BY resolved_by ORDER BY (SELECT NULL)) AS rn
-            FROM SERVICENOW.dbo.incident inc
+            FROM SERVICE_NOW.dbo.incident inc
             WHERE resolved_by IS NOT NULL
             AND resolved_by NOT IN ('')
         ) AS SubQuery
@@ -50,7 +50,7 @@ BEGIN
     MERGE d_contract AS target
     USING (
         SELECT DISTINCT contract
-        FROM SERVICENOW.dbo.incident inc
+        FROM SERVICE_NOW.dbo.incident inc
         WHERE contract IS NOT NULL
         AND contract NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_contract dc WHERE dc.id = inc.contract)
@@ -64,7 +64,7 @@ BEGIN
     MERGE d_company AS target
     USING (
         SELECT DISTINCT company, company_cnpj
-        FROM SERVICENOW.dbo.incident inc
+        FROM SERVICE_NOW.dbo.incident inc
         WHERE company IS NOT NULL
         AND company NOT IN ('')
         AND EXISTS (SELECT 1 FROM d_company dco WHERE dco.id = inc.company)
@@ -82,7 +82,7 @@ BEGIN
             rb.id AS resolved_by_id,
             ag.id AS assignment_group_id,
             ROW_NUMBER() OVER (PARTITION BY rb.id, ag.id ORDER BY (SELECT NULL)) AS rn
-        FROM SERVICENOW.dbo.incident inc
+        FROM SERVICE_NOW.dbo.incident inc
         JOIN d_resolved_by rb ON rb.dv_resolved_by = inc.resolved_by
         JOIN d_assignment_group ag ON ag.dv_assignment_group = inc.assignment_group
         WHERE inc.resolved_by IS NOT NULL
@@ -108,9 +108,9 @@ BEGIN
             inc.impact,
             inc.urgency,
             inc.incident_state,
-            inc.short_description,
-            inc.description,
-            inc.close_notes,
+            CAST(inc.short_description AS nvarchar(max)) AS short_description,
+            CAST(inc.description AS nvarchar(max)) AS description,
+            CAST(inc.close_notes AS nvarchar(max)) AS close_notes,
             inc.assigned_to,
             inc.assignment_group,
             inc.resolved_by,
@@ -118,8 +118,8 @@ BEGIN
             inc.company,
             MAX(CASE WHEN sla.dv_sla LIKE '%VITA] FIRST' THEN sla.has_breached ELSE NULL END) AS sla_atendimento,
             MAX(CASE WHEN sla.dv_sla LIKE '%VITA] RESOLVED' THEN sla.has_breached ELSE NULL END) AS sla_resolucao
-        FROM SERVICENOW.dbo.incident inc
-        LEFT JOIN SERVICENOW.dbo.incident_sla sla ON sla.task = inc.sys_id
+        FROM SERVICE_NOW.dbo.incident inc
+        LEFT JOIN SERVICE_NOW.dbo.incident_sla sla ON sla.task = inc.sys_id
         WHERE inc.sys_id IS NOT NULL
         GROUP BY
             inc.sys_id,
@@ -185,7 +185,6 @@ BEGIN
         st.id IS NULL;
 
 END;
-GO
 
 -- Comentário explicativo sobre a atualização incremental
 /*
