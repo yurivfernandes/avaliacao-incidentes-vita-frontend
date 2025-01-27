@@ -84,13 +84,13 @@ BEGIN
     MERGE dw_analytics.f_incident AS target
     USING (
         SELECT 
-            id, resolved_by_id, assignment_group_id, opened_at, closed_at,
+            number, resolved_by_id, assignment_group_id, opened_at, closed_at,
             contract_id, sla_atendimento, sla_resolucao, company,
             u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         FROM (
             SELECT 
-                inc.number as id,
+                inc.number,
                 inc.resolved_by as resolved_by_id,
                 inc.assignment_group as assignment_group_id,
                 inc.opened_at,
@@ -123,7 +123,7 @@ BEGIN
         ) AS DedupedIncidents
         WHERE rn = 1
     ) AS source
-    ON target.id = source.id
+    ON target.number = source.number
     WHEN MATCHED THEN
         UPDATE SET
             resolved_by_id = source.resolved_by_id,
@@ -140,13 +140,13 @@ BEGIN
             dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
         INSERT (
-            id, resolved_by_id, assignment_group_id, opened_at, closed_at,
+            number, resolved_by_id, assignment_group_id, opened_at, closed_at,
             contract_id, sla_atendimento, sla_resolucao, company,
             u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         )
         VALUES (
-            source.id, source.resolved_by_id, source.assignment_group_id,
+            source.number, source.resolved_by_id, source.assignment_group_id,
             source.opened_at, source.closed_at, source.contract_id,
             source.sla_atendimento, source.sla_resolucao, source.company,
             source.u_origem, source.dv_u_categoria_da_falha,
