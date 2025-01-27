@@ -107,10 +107,10 @@ BEGIN
                     PARTITION BY inc.number 
                     ORDER BY 
                         CASE 
-                            WHEN inc.closed_at IS NOT NULL THEN 0  -- Prioriza registros com data de fechamento
+                            WHEN inc.dv_state IN ('Encerrado', 'Closed') THEN 0
                             ELSE 1
                         END,
-                        inc.sys_id  -- Desempate por sys_id quando nenhum tem data de fechamento
+                        inc.sys_id
                 ) as rn
             FROM SERVICE_NOW.dbo.incident inc
             LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_first 
@@ -135,14 +135,14 @@ BEGIN
             sla_resolucao = source.sla_resolucao,
             company = source.company,
             u_origem = source.u_origem,
-            dv_u_categoria_da_falha = source.dv_u_categoria_da_falha,
+            dv_u_categoria_falha = source.dv_u_categoria_da_falha,
             dv_u_sub_categoria_da_falha = source.dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
         INSERT (
             id, resolved_by_id, assignment_group_id, opened_at, closed_at,
             contract_id, sla_atendimento, sla_resolucao, company,
-            u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
+            u_origem, dv_u_categoria_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         )
         VALUES (
