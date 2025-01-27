@@ -12,13 +12,13 @@ class Incident(models.Model):
         max_length=255,
         help_text="Número do chamado no ServiceNow",
     )
-    resolved_by_id = models.CharField(
+    resolved_by = models.CharField(
         max_length=255,
         null=True,
         blank=True,
         help_text="ID Do analista",
     )
-    assignment_group_id = models.CharField(
+    assignment_group = models.CharField(
         max_length=255,
         null=True,
         blank=True,
@@ -32,7 +32,7 @@ class Incident(models.Model):
         blank=True,
         help_text="Data do fechamento do ticket",
     )
-    contract_id = models.CharField(
+    contract = models.CharField(
         max_length=255,
         null=True,
         blank=True,

@@ -84,18 +84,18 @@ BEGIN
     MERGE dw_analytics.f_incident AS target
     USING (
         SELECT 
-            number, resolved_by_id, assignment_group_id, opened_at, closed_at,
-            contract_id, sla_atendimento, sla_resolucao, company,
+            number, resolved_by, assignment_group, opened_at, closed_at,
+            contract, sla_atendimento, sla_resolucao, company,
             u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         FROM (
             SELECT 
                 inc.number,
-                inc.resolved_by as resolved_by_id,
-                inc.assignment_group as assignment_group_id,
+                inc.resolved_by,
+                inc.assignment_group,
                 inc.opened_at,
                 inc.closed_at,
-                inc.contract as contract_id,
+                inc.contract,
                 sla_first.has_breached as sla_atendimento,
                 sla_resolved.has_breached as sla_resolucao,
                 inc.company,
@@ -126,11 +126,11 @@ BEGIN
     ON target.number = source.number
     WHEN MATCHED THEN
         UPDATE SET
-            resolved_by_id = source.resolved_by_id,
-            assignment_group_id = source.assignment_group_id,
+            resolved_by = source.resolved_by,
+            assignment_group = source.assignment_group,
             opened_at = source.opened_at,
             closed_at = source.closed_at,
-            contract_id = source.contract_id,
+            contract = source.contract,
             sla_atendimento = source.sla_atendimento,
             sla_resolucao = source.sla_resolucao,
             company = source.company,
@@ -140,32 +140,80 @@ BEGIN
             dv_u_detalhe_sub_categoria_da_falha = source.dv_u_detalhe_sub_categoria_da_falha
     WHEN NOT MATCHED THEN
         INSERT (
-            number, resolved_by_id, assignment_group_id, opened_at, closed_at,
-            contract_id, sla_atendimento, sla_resolucao, company,
+            number, resolved_by, assignment_group, opened_at, closed_at,
+            contract, sla_atendimento, sla_resolucao, company,
             u_origem, dv_u_categoria_da_falha, dv_u_sub_categoria_da_falha,
             dv_u_detalhe_sub_categoria_da_falha
         )
         VALUES (
-            source.number, source.resolved_by_id, source.assignment_group_id,
-            source.opened_at, source.closed_at, source.contract_id,
+            source.number, source.resolved_by, source.assignment_group,
+            source.opened_at, source.closed_at, source.contract,
             source.sla_atendimento, source.sla_resolucao, source.company,
             source.u_origem, source.dv_u_categoria_da_falha,
             source.dv_u_sub_categoria_da_falha,
             source.dv_u_detalhe_sub_categoria_da_falha
         );
 
-    -- Atualizar Sorted Tickets para chamados fechados
-    INSERT INTO d_sorted_ticket (incident_id, mes_ano)
+    -- Atualizar Sorted Tickets para todos os meses
+    WITH IncidentesParaSorteio AS (
+        SELECT 
+            i.id,
+            i.resolved_by,
+            FORMAT(i.closed_at, 'yyyy-MM') as mes_ano,
+            ROW_NUMBER() OVER (
+                PARTITION BY i.resolved_by, FORMAT(i.closed_at, 'yyyy-MM')
+                ORDER BY NEWID()
+            ) as ordem_sorteio
+        FROM dw_analytics.f_incident i
+        LEFT JOIN dw_analytics.d_sorted_ticket st 
+            ON st.incident_id = i.id 
+            AND st.mes_ano = FORMAT(i.closed_at, 'yyyy-MM')
+        INNER JOIN SERVICE_NOW.dbo.incident inc 
+            ON i.number = inc.number
+        WHERE 
+            i.closed_at IS NOT NULL AND
+            i.resolved_by IS NOT NULL AND
+            inc.dv_state IN ('Encerrado', 'Closed') AND
+            st.id IS NULL
+    )
+    INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
     SELECT 
-        i.id,
-        FORMAT(i.closed_at, 'yyyy-MM') as mes_ano
-    FROM f_incident i
-    LEFT JOIN d_sorted_ticket st ON 
-        st.incident_id = i.id AND 
-        st.mes_ano = FORMAT(i.closed_at, 'yyyy-MM')
-    WHERE 
-        i.closed_at IS NOT NULL AND
-        st.id IS NULL;
+        id,
+        mes_ano
+    FROM IncidentesParaSorteio
+    WHERE ordem_sorteio <= 5;  -- Número de tickets sorteados por analista por mês
+
+    -- Script para atualização mensal (comentado)
+    /*
+    WITH IncidentesParaSorteio AS (
+        SELECT 
+            i.id,
+            i.resolved_by,
+            FORMAT(i.closed_at, 'yyyy-MM') as mes_ano,
+            ROW_NUMBER() OVER (
+                PARTITION BY i.resolved_by, FORMAT(i.closed_at, 'yyyy-MM')
+                ORDER BY NEWID()
+            ) as ordem_sorteio
+        FROM dw_analytics.f_incident i
+        LEFT JOIN dw_analytics.d_sorted_ticket st 
+            ON st.incident_id = i.id 
+            AND st.mes_ano = FORMAT(i.closed_at, 'yyyy-MM')
+        INNER JOIN SERVICE_NOW.dbo.incident inc 
+            ON i.number = inc.number
+        WHERE 
+            i.closed_at IS NOT NULL AND
+            i.resolved_by IS NOT NULL AND
+            inc.dv_state IN ('Encerrado', 'Closed') AND
+            st.id IS NULL AND
+            FORMAT(i.closed_at, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM')
+    )
+    INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
+    SELECT 
+        id,
+        mes_ano
+    FROM IncidentesParaSorteio
+    WHERE ordem_sorteio <= 5;  -- Número de tickets sorteados por analista por mês
+    */
 
 END;
 
@@ -190,3 +238,41 @@ WHERE number IS NOT NULL
 GROUP BY number, FORMAT(opened_at, 'yyyy-MM')
 HAVING COUNT(*) > 1
 ORDER BY FORMAT(opened_at, 'yyyy-MM') DESC, COUNT(*) DESC;
+
+-- Procedure para sorteio de tickets por fila
+CREATE OR ALTER PROC PROC_SORTEAR_TICKETS_POR_FILA
+    @assignment_group NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Atualizar Sorted Tickets para todos os meses
+    WITH IncidentesParaSorteio AS (
+        SELECT 
+            i.id,
+            i.resolved_by,
+            FORMAT(i.closed_at, 'yyyy-MM') as mes_ano,
+            ROW_NUMBER() OVER (
+                PARTITION BY i.resolved_by, FORMAT(i.closed_at, 'yyyy-MM')
+                ORDER BY NEWID()
+            ) as ordem_sorteio
+        FROM dw_analytics.f_incident i
+        LEFT JOIN dw_analytics.d_sorted_ticket st 
+            ON st.incident_id = i.id 
+            AND st.mes_ano = FORMAT(i.closed_at, 'yyyy-MM')
+        INNER JOIN SERVICE_NOW.dbo.incident inc 
+            ON i.number = inc.number
+        WHERE 
+            i.closed_at IS NOT NULL AND
+            i.resolved_by IS NOT NULL AND
+            inc.dv_state IN ('Encerrado', 'Closed') AND
+            i.assignment_group = @assignment_group AND
+            st.id IS NULL
+    )
+    INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
+    SELECT 
+        id,
+        mes_ano
+    FROM IncidentesParaSorteio
+    WHERE ordem_sorteio <= 5;  -- Número de tickets sorteados por analista por mês
+END;
