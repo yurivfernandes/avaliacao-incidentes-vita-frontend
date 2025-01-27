@@ -103,7 +103,15 @@ BEGIN
                 inc.dv_u_categoria_da_falha,
                 inc.dv_u_sub_categoria_da_falha,
                 inc.dv_u_detalhe_sub_categoria_da_falha,
-                ROW_NUMBER() OVER (PARTITION BY inc.number ORDER BY inc.sys_id) as rn
+                ROW_NUMBER() OVER (
+                    PARTITION BY inc.number 
+                    ORDER BY 
+                        CASE 
+                            WHEN inc.closed_at IS NOT NULL THEN 0  -- Prioriza registros com data de fechamento
+                            ELSE 1
+                        END,
+                        inc.sys_id  -- Desempate por sys_id quando nenhum tem data de fechamento
+                ) as rn
             FROM SERVICE_NOW.dbo.incident inc
             LEFT JOIN SERVICE_NOW.dbo.incident_sla sla_first 
                 ON inc.sys_id = sla_first.task 
