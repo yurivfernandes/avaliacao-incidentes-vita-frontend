@@ -61,18 +61,20 @@ BEGIN
         VALUES (source.dv_contract);
 
     -- Inserir ou atualizar Company
-    MERGE d_company AS target
-    USING (
-        SELECT DISTINCT company, company_cnpj
-        FROM SERVICE_NOW.dbo.incident inc
-        WHERE company IS NOT NULL
-        AND company NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_company dco WHERE dco.id = inc.company)
-    ) AS source (dv_company, u_cnpj)
-    ON target.dv_company = source.dv_company
-    WHEN NOT MATCHED THEN
-        INSERT (dv_company, u_cnpj)
-        VALUES (source.dv_company, source.u_cnpj);
+    INSERT INTO dw_analitycs.d_company (id, dv_company, u_cnpj)
+    SELECT id, dv_company, u_cnpj
+    FROM (
+       SELECT 
+           LTRIM(RTRIM(dv_company)) AS dv_company, 
+           LTRIM(RTRIM(company)) AS id,
+           LTRIM(RTRIM(u_cnpj)) AS u_cnpj,
+           ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(dv_company)), LTRIM(RTRIM(company)) ORDER BY (SELECT NULL)) AS rn
+       FROM SERVICE_NOW.dbo.incident
+       WHERE LTRIM(RTRIM(dv_company)) != ''
+         AND LTRIM(RTRIM(company)) != ''
+         AND LTRIM(RTRIM(u_cnpj)) != ''
+    ) AS SubQuery
+    WHERE rn = 1
 
     -- Relacionamento Resolved By - Assignment Group
     INSERT INTO d_resolved_by_assignment_group (id, resolved_by_id, assignment_group_id)
