@@ -175,9 +175,10 @@ NOTAS SOBRE ATUALIZAÇÃO INCREMENTAL:
 -- Script para verificar duplicações na tabela de incidentes
 SELECT 
     number as numero_incidente,
+    FORMAT(opened_at, 'yyyy-MM') as mes_ano,
     COUNT(*) as quantidade_duplicacoes
 FROM SERVICE_NOW.dbo.incident
 WHERE number IS NOT NULL
-GROUP BY number
+GROUP BY number, FORMAT(opened_at, 'yyyy-MM')
 HAVING COUNT(*) > 1
-ORDER BY COUNT(*) DESC;
+ORDER BY FORMAT(opened_at, 'yyyy-MM') DESC, COUNT(*) DESC;
