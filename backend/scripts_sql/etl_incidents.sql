@@ -13,7 +13,7 @@ BEGIN
         FROM [SERVICE NOW].incident inc
         WHERE assignment_group IS NOT NULL
         AND assignment_group NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_fila df WHERE df.id = inc.assignment_group)
+        AND EXISTS (SELECT 1 FROM d_assignment_group dag WHERE dag.id = inc.assignment_group)
     ) AS source (dv_assignment_group)
     ON target.dv_assignment_group = source.dv_assignment_group
     WHEN NOT MATCHED THEN
@@ -27,7 +27,7 @@ BEGIN
         FROM [SERVICE NOW].incident inc
         WHERE resolved_by IS NOT NULL
         AND resolved_by NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_analista da WHERE da.id = inc.resolved_by)
+        AND EXISTS (SELECT 1 FROM d_resolved_by drb WHERE drb.id = inc.resolved_by)
     ) AS source (dv_resolved_by)
     ON target.dv_resolved_by = source.dv_resolved_by
     WHEN NOT MATCHED THEN
@@ -41,7 +41,7 @@ BEGIN
         FROM [SERVICE NOW].incident inc
         WHERE contract IS NOT NULL
         AND contract NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_contrato dc WHERE dc.id = inc.contract)
+        AND EXISTS (SELECT 1 FROM d_contract dc WHERE dc.id = inc.contract)
     ) AS source (dv_contract)
     ON target.dv_contract = source.dv_contract
     WHEN NOT MATCHED THEN
@@ -55,7 +55,7 @@ BEGIN
         FROM [SERVICE NOW].incident inc
         WHERE company IS NOT NULL
         AND company NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_cliente dc WHERE dc.id = inc.company)
+        AND EXISTS (SELECT 1 FROM d_company dco WHERE dco.id = inc.company)
     ) AS source (dv_company, u_cnpj)
     ON target.dv_company = source.dv_company
     WHEN NOT MATCHED THEN
@@ -75,8 +75,8 @@ BEGIN
         AND inc.assignment_group IS NOT NULL
         AND inc.resolved_by NOT IN ('')
         AND inc.assignment_group NOT IN ('')
-        AND EXISTS (SELECT 1 FROM d_analista da WHERE da.id = inc.resolved_by)
-        AND EXISTS (SELECT 1 FROM d_fila df WHERE df.id = inc.assignment_group)
+        AND EXISTS (SELECT 1 FROM d_resolved_by drb WHERE drb.id = inc.resolved_by)
+        AND EXISTS (SELECT 1 FROM d_assignment_group dag WHERE dag.id = inc.assignment_group)
     ) AS source
     ON (target.resolved_by_id = source.resolved_by_id 
         AND target.assignment_group_id = source.assignment_group_id)
@@ -88,7 +88,7 @@ BEGIN
     MERGE dw_analytics.f_incident AS target
     USING (
         SELECT 
-            i.number AS id,
+            i.sys_id AS id,
             rb.id AS resolved_by_id,
             i.opened_at,
             i.closed_at,
@@ -110,10 +110,10 @@ BEGIN
         LEFT JOIN dw_analytics.d_resolved_by rb ON rb.dv_resolved_by = i.resolved_by
         LEFT JOIN dw_analytics.d_contract c ON c.dv_contract = i.contract
         LEFT JOIN [SERVICE NOW].incident_sla sla_atend 
-            ON i.number = sla_atend.incident_number 
+            ON i.sys_id = sla_atend.task 
             AND sla_atend.dv_sla = 'First Response Time'
         LEFT JOIN [SERVICE NOW].incident_sla sla_resol 
-            ON i.number = sla_resol.incident_number 
+            ON i.sys_id = sla_resol.task 
             AND sla_resol.dv_sla = 'Resolution Time'
         /* Filtro para atualização incremental - descomentar após carga inicial
         WHERE 
