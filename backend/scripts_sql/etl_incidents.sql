@@ -55,7 +55,7 @@ BEGIN
         SELECT 
             LTRIM(RTRIM(company)) AS id,
             LTRIM(RTRIM(dv_company)) AS dv_company,
-            LTRIM(RTRIM(u_cnpj)) AS u_cnpj,
+            REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(u_cnpj)), '.', ''), '/', ''), '-', '') AS u_cnpj,
             ROW_NUMBER() OVER (PARTITION BY LTRIM(RTRIM(company)) ORDER BY (SELECT NULL)) AS rn
         FROM SERVICE_NOW.dbo.incident
         WHERE LTRIM(RTRIM(company)) != ''
