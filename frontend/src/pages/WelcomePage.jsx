@@ -52,7 +52,7 @@ function WelcomePage() {
         { 
           name: 'Editar Premissas', 
           icon: <FaClipboardList size={16} />, 
-          path: '/premissas/editar'
+          path: '/premissas/'
         }
       ]
     }] : []),
