@@ -98,7 +98,7 @@ GO
 -- Criar tabela de tickets sorteados
 CREATE TABLE dw_analytics.d_sorted_ticket (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    incident_id NVARCHAR(50) NOT NULL,
+    incident_id NVARCHAR(255) NOT NULL,
     mes_ano NVARCHAR(7) NOT NULL,
     CONSTRAINT CK_mes_ano_format CHECK (mes_ano LIKE '[0-9][0-9][0-9][0-9]-[0-9][0-9]'),
     CONSTRAINT FK_sorted_incident FOREIGN KEY (incident_id) 
