@@ -10,7 +10,7 @@ from service_now.models import IncidentSLA
 from ..models import Incident as DWIncident
 
 
-class SyncServiceNowData:
+class LoadIncidentsSN:
     def __init__(self, full_sync: bool = False):
         self.full_sync = full_sync
         self.log = {
@@ -22,25 +22,26 @@ class SyncServiceNowData:
 
     def _get_sla_status(self, incident_id: str) -> Tuple[bool, bool]:
         """Obtém o status dos SLAs de atendimento e resolução"""
-        slas = IncidentSLA.objects.filter(task=incident_id)
-        sla_atendimento = None
-        sla_resolucao = None
+        sla_first = IncidentSLA.objects.filter(
+            task=incident_id, dv_sla__icontains="VITA] FIRST"
+        ).first()
 
-        for sla in slas:
-            if "RESOLVED" in (sla.dv_sla or "").upper():
-                sla_resolucao = (
-                    not sla.has_breached
-                    if sla.has_breached is not None
-                    else False
-                )
-            elif "FIRST RESP" in (sla.dv_sla or "").upper():
-                sla_atendimento = (
-                    not sla.has_breached
-                    if sla.has_breached is not None
-                    else False
-                )
+        sla_resolved = IncidentSLA.objects.filter(
+            task=incident_id, dv_sla__icontains="VITA] RESOLVED"
+        ).first()
 
-        return sla_atendimento or False, sla_resolucao or False
+        sla_atendimento = (
+            not sla_first.has_breached
+            if sla_first and sla_first.has_breached is not None
+            else False
+        )
+        sla_resolucao = (
+            not sla_resolved.has_breached
+            if sla_resolved and sla_resolved.has_breached is not None
+            else False
+        )
+
+        return sla_atendimento, sla_resolucao
 
     def _get_servicenow_query(self) -> Q:
         """Define o filtro para busca dos incidentes baseado no tipo de sincronização"""
@@ -56,13 +57,14 @@ class SyncServiceNowData:
 
         return {
             "id": incident.number,
-            "resolved_by_id": incident.assigned_to,
+            "resolved_by": incident.resolved_by,
+            "assignment_group": incident.assignment_group,
             "opened_at": incident.opened_at,
             "closed_at": incident.closed_at,
             "contract_id": incident.contract,
             "company": incident.company,
             "u_origem": incident.u_origem,
-            "dv_u_categoria_falha": incident.dv_u_categoria_falha,
+            "dv_u_categoria_da_falha": incident.dv_u_categoria_da_falha,
             "dv_u_sub_categoria_da_falha": incident.dv_u_sub_categoria_da_falha,
             "dv_u_detalhe_sub_categoria_da_falha": incident.dv_u_detalhe_sub_categoria_da_falha,
             "sla_atendimento": sla_atendimento,
@@ -106,12 +108,12 @@ class SyncServiceNowData:
 
 
 @shared_task(
-    name="sync.servicenow",
+    name="dw_analytics.load_incidents_sn",
     bind=True,
     autoretry_for=(Exception,),
     retry_backoff=5,
     retry_kwargs={"max_retries": 3},
 )
-def sync_service_now_data(self, full_sync: bool = False) -> Dict:
-    sync_task = SyncServiceNowData(full_sync=full_sync)
+def load_incidents_sn_async(self, full_sync: bool = False) -> Dict:
+    sync_task = LoadIncidentsSN(full_sync=full_sync)
     return sync_task.run()
