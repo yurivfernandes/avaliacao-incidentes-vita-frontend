@@ -1,2 +1,2 @@
 from .assignment_group_views import AssignmentGroupListView
-from .sorteio_views import SorteioTicketsView
+from .load_sorteio_incident_views import SorteioIncidentsView

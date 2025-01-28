@@ -1,12 +1,13 @@
-from django.shortcuts import get_object_or_404
+from datetime import datetime, timedelta
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ...tasks import SorteioTicketsTask, sortear_tickets_async
+from ...tasks import SorteioIncidentsTask, load_sorteio_incidents_async
 
 
-class SorteioTicketsView(APIView):
+class SorteioIncidentsView(APIView):
     """
     View para realizar o sorteio de tickets para avaliação.
     """
@@ -19,13 +20,10 @@ class SorteioTicketsView(APIView):
         data = request.data.get("data")
 
         if not data:
-            return Response(
-                {"error": "Data é obrigatória (formato: YYYY-MM)"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            data = (datetime.now() - timedelta(days=30)).strftime("%Y-%m")
 
         try:
-            task = sortear_tickets_async.delay({"data_sorteio": data})
+            task = load_sorteio_incidents_async.delay({"data_sorteio": data})
             return Response(
                 {
                     "message": "Sorteio iniciado com sucesso",

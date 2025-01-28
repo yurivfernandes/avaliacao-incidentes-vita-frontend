@@ -1,2 +1,5 @@
-from .sync_tasks import SyncServiceNowData, sync_service_now_data
-from .ticket_tasks import SorteioTicketsTask, sortear_tickets_async
+from .load_sorteio_tickets import (
+    SorteioIncidentsTask,
+    load_sorteio_incidents_async,
+)
+from .load_tickets_sn import LoadIncidentsSN, load_incidents_sn_async

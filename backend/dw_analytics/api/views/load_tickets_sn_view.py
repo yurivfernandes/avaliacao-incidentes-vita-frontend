@@ -2,10 +2,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ...tasks import sync_service_now_data
+from ...tasks import LoadIncidentsSN, load_incidents_sn_async
 
 
-class SyncServiceNowView(APIView):
+class LoadIncidentsSNView(APIView):
     """
     View para sincronizar dados do ServiceNow para o DW Analytics.
     """
@@ -16,7 +16,7 @@ class SyncServiceNowView(APIView):
         """
         try:
             full_sync = request.data.get("full_sync", False)
-            task = sync_service_now_data.delay(full_sync=full_sync)
+            task = load_incidents_sn_async.delay(full_sync=full_sync)
 
             return Response(
                 {

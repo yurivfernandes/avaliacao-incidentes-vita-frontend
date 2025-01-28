@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List
 
 from celery import shared_task
@@ -9,10 +9,10 @@ from premissas.models import Premissas
 from ..models import Incident, ResolvedBy, SortedTicket
 
 
-class SorteioTicketsTask:
+class SorteioIncidentsTask:
     """Classe responsável pelo sorteio de tickets para avaliação."""
 
-    def __init__(self, data_sorteio: str):
+    def __init__(self, data_sorteio: str = None):
         self.data = datetime.strptime(data_sorteio, "%Y-%m")
         self.mes_ano_fmt = self.data.strftime("%Y-%m")
         self.log = {
@@ -36,9 +36,11 @@ class SorteioTicketsTask:
             .exclude(
                 sorted_tickets__mes_ano=self.mes_ano_fmt,
                 company="VITA IT - SP",
+            )
+            .filter(
+                resolved_by__assignment_group=assignment_group,
                 u_origem="vita_it",
             )
-            .filter(resolved_by__assignment_group=assignment_group)
         )
 
     def extract_and_transform_dataset(self) -> None:
@@ -127,6 +129,6 @@ class SorteioTicketsTask:
     retry_backoff=5,
     retry_kwargs={"max_retries": 3},
 )
-def sortear_tickets_async(self, filtros: dict) -> dict:
-    task = SorteioTicketsTask(filtros["data_sorteio"])
+def load_sorteio_incidents_async(self, filtros: dict) -> dict:
+    task = SorteioIncidentsTask(filtros["data_sorteio"])
     return task.run()

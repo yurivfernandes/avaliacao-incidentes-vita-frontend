@@ -22,7 +22,7 @@ from . import views
 urlpatterns = [
     path(
         "sortear-tickets/",
-        views.SorteioTicketsView.as_view(),
+        views.SorteioIncidentsView.as_view(),
         name="sortear-tickets",
     ),
     path(
