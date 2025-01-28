@@ -8,6 +8,7 @@ class Premissas(models.Model):
         on_delete=models.PROTECT,
         related_name="premissas",
         help_text="Assignment Group relacionado",
+        unique=True,
     )
     qtd_incidents = models.IntegerField(
         help_text="Quantidade de incidentes a serem sorteados"

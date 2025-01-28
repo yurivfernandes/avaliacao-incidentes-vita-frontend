@@ -21,4 +21,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.static import serve
 
-urlpatterns = []
+from . import views
+
+urlpatterns = [
+    path("premissas/", views.PremissasView.as_view(), name="premissas-list"),
+]
