@@ -16,7 +16,8 @@ class LoadIncidentsSNView(APIView):
         """
         try:
             full_sync = request.data.get("full_sync", False)
-            task = load_incidents_sn_async.delay(full_sync=full_sync)
+            LoadIncidentsSN(full_sync=full_sync).run()
+            # task = load_incidents_sn_async.delay(full_sync=full_sync)
 
             return Response(
                 {

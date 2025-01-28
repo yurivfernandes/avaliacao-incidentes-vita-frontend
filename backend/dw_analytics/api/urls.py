@@ -21,7 +21,7 @@ from . import views
 
 urlpatterns = [
     path(
-        "sortear-tickets/",
+        "sortear-tickets/load/",
         views.SorteioIncidentsView.as_view(),
         name="sortear-tickets",
     ),
@@ -34,5 +34,20 @@ urlpatterns = [
         "assignment-group/<int:pk>/",
         views.AssignmentGroupListView.as_view(),
         name="assignment-group-detail",
+    ),
+    path(
+        "incidents-sn/load/",
+        views.LoadIncidentsSNView.as_view(),
+        name="assignment-group-detail",
+    ),
+    path(
+        "resolved-by/load/",
+        views.LoadResolvedByView.as_view(),
+        name="load-resolved-by",
+    ),
+    path(
+        "assignment-group/load/",
+        views.LoadAssignmentGroupView.as_view(),
+        name="load-assignment-group",
     ),
 ]

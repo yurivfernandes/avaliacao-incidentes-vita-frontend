@@ -23,7 +23,8 @@ class SorteioIncidentsView(APIView):
             data = (datetime.now() - timedelta(days=30)).strftime("%Y-%m")
 
         try:
-            task = load_sorteio_incidents_async.delay({"data_sorteio": data})
+            SorteioIncidentsTask(data_sorteio=data).run()
+            # task = load_sorteio_incidents_async.delay({"data_sorteio": data})
             return Response(
                 {
                     "message": "Sorteio iniciado com sucesso",

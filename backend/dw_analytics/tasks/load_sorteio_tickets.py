@@ -22,6 +22,62 @@ class SorteioIncidentsTask:
         }
         self.dataset = []
 
+    def run(self) -> Dict:
+        """Executa o processo completo de sorteio"""
+        self.extract_and_transform_dataset()
+        self.load()
+
+        if not self.log["resumo_sorteio"]:
+            return {"message": "Nenhum ticket encontrado para sorteio"}
+
+        return {
+            "message": f"Sorteio realizado com sucesso para {self.mes_ano_fmt}",
+            "resumo": self.log["resumo_sorteio"],
+            "estatisticas": {
+                "deletados": self.log["n_deleted"],
+                "inseridos": self.log["n_inserted"],
+            },
+        }
+
+    def extract_and_transform_dataset(self) -> None:
+        """Extrai e transforma os dados para o sorteio"""
+        premissas = Premissas.objects.all().select_related("assignment")
+
+        for premissa in premissas:
+            tecnicos = ResolvedBy.objects.filter(
+                assignment_group=premissa.assignment
+            )
+
+            for tecnico in tecnicos:
+                tickets_disponiveis = self._get_tickets_disponiveis(
+                    tecnico, premissa.assignment
+                )
+                tickets_disponiveis = list(tickets_disponiveis)
+
+                # Realiza o sorteio
+                quantidade_real = min(
+                    len(tickets_disponiveis), premissa.qtd_incidents
+                )
+                if quantidade_real > 0:
+                    tickets_sorteados = random.sample(
+                        tickets_disponiveis, quantidade_real
+                    )
+
+                    # Adiciona ao dataset
+                    self.dataset.extend(
+                        [
+                            {"incident": ticket, "mes_ano": self.mes_ano_fmt}
+                            for ticket in tickets_sorteados
+                        ]
+                    )
+
+                    # Adiciona ao log
+                    self.log["resumo_sorteio"].append(
+                        f"Fila {assignment_group.dv_assignment_group} - "
+                        f"Técnico {tecnico.dv_resolved_by}: "
+                        f"{len(tickets_sorteados)} tickets sorteados"
+                    )
+
     def _get_tickets_disponiveis(
         self, resolved_by, assignment_group
     ) -> List[Incident]:
@@ -42,45 +98,6 @@ class SorteioIncidentsTask:
                 u_origem="vita_it",
             )
         )
-
-    def extract_and_transform_dataset(self) -> None:
-        """Extrai e transforma os dados para o sorteio"""
-        premissas = Premissas.objects.all().select_related("assignment")
-
-        for premissa in premissas:
-            assignment_group = premissa.assignment
-            qtd_tickets = premissa.qtd_incidents
-            tecnicos = ResolvedBy.objects.filter(
-                assignment_group=assignment_group
-            )
-
-            for tecnico in tecnicos:
-                tickets_disponiveis = self._get_tickets_disponiveis(
-                    tecnico, assignment_group
-                )
-                tickets_disponiveis = list(tickets_disponiveis)
-
-                # Realiza o sorteio
-                quantidade_real = min(len(tickets_disponiveis), qtd_tickets)
-                if quantidade_real > 0:
-                    tickets_sorteados = random.sample(
-                        tickets_disponiveis, quantidade_real
-                    )
-
-                    # Adiciona ao dataset
-                    self.dataset.extend(
-                        [
-                            {"incident": ticket, "mes_ano": self.mes_ano_fmt}
-                            for ticket in tickets_sorteados
-                        ]
-                    )
-
-                    # Adiciona ao log
-                    self.log["resumo_sorteio"].append(
-                        f"Fila {assignment_group.dv_assignment_group} - "
-                        f"Técnico {tecnico.dv_resolved_by}: "
-                        f"{len(tickets_sorteados)} tickets sorteados"
-                    )
 
     @transaction.atomic
     def load(self) -> None:
@@ -103,23 +120,6 @@ class SorteioIncidentsTask:
         objs = [SortedTicket(**data) for data in self.dataset]
         created = SortedTicket.objects.bulk_create(objs=objs, batch_size=1000)
         self.log["n_inserted"] = len(created)
-
-    def run(self) -> Dict:
-        """Executa o processo completo de sorteio"""
-        self.extract_and_transform_dataset()
-        self.load()
-
-        if not self.log["resumo_sorteio"]:
-            return {"message": "Nenhum ticket encontrado para sorteio"}
-
-        return {
-            "message": f"Sorteio realizado com sucesso para {self.mes_ano_fmt}",
-            "resumo": self.log["resumo_sorteio"],
-            "estatisticas": {
-                "deletados": self.log["n_deleted"],
-                "inseridos": self.log["n_inserted"],
-            },
-        }
 
 
 @shared_task(
