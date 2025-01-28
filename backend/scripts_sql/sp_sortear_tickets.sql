@@ -1,4 +1,4 @@
-CREATE OR ALTER PROC sp_sortear_tickets
+CREATE OR ALTER PROC PROC_SORTEAR_TICKETS
     @data_sorteio VARCHAR(7) = NULL  -- Formato: YYYY-MM
 AS
 BEGIN
@@ -17,8 +17,12 @@ BEGIN
         RETURN
     END
 
-    -- Tabela temporária para o sorteio
-    WITH IncidentesParaSorteio AS (
+    -- Inserir tickets sorteados
+    INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
+    SELECT 
+        id,
+        mes_ano
+    FROM (
         SELECT 
             i.id,
             i.resolved_by,
@@ -43,12 +47,7 @@ BEGIN
             AND inc.dv_state IN ('Encerrado', 'Closed')
             AND FORMAT(i.closed_at, 'yyyy-MM') = @data_sorteio
             AND st.id IS NULL
-    )
-    INSERT INTO dw_analytics.d_sorted_ticket (incident_id, mes_ano)
-    SELECT 
-        id,
-        mes_ano
-    FROM IncidentesParaSorteio
+    ) AS IncidentesParaSorteio
     WHERE ordem_sorteio <= qtd_incidents;
 
     -- Retornar resumo do sorteio
