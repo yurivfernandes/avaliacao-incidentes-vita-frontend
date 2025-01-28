@@ -47,6 +47,8 @@ BEGIN
             AND inc.dv_state IN ('Encerrado', 'Closed')
             AND FORMAT(i.closed_at, 'yyyy-MM') = @data_sorteio
             AND st.id IS NULL
+            AND i.company <> 'VITA IT - SP'
+            AND i.u_origem <> 'vita_it'
     ) AS IncidentesParaSorteio
     WHERE ordem_sorteio <= qtd_incidents;
 
