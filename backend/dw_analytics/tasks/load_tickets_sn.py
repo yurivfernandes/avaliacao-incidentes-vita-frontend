@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
+from typing import Dict
 
+import polars as pl
 from celery import shared_task
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Case, Max, Q, Value, When
+from django.utils import timezone
 from service_now.models import Incident as ServiceNowIncident
 from service_now.models import IncidentSLA
 
@@ -19,65 +21,157 @@ class LoadIncidentsSN:
             "n_incidents_processed": 0,
         }
         self.dataset = []
+        self._incidents_dataset = None
 
-    def _get_sla_status(self, incident_id: str) -> Tuple[bool, bool]:
-        """Obtém o status dos SLAs de atendimento e resolução"""
-        sla_first = IncidentSLA.objects.filter(
-            task=incident_id, dv_sla__icontains="VITA] FIRST"
-        ).first()
+    def run(self) -> Dict:
+        """Executa o processo completo de sincronização"""
+        self.extract_and_transform_dataset()
+        self.load()
+        return self.log
 
-        sla_resolved = IncidentSLA.objects.filter(
-            task=incident_id, dv_sla__icontains="VITA] RESOLVED"
-        ).first()
-
-        sla_atendimento = (
-            not sla_first.has_breached
-            if sla_first and sla_first.has_breached is not None
-            else False
-        )
-        sla_resolucao = (
-            not sla_resolved.has_breached
-            if sla_resolved and sla_resolved.has_breached is not None
-            else False
+    def _handle_duplicates(self, df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Trata incidentes duplicados mantendo os encerrados ou o primeiro encontrado.
+        """
+        # Criando coluna para priorização (1 para encerrados, 0 para outros)
+        df_with_priority = df.with_columns(
+            pl.when(pl.col("state").is_in([6, 7]))
+            .then(1)
+            .otherwise(0)
+            .alias("priority")
         )
 
-        return sla_atendimento, sla_resolucao
+        # Ordenando por number e priority (descendente) e pegando o primeiro de cada grupo
+        return (
+            df_with_priority.sort(
+                ["number", "priority"], descending=[False, True]
+            )
+            .groupby("number", maintain_order=True)
+            .first()
+        )
+
+    def extract_and_transform_dataset(self) -> None:
+        """Extrai e transforma os dados do ServiceNow usando Polars"""
+        self.dataset = (
+            self.incidents_dataset.with_columns(
+                pl.when(pl.col("state").is_in([6, 7]))
+                .then(1)
+                .otherwise(0)
+                .alias("priority")
+            )
+            .sort(["number", "priority"], descending=[False, True])
+            .groupby("number", maintain_order=True)
+            .first()
+            .join(
+                self.sla_dataset,
+                on="sys_id",
+                how="left",
+            )
+            .select(
+                [
+                    "number",
+                    "resolved_by",
+                    "assignment_group",
+                    "opened_at",
+                    "closed_at",
+                    "contract",
+                    "company",
+                    "u_origem",
+                    "dv_u_categoria_da_falha",
+                    "dv_u_sub_categoria_da_falha",
+                    "dv_u_detalhe_sub_categoria_da_falha",
+                    "sla_atendimento",
+                    "sla_resolucao",
+                ]
+            )
+        )
+
+    @property
+    def incidents_dataset(self) -> pl.DataFrame:
+        """Retorna o DataFrame de incidentes, carregando-o se necessário."""
+        schema = {
+            "sys_id": pl.Utf8,
+            "number": pl.Utf8,
+            "resolved_by": pl.Utf8,
+            "assignment_group": pl.Utf8,
+            "opened_at": pl.Datetime,
+            "closed_at": pl.Datetime,
+            "contract": pl.Utf8,
+            "company": pl.Utf8,
+            "u_origem": pl.Utf8,
+            "dv_u_categoria_da_falha": pl.Utf8,
+            "dv_u_sub_categoria_da_falha": pl.Utf8,
+            "dv_u_detalhe_sub_categoria_da_falha": pl.Utf8,
+            "state": pl.Int64,
+        }
+
+        query = self._get_servicenow_query()
+        incidents = ServiceNowIncident.objects.filter(query).values(
+            *schema.keys()
+        )
+        self.log["n_incidents_processed"] = len(incidents)
+
+        return pl.DataFrame(
+            data=list(incidents),
+            schema=schema,
+        )
+
+    @property
+    def sla_dataset(self) -> pl.DataFrame:
+        """Retorna o DataFrame de SLAs, carregando-o se necessário."""
+        schema = {
+            "task": pl.Utf8,
+            "sla_atendimento": pl.Boolean,
+            "sla_resolucao": pl.Boolean,
+        }
+
+        slas = (
+            IncidentSLA.objects.filter(
+                task__in=self.incidents_dataset["sys_id"].unique(),
+                dv_sla__in=["[VITA] FIRST", "[VITA] RESOLVED"],
+            )
+            .values("task")
+            .annotate(
+                sla_atendimento=Case(
+                    When(
+                        dv_sla="[VITA] FIRST",
+                        then=Case(
+                            When(has_breached=True, then=Value(False)),
+                            default=Value(True),
+                        ),
+                    ),
+                    default=Value(None),
+                ),
+                sla_resolucao=Case(
+                    When(
+                        dv_sla="[VITA] RESOLVED",
+                        then=Case(
+                            When(has_breached=True, then=Value(False)),
+                            default=Value(True),
+                        ),
+                    ),
+                    default=Value(None),
+                ),
+            )
+            .values("task")
+            .annotate(
+                sla_atendimento=Max("sla_atendimento"),
+                sla_resolucao=Max("sla_resolucao"),
+            )
+        )
+
+        return pl.DataFrame(
+            data=list(slas),
+            schema=schema,
+        ).rename({"task": "sys_id"})
 
     def _get_servicenow_query(self) -> Q:
         """Define o filtro para busca dos incidentes baseado no tipo de sincronização"""
         if self.full_sync:
             return Q()
 
-        ten_days_ago = datetime.now() - timedelta(days=10)
+        ten_days_ago = timezone.now() - timedelta(days=10)
         return Q(closed_at__isnull=True) | Q(closed_at__gte=ten_days_ago)
-
-    def _include_slas(self, incident: ServiceNowIncident) -> Dict:
-        """Transforma um incidente do ServiceNow no formato do DW"""
-        sla_atendimento, sla_resolucao = self._get_sla_status(incident.sys_id)
-
-        return {
-            "id": incident.number,
-            "resolved_by": incident.resolved_by,
-            "assignment_group": incident.assignment_group,
-            "opened_at": incident.opened_at,
-            "closed_at": incident.closed_at,
-            "contract_id": incident.contract,
-            "company": incident.company,
-            "u_origem": incident.u_origem,
-            "dv_u_categoria_da_falha": incident.dv_u_categoria_da_falha,
-            "dv_u_sub_categoria_da_falha": incident.dv_u_sub_categoria_da_falha,
-            "dv_u_detalhe_sub_categoria_da_falha": incident.dv_u_detalhe_sub_categoria_da_falha,
-            "sla_atendimento": sla_atendimento,
-            "sla_resolucao": sla_resolucao,
-        }
-
-    def extract_and_transform_dataset(self) -> None:
-        """Extrai e transforma os dados do ServiceNow"""
-        query = self._get_servicenow_query()
-        incidents = ServiceNowIncident.objects.filter(query)
-        self.log["n_incidents_processed"] = incidents.count()
-
-        self.dataset = [self._include_slas(incident) for incident in incidents]
 
     @transaction.atomic
     def load(self) -> None:
@@ -93,18 +187,36 @@ class LoadIncidentsSN:
 
     def _save(self) -> None:
         """Salva os novos registros no DW"""
-        if not self.dataset:
+        if self.dataset.is_empty():
             return
 
-        objs = [DWIncident(**data) for data in self.dataset]
-        created = DWIncident.objects.bulk_create(objs=objs, batch_size=1000)
-        self.log["n_inserted"] = len(created)
+        # Convertendo o DataFrame para dicionários de forma segura
+        records = [
+            {
+                "number": row["number"],
+                "resolved_by": row["resolved_by"],
+                "assignment_group": row["assignment_group"],
+                "opened_at": row["opened_at"],
+                "closed_at": row["closed_at"],
+                "contract": row["contract"],
+                "company": row["company"],
+                "u_origem": row["u_origem"],
+                "dv_u_categoria_da_falha": row["dv_u_categoria_da_falha"],
+                "dv_u_sub_categoria_da_falha": row[
+                    "dv_u_sub_categoria_da_falha"
+                ],
+                "dv_u_detalhe_sub_categoria_da_falha": row[
+                    "dv_u_detalhe_sub_categoria_da_falha"
+                ],
+                "sla_atendimento": row["sla_atendimento"],
+                "sla_resolucao": row["sla_resolucao"],
+            }
+            for row in self.dataset.iter_rows(named=True)
+        ]
 
-    def run(self) -> Dict:
-        """Executa o processo completo de sincronização"""
-        self.extract_and_transform_dataset()
-        self.load()
-        return self.log
+        objs = [DWIncident(**record) for record in records]
+        created = DWIncident.objects.bulk_create(objs=objs, batch_size=5000)
+        self.log["n_inserted"] = len(created)
 
 
 @shared_task(
