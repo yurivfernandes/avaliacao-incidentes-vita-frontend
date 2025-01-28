@@ -68,7 +68,7 @@ function Header() {
             )}
             {(user?.is_staff || user?.is_gestor) && (
               <li className="app-menu-item user-menu">
-                <Link to="/premissas/editar">
+                <Link to="/premissas/">
                   <FaClipboardList />
                   <span>Premissas</span>
                 </Link>

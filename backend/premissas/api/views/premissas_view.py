@@ -1,5 +1,7 @@
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,8 +10,15 @@ from ...models import Premissas
 from ..serializers import PremissaSerializer
 
 
+class PremissasPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class PremissasView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = PremissasPagination
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -30,8 +39,18 @@ class PremissasView(APIView):
                 {"detail": "Acesso negado."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = PremissaSerializer(premissas, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        search = request.query_params.get("search", "")
+        if search:
+            premissas = premissas.filter(
+                Q(assignment__dv_assignment_group__icontains=search)
+                | Q(qtd_incidents__icontains=search)
+            )
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(premissas, request)
+
+        serializer = PremissaSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
         user = request.user

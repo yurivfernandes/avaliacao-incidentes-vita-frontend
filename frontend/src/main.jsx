@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import WelcomePage from './pages/WelcomePage';
 import PasswordPage from './pages/PasswordPage';
 import TecnicosPage from './pages/TecnicosPage';
+import PremissasPage from './pages/PremissasPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -59,6 +60,18 @@ ReactDOM.render(
             element={
               <ProtectedRoute>
                 <PasswordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/premissas"
+            element={
+              <ProtectedRoute>
+                <FirstAccessRoute>
+                  <ProtectedGestaoUsuariosRoute>
+                    <PremissasPage />
+                  </ProtectedGestaoUsuariosRoute>
+                </FirstAccessRoute>
               </ProtectedRoute>
             }
           />

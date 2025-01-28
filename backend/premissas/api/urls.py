@@ -24,5 +24,10 @@ from django.views.static import serve
 from . import views
 
 urlpatterns = [
-    path("premissas/", views.PremissasView.as_view(), name="premissas-list"),
+    path("list/", views.PremissasView.as_view(), name="premissas-list"),
+    path(
+        "list/<int:pk>/",
+        views.PremissasView.as_view(),
+        name="premissas-detail",
+    ),
 ]
