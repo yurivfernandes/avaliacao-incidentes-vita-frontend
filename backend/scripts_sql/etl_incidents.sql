@@ -4,7 +4,7 @@ BEGIN
     SET NOCOUNT ON;
     
     -- Variável para controle de atualização incremental
-    -- DECLARE @data_corte DATETIME = DATEADD(DAY, -10, GETDATE())
+    DECLARE @data_corte DATETIME = DATEADD(DAY, -10, GETDATE());
     
     -- Inserir novos Assignment Groups
     INSERT INTO dw_analytics.d_assignment_group (id, dv_assignment_group)
@@ -17,7 +17,8 @@ BEGIN
     WHERE ag.id IS NULL
         AND inc.assignment_group IS NOT NULL
         AND inc.assignment_group != ''
-        AND inc.dv_assignment_group != '';
+        AND inc.dv_assignment_group != ''
+        AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte);
 
     -- Inserir novos Resolved By
     INSERT INTO dw_analytics.d_resolved_by (id, dv_resolved_by)
@@ -30,7 +31,8 @@ BEGIN
     WHERE rb.id IS NULL
         AND inc.resolved_by IS NOT NULL
         AND inc.resolved_by != ''
-        AND inc.dv_resolved_by != '';
+        AND inc.dv_resolved_by != ''
+        AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte);
 
     -- Inserir novos Contracts
     INSERT INTO dw_analytics.d_contract (id, dv_contract)
@@ -43,7 +45,8 @@ BEGIN
     WHERE c.id IS NULL
         AND inc.contract IS NOT NULL
         AND inc.contract != ''
-        AND inc.dv_contract != '';
+        AND inc.dv_contract != ''
+        AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte);
 
     -- Inserir novas Companies
     INSERT INTO dw_analytics.d_company (id, dv_company, u_cnpj)
@@ -58,7 +61,8 @@ BEGIN
         AND inc.company IS NOT NULL
         AND inc.company != ''
         AND inc.dv_company != ''
-        AND inc.u_cnpj != '';
+        AND inc.u_cnpj != ''
+        AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte);
 
     -- Relacionamento Resolved By - Assignment Group
     INSERT INTO dw_analytics.d_resolved_by_assignment_group (resolved_by_id, assignment_group_id)
@@ -77,8 +81,13 @@ BEGIN
         AND inc.assignment_group IS NOT NULL
         AND inc.resolved_by != ''
         AND inc.assignment_group != ''
+        AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte)
     ) AS SubQuery
     WHERE rn = 1;
+
+    -- Apagar incidentes abertos e fechados nos últimos 10 dias
+    DELETE FROM dw_analytics.f_incident
+    WHERE opened_at >= @data_corte OR closed_at >= @data_corte;
 
     -- Inserir ou atualizar Incidents na tabela fato
     MERGE dw_analytics.f_incident AS target
@@ -120,6 +129,7 @@ BEGIN
                 ON inc.sys_id = sla_resolved.task 
                 AND sla_resolved.dv_sla LIKE '%VITA] RESOLVED%'
             WHERE inc.number IS NOT NULL
+                AND (inc.opened_at >= @data_corte OR inc.closed_at >= @data_corte)
         ) AS DedupedIncidents
         WHERE rn = 1
     ) AS source
@@ -153,4 +163,5 @@ BEGIN
             source.dv_u_sub_categoria_da_falha,
             source.dv_u_detalhe_sub_categoria_da_falha
         );
+END;
 
