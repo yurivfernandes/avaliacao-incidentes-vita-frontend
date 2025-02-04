@@ -320,6 +320,38 @@
   min-width: 120px; /* Largura mínima para outras colunas */
 }
 
+/* Ajuste para todas as células da tabela */
+.inventory-table td, 
+.inventory-table th {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+/* Mantém apenas a primeira coluna (Fila) alinhada à esquerda */
+.inventory-table td:first-child,
+.inventory-table th:first-child {
+  text-align: left;
+}
+
+/* Estilo para os textos de status */
+.status-text {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-active {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.status-inactive {
+  color: #991b1b;
+  background: #fef2f2;
+}
+
 /* ...existing code... */
 
 .checkbox-cell {
