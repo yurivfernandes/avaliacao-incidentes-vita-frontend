@@ -1,15 +1,14 @@
-# Django & DRF
+# Core & API
 Django==4.2.10
-django-cors-headers==4.3.1
-django-filter==23.5
-django-rest-knox==4.2.0
 djangorestframework==3.14.0
+django-filter==23.5
+django-cors-headers==4.3.1
 djangorestframework-simplejwt==5.3.1
-drf-yasg==1.21.7
-djangorestframework-filters
 
 # Database
 psycopg2-binary==2.9.9
+mssql-django
+redis==5.0.1
 
 # Data Processing
 polars==0.19.3
@@ -37,8 +36,14 @@ validate-docbr==1.10.0
 # Documentation
 mkdocs==1.4.3
 mkdocs-material==9.0.5
-psycopg2-binary
 
-# Celery
+# Task Queue
 celery==5.2.7
-redis==5.0.1
+
+# Development
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+pytest==7.4.4
+pytest-django==4.7.0
+coverage==7.4.1

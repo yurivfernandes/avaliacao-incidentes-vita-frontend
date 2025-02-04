@@ -5,44 +5,38 @@
 </p>
 
 ## Sobre o Projeto
-Sistema desenvolvido para realizar a análise e gestão de incidentes, permitindo o controle de ocorrências, acompanhamento de técnicos e geração de relatórios detalhados. O sistema realiza a análise de incidentes, correlacionando informações para monitorar e avaliar indisponibilidades.
+Sistema desenvolvido para realizar a análise de qualidade de atendimento de tickets, através de um determinado número de tickets por fila e técnico.
 
 ## Funcionalidades
 ### Implementadas
-- Cadastro e gerenciamento de usuários
-- Sistema de autenticação
-- Alteração de senha
-- Tela de perfil/alteração de senha
-- Welcome page
-- Gestão de técnicos
-  - Visualização de técnicos
-  - Cadastro de novos técnicos
-  - Perfil de técnico
+- Autenticação e Autorização (JWT)
+- Gestão de Usuários
+- Gestão de Técnicos
+- API REST com Django REST Framework
+- Integração com SQL Server
 
-### Em Desenvolvimento
-- Sistema de relatórios
-  - Relatórios de incidentes
-  - Relatórios de desempenho
-  - Dashboards
+### Em Desenvolvimento 
+- Dashboard Analítico
+- Relatórios Gerenciais
+- Sistema de Notificações
+- Análise Preditiva de Incidentes
 
 ## Tecnologias Utilizadas
 
 ### Backend
-- Django 4.2
-- Django REST Framework
+- Python 3.8+
+- Django 4.2.10
+- Django REST Framework 3.14.0
+- SQL Server
 - JWT Authentication
-- SQLServer
-- Polars
-- Python Dotenv
 
 ### Frontend
-- Node.js
-- React
+- React 18+
 - TypeScript
-- CSS
+- Material UI
+- Axios
 
-### Ferramentas e Bibliotecas Adicionais
-- Django CORS Headers
-- DRF Swagger/OpenAPI
-- Faker (desenvolvimento)
-- Validate DocBR
+### Infraestrutura
+- Docker
+- Redis
+- Celery
