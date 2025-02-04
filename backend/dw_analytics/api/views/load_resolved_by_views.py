@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ...tasks import LoadResolvedByTask
+from ...tasks import LoadResolvedBy, load_resolved_by_async
 
 
 class LoadResolvedByView(APIView):
@@ -19,8 +19,12 @@ class LoadResolvedByView(APIView):
         """
         update_all = request.data.get("update_all", False)
 
-        result = LoadResolvedByTask.execute(update_all)
+        LoadResolvedBy(update_all=update_all).run()
 
-        if result["status"] == "success":
-            return Response(result, status=status.HTTP_200_OK)
-        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        # result = load_resolved_by_async.apply_async(
+        #     kwargs={"update_all": update_all}
+        # )
+
+        if result.status == "SUCCESS":
+            return Response(result.result, status=status.HTTP_200_OK)
+        return Response(result.result, status=status.HTTP_400_BAD_REQUEST)

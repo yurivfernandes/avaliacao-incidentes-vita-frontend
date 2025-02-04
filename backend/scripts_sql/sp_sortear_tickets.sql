@@ -1,3 +1,6 @@
+-- Procedimento armazenado para sortear tickets
+-- Este procedimento sorteia tickets com base em critérios específicos e insere os resultados na tabela d_sorted_ticket.
+
 CREATE OR ALTER PROC PROC_SORTEAR_TICKETS
     @data_sorteio VARCHAR(7) = NULL  -- Formato: YYYY-MM
 AS

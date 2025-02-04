@@ -1,3 +1,6 @@
+-- Procedimento armazenado para ETL de incidentes do Service Now
+-- Este procedimento realiza a extração, transformação e carga (ETL) dos dados de incidentes do sistema Service Now para o data warehouse.
+
 CREATE PROC PROC_ETL_INCIDENTES_SERVICE_NOW
 AS
 BEGIN

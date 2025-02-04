@@ -2,7 +2,7 @@ from .load_assignment_group import (
     LoadAssignmentGroupTask,
     load_assignment_group_async,
 )
-from .load_resolved_by import LoadResolvedByTask, load_resolved_by_async
+from .load_resolved_by import LoadResolvedBy, load_resolved_by_async
 from .load_sorteio_tickets import (
     SorteioIncidentsTask,
     load_sorteio_incidents_async,
