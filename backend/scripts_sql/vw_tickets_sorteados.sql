@@ -1,3 +1,6 @@
+-- Definição da view vw_tickets_sorteados
+-- Esta view combina informações de tickets sorteados com detalhes dos incidentes correspondentes.
+
 CREATE OR ALTER VIEW vw_tickets_sorteados AS
 SELECT 
     st.id as sorteio_id,
@@ -18,4 +21,4 @@ SELECT
 FROM dw_analytics.d_sorted_ticket st
 INNER JOIN dw_analytics.f_incident i 
     ON st.incident_id = i.id
-GO 
+GO

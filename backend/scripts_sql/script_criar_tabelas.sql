@@ -1,3 +1,6 @@
+-- Script para criar tabelas e índices no schema dw_analytics
+-- Este script cria as tabelas necessárias para armazenar dados de incidentes, grupos de atribuição, contratos, empresas, etc.
+
 -- Script de Rollback (caso necessário)
 USE master
 GO
@@ -71,6 +74,15 @@ CREATE TABLE dw_analytics.d_premissas (
     id INT IDENTITY(1,1) PRIMARY KEY,
     assignment_id NVARCHAR(50) NOT NULL,
     qtd_incidents INT NOT NULL,
+    is_contrato_lancado BIT NOT NULL DEFAULT 1,
+    is_horas_lancadas BIT NOT NULL DEFAULT 1,
+    is_has_met_first_response_target BIT NOT NULL DEFAULT 1,
+    is_resolution_target BIT NOT NULL DEFAULT 1,
+    is_atualizaca_logs_correto BIT NOT NULL DEFAULT 1,
+    is_ticket_encerrado_corretamente BIT NOT NULL DEFAULT 1,
+    is_descricao_troubleshooting BIT NOT NULL DEFAULT 1,
+    is_cliente_notificado BIT NOT NULL DEFAULT 1,
+    is_category_correto BIT NOT NULL DEFAULT 1,
     CONSTRAINT FK_premissas_assignment FOREIGN KEY (assignment_id) 
         REFERENCES dw_analytics.d_assignment_group(id)
 )

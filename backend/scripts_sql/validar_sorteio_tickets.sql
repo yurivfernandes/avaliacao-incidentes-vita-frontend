@@ -1,3 +1,6 @@
+-- Consulta para validar o sorteio de tickets
+-- Esta consulta retorna a quantidade de tickets sorteados por mês, fila e técnico.
+
 SELECT 
     st.mes_ano,
     ag.dv_assignment_group as fila,
