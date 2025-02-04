@@ -225,4 +225,143 @@
   height: 38px !important;
   margin: 0 !important;
   padding: 0 !important;
-} 
+}
+
+/* ...existing code... */
+
+/* Container principal da tabela */
+.table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Container do scroll da tabela */
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+/* Ajustes da paginação */
+.pagination {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inventory-table {
+  min-width: 1200px; /* Largura mínima para garantir que todos os campos fiquem visíveis */
+  border-collapse: separate; /* Necessário para sticky funcionar */
+  border-spacing: 0;
+}
+
+.inventory-table th,
+.inventory-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Estilo para a coluna fixa */
+.inventory-table th:first-child,
+.inventory-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: white; /* Mesmo background da tabela */
+  min-width: 250px; /* Largura aumentada para acomodar nomes maiores */
+  max-width: 250px;
+  z-index: 2;
+  /* Sombra para dar efeito de separação */
+  box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.15);
+}
+
+.inventory-table th:first-child {
+  background: #670099; /* Mantém a cor do cabeçalho */
+  z-index: 3; /* Maior z-index para ficar sobre as células */
+}
+
+/* Ajuste para células normais */
+.inventory-table td:not(:first-child),
+.inventory-table th:not(:first-child) {
+  min-width: 120px; /* Largura mínima para outras colunas */
+}
+
+/* ...existing code... */
+
+.checkbox-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.checkbox-cell input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Grupo de campos relacionados */
+.field-group {
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+}
+
+.field-group-title {
+  font-weight: 600;
+  color: #670099;
+  margin-bottom: 0.5rem;
+}
+
+/* Grid para checkboxes no formulário */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-item label {
+  color: #4a5568;
+  font-size: 0.875rem;
+}
