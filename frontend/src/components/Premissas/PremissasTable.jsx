@@ -194,6 +194,12 @@ function PremissasTable() {
     </>
   );
 
+  const renderStatus = (isActive) => (
+    <span className={`status-text ${isActive ? 'status-active' : 'status-inactive'}`}>
+      {isActive ? 'Ativo' : 'Inativo'}
+    </span>
+  );
+
   return (
     <div className="tecnicos-content">
       <div className="page-header">
@@ -258,15 +264,15 @@ function PremissasTable() {
                       <>
                         <td>{premissa.dv_assignment_group}</td>
                         <td>{premissa.qtd_incidents}</td>
-                        <td>{premissa.is_contrato_lancado ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_horas_lancadas ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_has_met_first_response_target ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_resolution_target ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_atualizaca_logs_correto ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_ticket_encerrado_corretamente ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_descricao_troubleshooting ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_cliente_notificado ? 'Sim' : 'Não'}</td>
-                        <td>{premissa.is_category_correto ? 'Sim' : 'Não'}</td>
+                        <td>{renderStatus(premissa.is_contrato_lancado)}</td>
+                        <td>{renderStatus(premissa.is_horas_lancadas)}</td>
+                        <td>{renderStatus(premissa.is_has_met_first_response_target)}</td>
+                        <td>{renderStatus(premissa.is_resolution_target)}</td>
+                        <td>{renderStatus(premissa.is_atualizaca_logs_correto)}</td>
+                        <td>{renderStatus(premissa.is_ticket_encerrado_corretamente)}</td>
+                        <td>{renderStatus(premissa.is_descricao_troubleshooting)}</td>
+                        <td>{renderStatus(premissa.is_cliente_notificado)}</td>
+                        <td>{renderStatus(premissa.is_category_correto)}</td>
                         <td>
                           <div className="actions-column">
                             <button className="edit-button" onClick={() => handleEdit(premissa)}>
