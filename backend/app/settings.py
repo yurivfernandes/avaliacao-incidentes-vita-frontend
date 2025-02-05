@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "cadastro",
     "premissas",
     "service_now",
+    "avaliacao",
 ]
 
 MIDDLEWARE = [
