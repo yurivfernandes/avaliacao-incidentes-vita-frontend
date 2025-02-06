@@ -2,7 +2,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ...tasks import LoadIncidentsSN, load_incidents_sn_async
+from ...tasks import (
+    LoadCompany,
+    LoadContract,
+    LoadIncidentsSN,
+    LoadResolvedBy,
+    load_incidents_sn_async,
+)
 
 
 class LoadIncidentsSNView(APIView):
@@ -17,7 +23,13 @@ class LoadIncidentsSNView(APIView):
         try:
             full_sync = request.data.get("full_sync", False)
             LoadIncidentsSN(full_sync=full_sync).run()
+            LoadContract(update_all=full_sync).run()
+            LoadCompany(update_all=full_sync).run()
+            LoadResolvedBy(update_all=full_sync).run()
             # task = load_incidents_sn_async.delay(full_sync=full_sync)
+            # load_contract_async.delay(update_all=full_sync)
+            # load_company_async.delay(update_all=full_sync)
+            # load_resolved_by_async.delay(update_all=full_sync)
 
             return Response(
                 {

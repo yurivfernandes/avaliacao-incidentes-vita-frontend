@@ -23,13 +23,9 @@ class SorteioIncidentsView(APIView):
             data = (datetime.now() - timedelta(days=30)).strftime("%Y-%m")
 
         try:
-            SorteioIncidentsTask(data_sorteio=data).run()
-            # task = load_sorteio_incidents_async.delay({"data_sorteio": data})
+            result = SorteioIncidentsTask(data_sorteio=data).run()
             return Response(
-                {
-                    "message": "Sorteio iniciado com sucesso",
-                    "task_id": task.id,
-                },
+                result,
                 status=status.HTTP_202_ACCEPTED,
             )
         except Exception as e:

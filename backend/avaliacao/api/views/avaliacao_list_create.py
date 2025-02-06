@@ -1,9 +1,10 @@
-from avaliacao.models import Avaliacao
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
-from ..serializers.avaliacao_serializer import AvaliacaoSerializer
+from ...models import Avaliacao
+from ..serializers import AvaliacaoSerializer
 
 
 class AvaliacaoListCreateView(generics.ListCreateAPIView):
@@ -12,9 +13,37 @@ class AvaliacaoListCreateView(generics.ListCreateAPIView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-        return Avaliacao.objects.select_related(
-            "incident", "assignment_group", "user"
-        ).all()
+        queryset = Avaliacao.objects.select_related("incident", "user")
+
+        # Adiciona filtro de busca
+        search = self.request.query_params.get("search", "")
+        if search:
+            queryset = queryset.filter(
+                Q(incident__number__icontains=search)
+                | Q(incident__resolved_by__icontains=search)
+                | Q(assignment_group__name__icontains=search)
+            )
+
+        # Filtro por data
+        data_inicial = self.request.query_params.get("data_inicial")
+        data_final = self.request.query_params.get("data_final")
+
+        if data_inicial:
+            queryset = queryset.filter(incident__closed_at__gte=data_inicial)
+        if data_final:
+            queryset = queryset.filter(incident__closed_at__lte=data_final)
+
+        # Filtro por perfil de usuário
+        user = self.request.user
+
+        if user.is_staff:
+            return queryset
+        elif user.is_gestor:
+            return queryset.filter(
+                assignment_group__in=user.assignment_groups.all()
+            )
+        else:
+            return queryset.filter(user=user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

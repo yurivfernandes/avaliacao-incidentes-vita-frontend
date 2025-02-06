@@ -79,6 +79,30 @@ class Incident(models.Model):
         help_text="Detalhe da SubCategoria da falha",
     )
 
+    @property
+    def resolved_by_name(self):
+        try:
+            resolved_by = ResolvedBy.objects.get(id=self.resolved_by)
+            return resolved_by.dv_resolved_by
+        except ResolvedBy.DoesNotExist:
+            return self.resolved_by
+
+    @property
+    def assignment_group_name(self):
+        try:
+            group = AssignmentGroup.objects.get(id=self.assignment_group)
+            return group.dv_assignment_group
+        except AssignmentGroup.DoesNotExist:
+            return self.assignment_group
+
+    @property
+    def contract_name(self):
+        try:
+            contract = Contract.objects.get(id=self.contract)
+            return contract.dv_contract
+        except Contract.DoesNotExist:
+            return self.contract
+
     def __str__(self):
         return f"Incident {self.pk}"
 

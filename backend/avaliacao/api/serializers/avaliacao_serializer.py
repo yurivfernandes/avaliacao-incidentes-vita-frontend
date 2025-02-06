@@ -14,8 +14,9 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
     created_by = serializers.StringRelatedField(
         source="user.username", read_only=True
     )
+    nota_total = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Avaliacao
         fields = "__all__"
-        read_only_fields = ("user", "created_at", "updated_at")
+        read_only_fields = ("user", "created_at", "updated_at", "nota_total")

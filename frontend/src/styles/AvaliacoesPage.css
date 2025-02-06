@@ -1,0 +1,12 @@
+
+.avaliacoes-page {
+  min-height: 100vh;
+  padding-top: 64px;
+  background: #f8fafc;
+}
+
+.avaliacoes-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}

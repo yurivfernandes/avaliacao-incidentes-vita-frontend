@@ -32,7 +32,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         quantidade = options["quantidade"]
 
-        # Obtendo IDs existentes de ResolvedBy e AssignmentGroup
+        # Usando todos os resolved_by existentes
         resolved_by_ids = list(
             ResolvedBy.objects.values_list("id", "dv_resolved_by")
         )
@@ -47,6 +47,8 @@ class Command(BaseCommand):
                 )
             )
             return
+
+        self.stdout.write(f"Usando {len(resolved_by_ids)} técnicos existentes")
 
         # Limpando registros existentes
         self.stdout.write("Removendo registros existentes...")
@@ -111,6 +113,14 @@ class Command(BaseCommand):
         # Calculando intervalo total em segundos
         total_seconds = int((end_date - start_date).total_seconds())
 
+        # Lista de empresas disponíveis com seus IDs fixos
+        EMPRESAS = {
+            "VITA IT - SP": "4903b3979747011021983d23f153af13",
+            "Fleury": "b15b33179747011021983d23f153af68",
+            "Arcos Dourados": "a22bf3979747011021983d23f153af42",
+            "RD Raia": "c44bf3979747011021983d23f153af99",
+        }
+
         # Criando incidentes
         for number in ticket_numbers:
             sys_id = fake.uuid4()
@@ -145,6 +155,17 @@ class Command(BaseCommand):
                 detalhes_sub.get(sub_categoria, ["Outros"])
             )
 
+            # Decide origem com 70% de chance de ser vita_it
+            origem = (
+                "vita_it"
+                if random.random() < 0.7
+                else random.choice(["NOC", "SOC", "MONITORACAO", "SUPORTE"])
+            )
+
+            # Selecionando empresa e seu ID
+            empresa_nome = random.choice(list(EMPRESAS.keys()))
+            empresa_id = EMPRESAS[empresa_nome]
+
             incident = Incident.objects.create(
                 sys_id=sys_id,
                 number=number,
@@ -156,14 +177,10 @@ class Command(BaseCommand):
                 dv_assignment_group=dv_assignment_group,
                 contract=fake.uuid4(),
                 dv_contract=f"CONTRATO {fake.random_number(digits=4)}",
-                company=fake.uuid4(),
-                dv_company=fake.company(),
-                u_origem=random.choice(
-                    ["NOC", "SOC", "MONITORACAO", "SUPORTE"]
-                ),
-                dv_u_origem=random.choice(
-                    ["NOC", "SOC", "MONITORACAO", "SUPORTE"]
-                ),
+                company=empresa_id,
+                dv_company=empresa_nome,
+                u_origem=origem,
+                dv_u_origem=origem,
                 dv_u_categoria_da_falha=categoria,
                 dv_u_sub_categoria_da_falha=sub_categoria,
                 dv_u_detalhe_sub_categoria_da_falha=detalhe,
