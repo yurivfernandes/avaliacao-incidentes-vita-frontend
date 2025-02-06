@@ -87,7 +87,7 @@ function Header() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/avaliacoes/lista">
+                  <Link to="/avaliacoes">
                     <FaListAlt />
                     <span>Lista de Avaliações</span>
                   </Link>

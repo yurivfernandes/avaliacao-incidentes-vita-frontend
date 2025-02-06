@@ -3,10 +3,13 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from premissas.models import Premissas
 
 from ..models import Incident, ResolvedBy, SortedTicket
+
+User = get_user_model()
 
 
 class SorteioIncidentsTask:
@@ -44,13 +47,15 @@ class SorteioIncidentsTask:
         premissas = Premissas.objects.all().select_related("assignment")
 
         for premissa in premissas:
-            tecnicos = ResolvedBy.objects.filter(
-                assignment_group=premissa.assignment
+            tecnicos = User.objects.filter(
+                assignment_groups=premissa.assignment,
+                is_active=True,
+                is_tecnico=True,
             )
 
             for tecnico in tecnicos:
                 tickets_disponiveis = self._get_tickets_disponiveis(
-                    tecnico, premissa.assignment
+                    tecnico.id, premissa.assignment
                 )
                 tickets_disponiveis = list(tickets_disponiveis)
 
@@ -66,37 +71,32 @@ class SorteioIncidentsTask:
                     # Adiciona ao dataset
                     self.dataset.extend(
                         [
-                            {"incident": ticket, "mes_ano": self.mes_ano_fmt}
+                            {"incident": ticket, "mes_ano": ticket.closed_at}
                             for ticket in tickets_sorteados
                         ]
                     )
 
                     # Adiciona ao log
                     self.log["resumo_sorteio"].append(
-                        f"Fila {assignment_group.dv_assignment_group} - "
-                        f"Técnico {tecnico.dv_resolved_by}: "
+                        f"Fila {premissa.assignment.dv_assignment_group} - "
+                        f"Técnico {tecnico.get_full_name() or tecnico.username}: "
                         f"{len(tickets_sorteados)} tickets sorteados"
                     )
 
     def _get_tickets_disponiveis(
-        self, resolved_by, assignment_group
+        self, tecnico_id, assignment_group
     ) -> List[Incident]:
         """Obtém os tickets disponíveis para sorteio"""
-        return (
-            Incident.objects.filter(
-                resolved_by=resolved_by,
-                closed_at__year=self.data.year,
-                closed_at__month=self.data.month,
-                closed_at__isnull=False,
-            )
-            .exclude(
-                sorted_tickets__mes_ano=self.mes_ano_fmt,
-                company="VITA IT - SP",
-            )
-            .filter(
-                resolved_by__assignment_group=assignment_group,
-                u_origem="vita_it",
-            )
+        return Incident.objects.filter(
+            resolved_by=tecnico_id,
+            closed_at__year=self.data.year,
+            closed_at__month=self.data.month,
+            closed_at__isnull=False,
+            assignment_group=assignment_group.id,
+            u_origem="vita_it",
+        ).exclude(
+            company="VITA IT - SP",
+            sorted_tickets__mes_ano=self.mes_ano_fmt,
         )
 
     @transaction.atomic

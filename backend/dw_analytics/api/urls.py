@@ -50,4 +50,9 @@ urlpatterns = [
         views.LoadAssignmentGroupView.as_view(),
         name="load-assignment-group",
     ),
+    path(
+        "sorted-tickets/",
+        views.SortedTicketListView.as_view(),
+        name="sorted-ticket-list",
+    ),
 ]

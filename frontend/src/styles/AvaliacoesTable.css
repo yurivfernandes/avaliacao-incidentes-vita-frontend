@@ -1,0 +1,366 @@
+.avaliacoes-table-container {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.avaliacoes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.avaliacoes-table th,
+.avaliacoes-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.avaliacoes-table th {
+  background: #670099;
+  color: white;
+}
+
+.actions-column {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.edit-button {
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #670099;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.edit-button:hover {
+  background: rgba(103, 0, 153, 0.1);
+  transform: scale(1.1);
+}
+
+/* Container principal da tabela */
+.table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Container do scroll da tabela */
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+/* Ajustes da paginação */
+.pagination {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inventory-table {
+  min-width: 1200px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.inventory-table th,
+.inventory-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+/* Estilo para a coluna fixa */
+.inventory-table th:first-child,
+.inventory-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: white;
+  min-width: 200px;
+  max-width: 200px;
+  z-index: 2;
+  box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.15);
+  text-align: left;
+}
+
+.inventory-table th:first-child {
+  background: #670099;
+  z-index: 3;
+}
+
+/* Estilo para os textos de status */
+.status-text {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-pending {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.status-completed {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  padding-left: 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #670099;
+  box-shadow: 0 0 0 2px rgba(103, 0, 153, 0.1);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.nota-total {
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.tickets-sorteados-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.month-filter {
+  padding: 0.75rem;
+  padding-left: 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background-color: #f8f9fa;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 180px;
+}
+
+.month-filter::-webkit-calendar-picker-indicator {
+  color: #670099;
+  cursor: pointer;
+  filter: invert(11%) sepia(85%) saturate(5266%) hue-rotate(275deg) brightness(73%) contrast(124%);
+}
+
+.month-filter:hover, .month-filter:focus {
+  border-color: #670099;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(103, 0, 153, 0.1);
+}
+
+.month-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.month-filter-wrapper .calendar-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #670099;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.clear-filter {
+  position: absolute;
+  right: 2.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  z-index: 2;
+}
+
+.clear-filter:hover {
+  color: #670099;
+  background: rgba(103, 0, 153, 0.1);
+}
+
+.month-filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.add-button {
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #670099;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.add-button:hover {
+  background: rgba(103, 0, 153, 0.1);
+  transform: scale(1.1);
+}
+
+.tabs-container {
+  margin-bottom: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab svg {
+  font-size: 1.2rem;
+}
+
+.tab:hover {
+  color: #670099;
+}
+
+.tab.active {
+  color: #670099;
+  border-bottom: 2px solid #670099;
+  font-weight: 500;
+}

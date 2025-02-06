@@ -61,6 +61,21 @@ class Avaliacao(models.Model):
         help_text="Categorização está correta",
     )
 
+    @property
+    def nota_total(self):
+        campos_avaliados = [
+            self.is_contrato_lancado,
+            self.is_horas_lancadas,
+            self.is_has_met_first_response_target,
+            self.is_resolution_target,
+            self.is_atualizaca_logs_correto,
+            self.is_ticket_encerrado_corretamente,
+            self.is_descricao_troubleshooting,
+            self.is_cliente_notificado,
+            self.is_category_correto,
+        ]
+        return sum(1 for campo in campos_avaliados if campo)
+
     def __str__(self):
         return f"Avaliação {self.incident.number}"
 
