@@ -18,29 +18,31 @@ function AvaliacoesTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingAvaliacao, setEditingAvaliacao] = useState(null);
+  const [editData, setEditData] = useState(null);
 
   const canEdit = currentUser?.is_staff || currentUser?.is_gestor;
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    if (activeTab === 'avaliados') {
       fetchAvaliacoes(currentPage, searchTerm);
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [currentPage, searchTerm]);
+    }
+  }, [activeTab, currentPage, searchTerm]);
 
   const fetchAvaliacoes = async (page = 1, search = '') => {
     setLoading(true);
     try {
-      let url = `/avaliacoes/?page=${page}`;
+      const params = new URLSearchParams({
+        page: page,
+      });
       
       if (search.trim()) {
-        url += `&search=${search}`;
+        params.append('search', search);
       }
 
-      const response = await api.get(url);
+      const response = await api.get(`/avaliacao/avaliacoes/?${params}`);
       setAvaliacoes(response.data.results);
-      setTotalPages(response.data.num_pages);
+      setTotalPages(Math.ceil(response.data.count / 10)); // Assumindo 10 itens por página
     } catch (error) {
       console.error('Erro ao buscar avaliações:', error);
     } finally {
@@ -48,8 +50,56 @@ function AvaliacoesTable() {
     }
   };
 
+  const handleEdit = (avaliacao) => {
+    setEditingAvaliacao(avaliacao.id);
+    setEditData({
+      is_contrato_lancado: avaliacao.is_contrato_lancado,
+      is_horas_lancadas: avaliacao.is_horas_lancadas,
+      is_has_met_first_response_target: avaliacao.is_has_met_first_response_target,
+      is_resolution_target: avaliacao.is_resolution_target,
+      is_atualizaca_logs_correto: avaliacao.is_atualizaca_logs_correto,
+      is_ticket_encerrado_corretamente: avaliacao.is_ticket_encerrado_corretamente,
+      is_descricao_troubleshooting: avaliacao.is_descricao_troubleshooting,
+      is_cliente_notificado: avaliacao.is_cliente_notificado,
+      is_category_correto: avaliacao.is_category_correto,
+    });
+  };
+
+  const handleToggleEdit = (field) => {
+    const isDisabled = [
+      'is_contrato_lancado',
+      'is_has_met_first_response_target',
+      'is_resolution_target'
+    ].includes(field);
+
+    if (!isDisabled) {
+      setEditData(prev => ({
+        ...prev,
+        [field]: !prev[field]
+      }));
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await api.patch(`/avaliacao/avaliacoes/${editingAvaliacao}/`, editData);
+      setEditingAvaliacao(null);
+      setEditData(null);
+      fetchAvaliacoes(currentPage, searchTerm);
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAvaliacao(null);
+    setEditData(null);
+  };
+
   const renderStatus = (status) => {
-    return status ? <FaCheck /> : <FaTimes />;
+    return status ? 
+      <FaCheck className="status-check" /> : 
+      <FaTimes className="status-times" />;
   };
 
   const renderContent = () => {
@@ -61,8 +111,10 @@ function AvaliacoesTable() {
           <div className="tickets-sorteados-section">
             <div className="section-header">
               <div className="header-title">
-                <FaClipboardCheck style={{ color: '#670099', fontSize: '1.5rem' }} />
-                <h2>Avaliações Realizadas</h2>
+                <h2>
+                  <FaClipboardCheck />
+                  Avaliações Realizadas
+                </h2>
               </div>
 
               <div className="filters">
@@ -99,7 +151,6 @@ function AvaliacoesTable() {
                       <th>Descrição de Troubleshooting</th>
                       <th>Cliente Notificado</th>
                       <th>Categoria Correta</th>
-                      <th>Status</th>
                       <th>Nota Total</th>
                       {canEdit && <th>Ações</th>}
                     </tr>
@@ -107,34 +158,88 @@ function AvaliacoesTable() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={canEdit ? "18" : "17"}>Carregando...</td>
+                        <td colSpan={canEdit ? "17" : "16"}>Carregando...</td>
+                      </tr>
+                    ) : avaliacoes.length === 0 ? (
+                      <tr>
+                        <td colSpan={canEdit ? "17" : "16"}>Nenhuma avaliação encontrada</td>
                       </tr>
                     ) : (
                       avaliacoes.map((avaliacao) => (
                         <tr key={avaliacao.id}>
                           <td>{avaliacao.incident?.number}</td>
-                          <td>{avaliacao.assignment_group?.name}</td>
+                          <td>{avaliacao.incident?.assignment_group}</td>
                           <td>{avaliacao.incident?.resolved_by}</td>
                           <td>{avaliacao.incident?.contract}</td>
                           <td>{avaliacao.created_by}</td>
                           <td>{new Date(avaliacao.created_at).toLocaleDateString()}</td>
-                          <td>{renderStatus(avaliacao.is_contrato_lancado)}</td>
-                          <td>{renderStatus(avaliacao.is_horas_lancadas)}</td>
-                          <td>{renderStatus(avaliacao.is_has_met_first_response_target)}</td>
-                          <td>{renderStatus(avaliacao.is_resolution_target)}</td>
-                          <td>{renderStatus(avaliacao.is_atualizaca_logs_correto)}</td>
-                          <td>{renderStatus(avaliacao.is_ticket_encerrado_corretamente)}</td>
-                          <td>{renderStatus(avaliacao.is_descricao_troubleshooting)}</td>
-                          <td>{renderStatus(avaliacao.is_cliente_notificado)}</td>
-                          <td>{renderStatus(avaliacao.is_category_correto)}</td>
-                          <td>{avaliacao.status}</td>
-                          <td>{avaliacao.nota_total}/9</td>
+                          {editingAvaliacao === avaliacao.id ? (
+                            // Modo de edição
+                            Object.keys(editData).map((key) => {
+                              const isDisabled = [
+                                'is_contrato_lancado',
+                                'is_has_met_first_response_target',
+                                'is_resolution_target'
+                              ].includes(key);
+                              
+                              if (key.startsWith('is_')) {
+                                return (
+                                  <td key={key}>
+                                    <div className="toggle-buttons" style={{ opacity: isDisabled ? 0.7 : 1 }}>
+                                      <button
+                                        className={`toggle-button ${!editData[key] ? 'active' : ''}`}
+                                        onClick={() => !isDisabled && handleToggleEdit(key)}
+                                        disabled={isDisabled}
+                                      >
+                                        Não
+                                      </button>
+                                      <button
+                                        className={`toggle-button ${editData[key] ? 'active' : ''}`}
+                                        onClick={() => !isDisabled && handleToggleEdit(key)}
+                                        disabled={isDisabled}
+                                      >
+                                        Sim
+                                      </button>
+                                    </div>
+                                  </td>
+                                );
+                              }
+                              return null;
+                            })
+                          ) : (
+                            <>
+                              <td>{renderStatus(avaliacao.is_contrato_lancado)}</td>
+                              <td>{renderStatus(avaliacao.is_horas_lancadas)}</td>
+                              <td>{renderStatus(avaliacao.is_has_met_first_response_target)}</td>
+                              <td>{renderStatus(avaliacao.is_resolution_target)}</td>
+                              <td>{renderStatus(avaliacao.is_atualizaca_logs_correto)}</td>
+                              <td>{renderStatus(avaliacao.is_ticket_encerrado_corretamente)}</td>
+                              <td>{renderStatus(avaliacao.is_descricao_troubleshooting)}</td>
+                              <td>{renderStatus(avaliacao.is_cliente_notificado)}</td>
+                              <td>{renderStatus(avaliacao.is_category_correto)}</td>
+                              <td>{avaliacao.nota_total}/9</td>
+                            </>
+                          )}
                           {canEdit && (
                             <td>
                               <div className="actions-column">
-                                <button className="edit-button">
-                                  <FaEdit />
-                                </button>
+                                {editingAvaliacao === avaliacao.id ? (
+                                  <>
+                                    <button className="save-button" onClick={handleSaveEdit}>
+                                      <FaCheck />
+                                    </button>
+                                    <button className="cancel-button" onClick={handleCancelEdit}>
+                                      <FaTimes />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button 
+                                    className="edit-button"
+                                    onClick={() => handleEdit(avaliacao)}
+                                  >
+                                    <FaEdit />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           )}

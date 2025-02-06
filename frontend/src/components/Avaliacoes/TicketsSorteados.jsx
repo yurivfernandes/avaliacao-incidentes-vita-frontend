@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaPlus, FaClock, FaCalendar, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaClock, FaCalendar, FaTimes, FaClipboardCheck, FaCheck } from 'react-icons/fa';
 import api from '../../services/api';
 
 function TicketsSorteados() {
@@ -9,6 +9,32 @@ function TicketsSorteados() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [mesAno, setMesAno] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [avaliacaoData, setAvaliacaoData] = useState({
+    is_contrato_lancado: false,
+    is_horas_lancadas: false,
+    is_has_met_first_response_target: false,
+    is_resolution_target: false,
+    is_atualizaca_logs_correto: false,
+    is_ticket_encerrado_corretamente: false,
+    is_descricao_troubleshooting: false,
+    is_cliente_notificado: false,
+    is_category_correto: false,
+  });
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+
+  const labelMap = {
+    contrato_lancado: 'Contrato Lançado Corretamente',
+    horas_lancadas: 'Horas Lançadas Corretamente',
+    has_met_first_response_target: 'Meta de Primeiro Atendimento Atingida',
+    resolution_target: 'Meta de Resolução Atingida',
+    atualizaca_logs_correto: 'Atualização de Logs Realizada Corretamente',
+    ticket_encerrado_corretamente: 'Ticket Encerrado Corretamente',
+    descricao_troubleshooting: 'Descrição do Troubleshooting Adequada',
+    cliente_notificado: 'Cliente Notificado Adequadamente',
+    category_correto: 'Categorização Realizada Corretamente'
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -18,7 +44,7 @@ function TicketsSorteados() {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        page: currentPage,  // Aqui a página já está sendo passada
+        page: currentPage,
         mes_ano: mesAno,
       });
       if (searchTerm) params.append('search', searchTerm);
@@ -33,12 +59,76 @@ function TicketsSorteados() {
     }
   };
 
+  const handleAddClick = (ticket) => {
+    setActiveDropdown(activeDropdown === ticket.incident_number ? null : ticket.incident_number);
+    setSelectedTicket(ticket);
+    
+    setAvaliacaoData({
+      ...Object.fromEntries(
+        Object.keys(avaliacaoData).map(key => [key, false])
+      ),
+      is_contrato_lancado: Boolean(ticket.contract?.trim()),
+      is_has_met_first_response_target: ticket.sla_atendimento,
+      is_resolution_target: ticket.sla_resolucao,
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, checked } = e.target;
+    setAvaliacaoData((prevData) => ({
+      ...prevData,
+      [name]: checked,
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!selectedTicket) {
+        console.error('Nenhum ticket selecionado');
+        return;
+      }
+
+      const payload = {
+        ...avaliacaoData,
+        incident_id: selectedTicket.incident_id
+      };
+
+      await api.post('/avaliacao/avaliacoes/', payload);
+      
+      setActiveDropdown(null);
+      setSelectedTicket(null);
+      fetchTickets();
+    } catch (error) {
+      console.error('Erro ao salvar avaliação:', error.response?.data || error);
+    }
+  };
+
+  const handleCancel = () => {
+    setActiveDropdown(null);
+    setSelectedTicket(null);
+  };
+
+  const handleToggle = (field) => {
+    setAvaliacaoData(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const renderSlaStatus = (isWithinSla) => {
+    return isWithinSla ? 
+      <FaCheck className="status-check" /> : 
+      <FaTimes className="status-times" />;
+  };
+
   return (
     <div className="tickets-sorteados-section">
       <div className="section-header">
         <div className="header-title">
-          <FaClock style={{ color: '#670099', fontSize: '1.5rem' }} />
-          <h2>Tickets Pendentes de Avaliação</h2>
+          <h2>
+            <FaClock />
+            Tickets Pendentes de Avaliação
+          </h2>
         </div>
         
         <div className="filters">
@@ -102,12 +192,73 @@ function TicketsSorteados() {
                     <td>{ticket.contract}</td>
                     <td>{ticket.company}</td>
                     <td>{new Date(ticket.closed_at).toLocaleDateString()}</td>
-                    <td>{ticket.sla_atendimento ? 'Sim' : 'Não'}</td>
-                    <td>{ticket.sla_resolucao ? 'Sim' : 'Não'}</td>
+                    <td>{renderSlaStatus(ticket.sla_atendimento)}</td>
+                    <td>{renderSlaStatus(ticket.sla_resolucao)}</td>
                     <td>
-                      <button className="add-button" title="Adicionar Avaliação">
-                        <FaPlus />
-                      </button>
+                      <div className="actions-column">
+                        <button 
+                          className="add-button" 
+                          title="Adicionar Avaliação" 
+                          onClick={() => handleAddClick(ticket)}
+                        >
+                          <FaPlus />
+                        </button>
+                        {activeDropdown === ticket.incident_number && (
+                          <div className="dropdown">
+                            <div className="dropdown-header">
+                              <div className="dropdown-title">
+                                <FaClipboardCheck />
+                                Avaliação do Incidente {ticket.incident_number}
+                              </div>
+                              <div className="dropdown-subtitle">
+                                Cliente: {ticket.company} | Técnico: {ticket.resolved_by}
+                              </div>
+                            </div>
+                            <div className="dropdown-items-grid">
+                              {Object.keys(avaliacaoData).map((key) => {
+                                const fieldName = key.replace('is_', '');
+                                const isDisabled = [
+                                  'is_contrato_lancado',
+                                  'is_has_met_first_response_target',
+                                  'is_resolution_target'
+                                ].includes(key);
+                              
+                                return (
+                                  <div className="dropdown-item" key={key}>
+                                    <label style={{ color: isDisabled ? '#94a3b8' : '#1e293b' }}>
+                                      {labelMap[fieldName]}
+                                    </label>
+                                    <div className="toggle-buttons" style={{ opacity: isDisabled ? 0.7 : 1 }}>
+                                      <button
+                                        className={`toggle-button ${avaliacaoData[key] ? '' : 'active'}`}
+                                        onClick={() => !isDisabled && handleToggle(key)}
+                                        disabled={isDisabled}
+                                      >
+                                        Não
+                                      </button>
+                                      <button
+                                        className={`toggle-button ${avaliacaoData[key] ? 'active' : ''}`}
+                                        onClick={() => !isDisabled && handleToggle(key)}
+                                        disabled={isDisabled}
+                                      >
+                                        Sim
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="dropdown-actions">
+                              <button className="cancel-button" onClick={handleCancel}>
+                                Cancelar
+                              </button>
+                              <button className="save-button" onClick={handleSave}>
+                                Salvar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

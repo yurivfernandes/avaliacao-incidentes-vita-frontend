@@ -15,13 +15,11 @@ class AvaliacaoListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = Avaliacao.objects.select_related("incident", "user")
 
-        # Adiciona filtro de busca
         search = self.request.query_params.get("search", "")
         if search:
             queryset = queryset.filter(
                 Q(incident__number__icontains=search)
                 | Q(incident__resolved_by__icontains=search)
-                | Q(assignment_group__name__icontains=search)
             )
 
         # Filtro por data

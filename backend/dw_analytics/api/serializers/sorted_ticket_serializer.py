@@ -1,10 +1,14 @@
 from access.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from ...models import AssignmentGroup, Company, Contract, SortedTicket
 
+User = get_user_model()
+
 
 class SortedTicketSerializer(serializers.ModelSerializer):
+    incident_id = serializers.IntegerField(source="incident.id")
     incident_number = serializers.CharField(source="incident.number")
     resolved_by = serializers.SerializerMethodField()
     assignment_group = serializers.SerializerMethodField()
@@ -29,9 +33,11 @@ class SortedTicketSerializer(serializers.ModelSerializer):
             if not obj.incident.resolved_by:
                 return ""
             user = User.objects.filter(id=obj.incident.resolved_by).first()
-            return user.username if user else obj.incident.resolved_by
-        except (User.DoesNotExist, ValueError):
-            return obj.incident.resolved_by
+            return (
+                f"{user.first_name} {user.last_name}".strip() if user else ""
+            )
+        except (User.DoesNotExist, ValueError, AttributeError):
+            return ""
 
     def get_assignment_group(self, obj):
         try:
@@ -71,6 +77,7 @@ class SortedTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = SortedTicket
         fields = (
+            "incident_id",
             "incident_number",
             "resolved_by",
             "assignment_group",
