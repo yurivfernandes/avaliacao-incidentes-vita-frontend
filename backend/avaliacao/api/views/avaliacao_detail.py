@@ -11,34 +11,40 @@ class AvaliacaoDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = AvaliacaoSerializer
 
     def get_queryset(self):
-        queryset = Avaliacao.objects.select_related(
-            "incident", "assignment_group", "user"
-        )
-
         user = self.request.user
+        queryset = Avaliacao.objects.select_related("incident", "user")
 
         if user.is_staff:
             return queryset
         elif user.is_gestor:
+            # Corrigido para usar todos os grupos do gestor
+            assignment_groups = user.assignment_groups.all()
             return queryset.filter(
-                assignment_group__in=user.assignment_groups.all()
+                incident__assignment_group__in=assignment_groups
             )
         else:
-            return queryset.filter(user=user)
+            return queryset.filter(incident__resolved_by=user.id)
 
     def check_object_permissions(self, request, obj):
-        super().check_object_permissions(request, obj)
+        # Apenas staff e gestor podem editar
+        if request.method in ["PUT", "PATCH"] and not (
+            request.user.is_staff or request.user.is_gestor
+        ):
+            raise PermissionDenied(
+                "Você não tem permissão para editar avaliações."
+            )
 
         if not request.user.is_staff:
-            if (
-                request.user.is_gestor
-                and obj.assignment_group
-                not in request.user.assignment_groups.all()
-            ):
-                raise PermissionDenied(
-                    "Você não tem permissão para acessar esta avaliação."
-                )
-            elif not request.user.is_gestor and obj.user != request.user:
+            if request.user.is_gestor:
+                # Corrigido para verificar se o grupo pertence aos grupos do gestor
+                if (
+                    obj.incident.assignment_group
+                    not in request.user.assignment_groups.all()
+                ):
+                    raise PermissionDenied(
+                        "Você não tem permissão para acessar esta avaliação."
+                    )
+            elif obj.incident.resolved_by != str(request.user.id):
                 raise PermissionDenied(
                     "Você não tem permissão para acessar esta avaliação."
                 )

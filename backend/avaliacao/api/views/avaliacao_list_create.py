@@ -14,34 +14,35 @@ class AvaliacaoListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Avaliacao.objects.select_related("incident", "user")
+        user = self.request.user
 
+        # Filtrar baseado no tipo de usuário
+        if user.is_staff:
+            # Staff vê tudo
+            pass
+        elif user.is_gestor:
+            # Gestor vê apenas tickets das suas filas
+            if user.assignment_groups.exists():
+                queryset = queryset.filter(
+                    incident__assignment_group__in=user.assignment_groups.all()
+                )
+            else:
+                return (
+                    Avaliacao.objects.none()
+                )  # Retorna queryset vazio se não tiver grupos
+        else:
+            # Técnico vê apenas seus tickets usando ID
+            queryset = queryset.filter(incident__resolved_by=user.id)
+
+        # Aplicar filtros de busca - atualizado para usar ID também
         search = self.request.query_params.get("search", "")
         if search:
             queryset = queryset.filter(
                 Q(incident__number__icontains=search)
-                | Q(incident__resolved_by__icontains=search)
+                | Q(incident__resolved_by=search if search.isdigit() else None)
             )
 
-        # Filtro por data
-        data_inicial = self.request.query_params.get("data_inicial")
-        data_final = self.request.query_params.get("data_final")
-
-        if data_inicial:
-            queryset = queryset.filter(incident__closed_at__gte=data_inicial)
-        if data_final:
-            queryset = queryset.filter(incident__closed_at__lte=data_final)
-
-        # Filtro por perfil de usuário
-        user = self.request.user
-
-        if user.is_staff:
-            return queryset
-        elif user.is_gestor:
-            return queryset.filter(
-                assignment_group__in=user.assignment_groups.all()
-            )
-        else:
-            return queryset.filter(user=user)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
