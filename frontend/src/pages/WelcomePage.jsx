@@ -62,11 +62,6 @@ function WelcomePage() {
       active: true,
       icon: <FaHeadset size={32} />, // Ícone principal alterado para headset
       subItems: [
-        ...(user?.is_staff || user?.is_gestor ? [{
-          name: 'Avaliar Atendimentos', 
-          icon: <FaTicketAlt size={16} />, // Novo ticket/chamado
-          path: '/avaliacoes/nova'
-        }] : []),
         { 
           name: 'Avaliações', 
           icon: <FaListAlt size={16} />, // Lista de avaliações

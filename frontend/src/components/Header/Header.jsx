@@ -81,12 +81,6 @@ function Header() {
               </Link>
               <ul className="user-submenu">
                 <li>
-                  <Link to="/avaliacoes/novo">
-                    <FaTicketAlt />
-                    <span>Nova Avaliação</span>
-                  </Link>
-                </li>
-                <li>
                   <Link to="/avaliacoes">
                     <FaListAlt />
                     <span>Lista de Avaliações</span>
