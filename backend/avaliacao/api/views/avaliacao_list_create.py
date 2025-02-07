@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from ...models import Avaliacao
 from ..serializers import AvaliacaoSerializer
@@ -46,3 +47,15 @@ class AvaliacaoListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return Response(
+            {
+                "count": self.paginator.page.paginator.count,
+                "num_pages": self.paginator.page.paginator.num_pages,
+                "next": self.paginator.get_next_link(),
+                "previous": self.paginator.get_previous_link(),
+                "results": data,
+            }
+        )

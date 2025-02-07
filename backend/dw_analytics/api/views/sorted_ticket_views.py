@@ -2,21 +2,16 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from ...models import AssignmentGroup, ResolvedBy, SortedTicket
 from ..serializers import SortedTicketSerializer
 
 
-class CustomPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = "page_size"
-    max_page_size = 100
-
-
 class SortedTicketListView(generics.ListAPIView):
     serializer_class = SortedTicketSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CustomPagination
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         queryset = SortedTicket.objects.select_related("incident")
@@ -59,3 +54,15 @@ class SortedTicketListView(generics.ListAPIView):
             )
 
         return queryset.order_by("-mes_ano", "incident__number")
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return Response(
+            {
+                "count": self.paginator.page.paginator.count,
+                "num_pages": self.paginator.page.paginator.num_pages,
+                "next": self.paginator.get_next_link(),
+                "previous": self.paginator.get_previous_link(),
+                "results": data,
+            }
+        )
