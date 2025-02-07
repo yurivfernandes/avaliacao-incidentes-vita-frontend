@@ -1,0 +1,103 @@
+.indicador-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  position: relative;
+  padding-left: 20px; /* espaço para a barra de destaque */
+}
+
+.indicador-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: rgba(103, 0, 153, 1);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.indicador-card.critical::before {
+  background-color: #dc3545;
+}
+
+.indicador-card.critical .indicador-title {
+  color: #dc3545;
+}
+
+.indicador-card.critical .indicador-value {
+  color: #dc3545;
+  font-size: 0.9em; /* reduzido em 20% */
+}
+
+.indicador-card.critical .indicador-icon {
+  color: #dc3545;
+}
+
+.indicador-title {
+  font-size: 0.85em;
+  color: rgba(103, 0, 153, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.indicador-icon {
+  font-size: 1em;
+}
+
+
+.indicador-value {
+  font-size: 1.1em; /* reduzido em 20% do valor anterior */
+  font-weight: bold;
+  color: #4d4d4d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 4px 0;
+  width: 100%;
+  text-align: center;
+}
+
+.indicador-tendencia {
+  display: flex;
+  align-items: center;
+}
+
+.indicador-subtitle {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: -4px;
+}
+
+.dashboard-ranking-item.top-1 {
+  background: linear-gradient(to right, rgba(103, 0, 153, 0.1), transparent);
+  border-radius: 8px;
+  padding: 12px 8px;
+}
+
+.medal-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ranking-score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}

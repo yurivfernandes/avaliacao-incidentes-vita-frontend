@@ -30,4 +30,9 @@ urlpatterns = [
         views.AvaliacaoDetailView.as_view(),
         name="avaliacao-detail",
     ),
+    path(
+        "avaliacoes/notas-por-tecnico/",
+        views.NotaPorTecnicoView.as_view(),
+        name="notas-por-tecnico",
+    ),
 ]

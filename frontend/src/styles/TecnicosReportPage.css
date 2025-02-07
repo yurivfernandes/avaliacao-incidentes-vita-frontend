@@ -1,0 +1,311 @@
+/* Layout principal */
+.dashboard-report-container {
+  padding-top: 84px; /* 64px do header + 20px de espaçamento extra */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 16px;
+}
+
+.dashboard-content-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+/* Cabeçalho */
+.dashboard-report-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.dashboard-report-title {
+  font-size: 1.5em;
+  color: rgba(103, 0, 153, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-report-subtitle {
+  font-size: 0.9em;
+  color: #666;
+  margin-left: 32px;
+}
+
+/* Filtros */
+.dashboard-filters-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dashboard-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-filter-group label {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.dashboard-filter-select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+/* Cards do Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.dashboard-card {
+  background: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  min-height: 38px; /* Reduzido em mais 20% de 48px */
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card h3 {
+  font-size: 0.65em;
+  color: #666;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-card-value {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #333;
+  margin: 2px 0;
+  line-height: 1.2;
+}
+
+.dashboard-card-subtitle {
+  font-size: 0.6em;
+  color: #666;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+/* Remova qualquer estilo que possa estar interferindo */
+.dashboard-card-tendencia,
+.dashboard-warning-card,
+.dashboard-background-container {
+  display: none !important;
+}
+
+/* Adicione isso no final do arquivo para garantir que sobrescreva outros estilos */
+.dashboard-card * {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Layout Flexível */
+.dashboard-flex {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+/* Gráfico */
+.dashboard-chart-container {
+  flex: 2;
+  background: #fff;
+  padding: 16px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.dashboard-chart-title {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+/* Gráfico - Estilização */
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.chart-wrapper::before,
+.chart-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.chart-wrapper::before {
+  left: -10px;
+  background: linear-gradient(to right, #fff 20%, rgba(255, 255, 255, 0));
+}
+
+.chart-wrapper::after {
+  right: -10px;
+  background: linear-gradient(to left, #fff 20%, rgba(255, 255, 255, 0));
+}
+
+.chart-outer-container {
+  position: relative;
+  z-index: 0;
+}
+
+/* Ajuste nos rótulos do gráfico */
+.area-chart-label {
+  font-size: 11px;
+  font-weight: 500;
+  fill-opacity: 0.9;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.9));
+}
+
+/* Ajuste labels do gráfico */
+.area-chart-label {
+  font-size: 11px;
+  font-weight: 500;
+  fill: #333;
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.95))
+         drop-shadow(0 -1px 1px rgba(255,255,255,0.95))
+         drop-shadow(1px 0 1px rgba(255,255,255,0.95))
+         drop-shadow(-1px 0 1px rgba(255,255,255,0.95));
+}
+
+/* Ranking */
+.dashboard-ranking-container {
+  flex: 1;
+  min-width: 280px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-ranking-container h3 {
+  color: rgba(103, 0, 153, 1);
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
+}
+
+.ranking-list-container {
+  width: 100%;
+  padding: 0 12px;
+}
+
+.dashboard-ranking-header {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.5fr) minmax(90px, 1fr) minmax(80px, 1fr);
+  gap: 16px;
+  padding: 12px 8px;
+  margin-bottom: 8px;
+  width: 100%;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.ranking-list {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dashboard-ranking-item {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.5fr) minmax(90px, 1fr) minmax(90px, 1fr);
+  gap: 16px;
+  padding: 12px 8px;
+  margin-bottom: 4px;
+  font-size: 0.95em;
+  width: 100%;
+  align-items: center;
+}
+
+.dashboard-ranking-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ranking-percentage, 
+.ranking-pontos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.95em; /* Mesmo tamanho do .dashboard-ranking-item */
+}
+
+/* Remover qualquer estilo que possa estar interferindo */
+.ranking-pontos {
+  font-size: inherit !important; /* Garante que herde o tamanho do pai */
+}
+
+.ranking-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Medalhas */
+.dashboard-top-1 .dashboard-ranking-number { background: linear-gradient(45deg, #ffd700, #ffa500); color: #000; }
+.dashboard-top-2 .dashboard-ranking-number { background: linear-gradient(45deg, #c0c0c0, #a9a9a9); color: #000; }
+.dashboard-top-3 .dashboard-ranking-number { background: linear-gradient(45deg, #cd7f32, #b8860b); color: #000; }
+
+.dashboard-top-1 {
+  background: linear-gradient(to right, rgba(107, 60, 164, 0.05), transparent);
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .dashboard-flex {
+    flex-direction: column;
+  }
+  
+  .dashboard-ranking-container {
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-filters-container,
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-content-container {
+    padding: 12px;
+  }
+}

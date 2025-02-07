@@ -8,6 +8,7 @@ import PasswordPage from './pages/PasswordPage';
 import TecnicosPage from './pages/TecnicosPage';
 import PremissasPage from './pages/PremissasPage';
 import AvaliacoesPage from './pages/AvaliacoesPage';
+import TecnicosReportPage from './pages/TecnicosReportPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -82,6 +83,16 @@ ReactDOM.render(
               <ProtectedRoute>
                 <FirstAccessRoute>
                   <AvaliacoesPage />
+                </FirstAccessRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/relatorios/tecnicos"
+            element={
+              <ProtectedRoute>
+                <FirstAccessRoute>
+                  <TecnicosReportPage />
                 </FirstAccessRoute>
               </ProtectedRoute>
             }
