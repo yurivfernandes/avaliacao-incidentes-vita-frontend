@@ -5,14 +5,28 @@ import api from '../../services/api';
 import '../../styles/AvaliacoesTable.css';
 import TicketsSorteados from './TicketsSorteados';
 
-const tabs = [
-  { id: 'pendentes', label: 'Tickets Pendentes', icon: <FaClock /> },
-  { id: 'avaliados', label: 'Tickets Avaliados', icon: <FaClipboardCheck /> }
-];
+// Modifique a definição das tabs para ser dinâmica baseada nas permissões
+const getTabs = (isStaffOrGestor) => {
+  const baseTabs = [
+    { id: 'avaliados', label: 'Tickets Avaliados', icon: <FaClipboardCheck /> }
+  ];
+
+  if (isStaffOrGestor) {
+    baseTabs.unshift({ 
+      id: 'pendentes', 
+      label: 'Tickets Pendentes', 
+      icon: <FaClock /> 
+    });
+  }
+
+  return baseTabs;
+};
 
 function AvaliacoesTable() {
   const { user: currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('pendentes');
+  const isStaffOrGestor = currentUser?.is_staff || currentUser?.is_gestor;
+  // Modifique o estado inicial do activeTab baseado nas permissões
+  const [activeTab, setActiveTab] = useState(isStaffOrGestor ? 'pendentes' : 'avaliados');
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +52,17 @@ function AvaliacoesTable() {
       
       if (search.trim()) {
         params.append('search', search);
+      }
+
+      // Se for gestor, adicionar filtro de fila (corrigido para usar assignment_groups)
+      if (currentUser?.is_gestor && currentUser?.assignment_groups?.length > 0) {
+        currentUser.assignment_groups.forEach(group => {
+          params.append('assignment_groups', group.id);
+        });
+      }
+      // Se for técnico, adicionar filtro por ID do usuário
+      else if (!currentUser?.is_staff) {
+        params.append('resolved_by', currentUser.id);
       }
 
       const response = await api.get(`/avaliacao/avaliacoes/?${params}`);
@@ -102,10 +127,11 @@ function AvaliacoesTable() {
       <FaTimes className="status-times" />;
   };
 
+  // No renderContent, adicione verificação de permissão
   const renderContent = () => {
     switch (activeTab) {
       case 'pendentes':
-        return <TicketsSorteados />;
+        return isStaffOrGestor ? <TicketsSorteados /> : null;
       case 'avaliados':
         return (
           <div className="tickets-sorteados-section">
@@ -281,7 +307,7 @@ function AvaliacoesTable() {
     <div className="tecnicos-content">
       <div className="tabs-container">
         <div className="tabs">
-          {tabs.map(tab => (
+          {getTabs(isStaffOrGestor).map(tab => (
             <button
               key={tab.id}
               className={`tab ${activeTab === tab.id ? 'active' : ''}`}

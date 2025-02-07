@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaPlus, FaClock, FaCalendar, FaTimes, FaClipboardCheck, FaCheck } from 'react-icons/fa';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 function TicketsSorteados() {
+  const { user: currentUser } = useAuth();
+  
+  // Redireciona usuários sem permissão
+  if (!currentUser?.is_staff && !currentUser?.is_gestor) {
+    return <Navigate to="/" replace />;
+  }
+
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

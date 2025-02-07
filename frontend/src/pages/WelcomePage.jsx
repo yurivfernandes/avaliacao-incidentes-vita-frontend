@@ -64,7 +64,7 @@ function WelcomePage() {
       subItems: [
         { 
           name: 'Avaliações', 
-          icon: <FaListAlt size={16} />, // Lista de avaliações
+          icon: <FaListAlt size={16} />, 
           path: '/avaliacoes'
         }
       ]
