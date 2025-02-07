@@ -18,7 +18,7 @@ class PremissasPagination(PageNumberPagination):
 
 class PremissasView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = PremissasPagination
+    pagination_class = PageNumberPagination
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -48,9 +48,17 @@ class PremissasView(APIView):
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(premissas, request)
-
         serializer = PremissaSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+
+        return Response(
+            {
+                "count": paginator.page.paginator.count,
+                "num_pages": paginator.page.paginator.num_pages,
+                "next": paginator.get_next_link(),
+                "previous": paginator.get_previous_link(),
+                "results": serializer.data,
+            }
+        )
 
     def patch(self, request, *args, **kwargs):
         user = request.user

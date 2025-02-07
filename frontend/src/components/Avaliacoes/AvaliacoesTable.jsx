@@ -30,10 +30,11 @@ function AvaliacoesTable() {
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
   const [editingAvaliacao, setEditingAvaliacao] = useState(null);
   const [editData, setEditData] = useState(null);
+  const itemsPerPage = 10; // Definindo explicitamente itens por página
 
   const canEdit = currentUser?.is_staff || currentUser?.is_gestor;
 
@@ -67,7 +68,12 @@ function AvaliacoesTable() {
 
       const response = await api.get(`/avaliacao/avaliacoes/?${params}`);
       setAvaliacoes(response.data.results);
-      setTotalPages(Math.ceil(response.data.count / 10)); // Assumindo 10 itens por página
+      setPagination({
+        count: response.data.count,
+        next: response.data.next,
+        previous: response.data.previous,
+        num_pages: response.data.num_pages // Adicionando número total de páginas
+      });
     } catch (error) {
       console.error('Erro ao buscar avaliações:', error);
     } finally {
@@ -278,18 +284,22 @@ function AvaliacoesTable() {
 
               <div className="pagination">
                 <div className="pagination-info">
-                  Página {currentPage} de {totalPages}
+                  {pagination?.count > 0 ? (
+                    `Página ${currentPage} de ${pagination.num_pages}`
+                  ) : (
+                    'Nenhum registro encontrado'
+                  )}
                 </div>
                 <div className="pagination-controls">
                   <button
                     onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
+                    disabled={!pagination?.previous}
                   >
                     Anterior
                   </button>
                   <button
                     onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={!pagination?.next}
                   >
                     Próxima
                   </button>
