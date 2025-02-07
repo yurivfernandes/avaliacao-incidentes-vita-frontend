@@ -199,10 +199,10 @@ function AvaliacoesTable() {
                     ) : (
                       avaliacoes.map((avaliacao) => (
                         <tr key={avaliacao.id}>
-                          <td>{avaliacao.incident?.number}</td>
-                          <td>{avaliacao.incident?.assignment_group}</td>
-                          <td>{avaliacao.incident?.resolved_by}</td>
-                          <td>{avaliacao.incident?.contract}</td>
+                          <td>{avaliacao.number}</td>
+                          <td>{avaliacao.assignment_group}</td>
+                          <td>{avaliacao.resolved_by}</td>
+                          <td>{avaliacao.contract}</td>
                           <td>{avaliacao.created_by}</td>
                           <td>{new Date(avaliacao.created_at).toLocaleDateString()}</td>
                           {editingAvaliacao === avaliacao.id ? (

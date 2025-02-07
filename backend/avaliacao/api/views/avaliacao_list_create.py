@@ -14,7 +14,8 @@ class AvaliacaoListCreateView(generics.ListCreateAPIView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-        queryset = Avaliacao.objects.select_related("incident", "user")
+        queryset = Avaliacao.objects.select_related("user", "incident")
+
         user = self.request.user
 
         # Filtrar baseado no tipo de usuário
