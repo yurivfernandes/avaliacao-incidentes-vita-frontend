@@ -10,19 +10,15 @@ A página inicial do sistema apresenta uma interface moderna e intuitiva, projet
 
 A tela inicial é organizada em cartões temáticos que dão acesso às diferentes áreas do sistema:
 
-### 1. Inventário
-- **Acessar Inventário**: Acesso direto ao módulo de gestão de inventário
-- **Fluxo de Inventário**: Visualização do fluxo de equipamentos e serviços
-
-### 2. Gestão de Incidentes
+### 1. Gestão de Incidentes
 - Registro e acompanhamento de ocorrências
 - Gestão de indisponibilidades
 
-### 3. Relatórios
+### 2. Relatórios
 - Área dedicada a relatórios e estatísticas do sistema
 - *Em desenvolvimento*
 
-### 4. Documentação
+### 3. Documentação
 - **Documentação API**: Acesso à documentação técnica da API
 - **Manual do Usuário**: Guia completo de utilização do sistema
 - **Backend**: Documentação técnica do backend

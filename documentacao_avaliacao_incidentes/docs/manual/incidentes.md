@@ -41,53 +41,17 @@ O painel de filtros oferece as seguintes opções de busca:
 
 ## Funcionalidades
 
-### Tabela de Incidentes
-A tabela apresenta as seguintes informações:
-- Número do Incidente
-- Responsável pela abertura
-- Origem do chamado
-- Categorização completa
-- Tipo de contato
-- Fila de atendimento
-- Datas de abertura, fechamento e resolução
-- Duração total
-- Status atual
-
-### Paginação e Navegação
-- 50 registros por página
-- Navegação entre páginas
-- Indicador de total de registros
-- Controles de anterior/próximo
-
-### Status dos Incidentes
-- **Pendente**: Aguardando atendimento inicial
-- **Em Andamento**: Em processo de resolução pela equipe técnica
-- **Resolvido**: Solução implementada, aguardando confirmação
-- **Fechado**: Incidente encerrado e validado
-
-### Gestão de Filtros
-- Aplicação de múltiplos filtros simultaneamente
-- Limpeza rápida de todos os filtros
-- Indicador visual de filtros ativos
-- Persistência dos filtros durante a navegação
+- Registro de novos incidentes
+- Edição de incidentes existentes
+- Acompanhamento do status dos incidentes
+- Geração de relatórios
 
 ## Integração ServiceNow
 
-### Sincronização
-- Atualização automática a cada 5 minutos
-- Sincronização manual disponível
-- Registro de histórico de sincronização
-
-### Fluxo de Dados
-1. Recebimento do incidente do ServiceNow
-2. Processamento e categorização
-3. Atualização do status
-4. Envio de atualizações
+O sistema se integra com o ServiceNow para sincronizar incidentes e manutenções, garantindo que todas as informações estejam atualizadas.
 
 ## Dicas de Uso
 
-### Boas Práticas
-1. Utilize filtros específicos para buscas precisas
-2. Combine filtros de data para análises periódicas
-3. Monitore incidentes pendentes regularmente
-4. Verifique a sincronização em caso de divergências
+- Utilize os filtros para encontrar incidentes específicos rapidamente.
+- Verifique o status dos incidentes regularmente para acompanhar o progresso.
+- Gere relatórios periódicos para análise e tomada de decisão.
