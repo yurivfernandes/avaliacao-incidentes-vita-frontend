@@ -1,91 +1,100 @@
 # Sistema de Análise de Incidentes
 
-<p align="center">
-  <img src="https://github.com/yurivfernandes/projeto-base-vita/blob/main/frontend/src/assets/logo_login.svg" alt="Logo" width="150" />
-</p>
+<div align="center">
+  <img src="https://github.com/yurivfernandes/projeto-base-vita/blob/main/frontend/src/assets/logo_login.svg" alt="Logo" width="200" style="margin-bottom: 20px"/>
+</div>
+
+<div align="center">
+
+![Status do Projeto](https://img.shields.io/badge/status-70%25-green?style=for-the-badge)
+![Licença](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
+![Versão](https://img.shields.io/badge/version-1.0.0-orange?style=for-the-badge)
+
+</div>
 
 ---
 
-## Sobre o Projeto
+## 📋 Sobre o Projeto
 
 O Sistema de Análise de Incidentes foi desenvolvido para avaliar a qualidade do atendimento dos analistas. O sistema facilita tanto a inclusão da avaliação pelos gestores quanto a visualização das notas pelos técnicos, garantindo que cada usuário tenha acesso específico de acordo com sua função.
 
 ---
 
-## Progresso do Projeto
+## 📊 Progresso do Projeto
 
-<div style="width:100%; background-color:#e0e0e0; border-radius: 8px; overflow:hidden;">
-  <div style="width:70%; background-color:#4caf50; padding: 8px 0; text-align:center; color:white; font-weight:bold;">
-    70% Concluído
-  </div>
+<div align="center">
+
+```
+┌────────────────────────────────────────────────┐
+|                    Progresso                    |
+└────────────────────────────────────────────────┘
+█████████████████████░░░░░░░░░ 70%
+```
+
 </div>
 
 ---
 
-## Funcionalidades
+## ⚡ Funcionalidades
 
-### Implementadas
-- Autenticação e Autorização (JWT)
-- Gestão de Usuários
-- Gestão de Técnicos
-- API REST com Django REST Framework
-- Integração com SQL Server
+### ✅ Implementadas
+- 🔐 Autenticação e Autorização (JWT)
+- 👥 Gestão de Usuários
+- 👨‍💻 Gestão de Técnicos
+- 🔄 API REST com Django REST Framework
+- 💾 Integração com SQL Server
 
-### Em Desenvolvimento 
-- Dashboard Analítico
-- Relatórios Gerenciais
-- Sistema de Notificações
-- Análise Preditiva de Incidentes
+### 🚧 Em Desenvolvimento 
+- 📊 Dashboard Analítico
+- 📋 Relatórios Gerenciais
+- 🔔 Sistema de Notificações
+- 📈 Análise Preditiva de Incidentes
 
 ---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
 ### Backend
-<p>
-  <img src="https://www.python.org/static/community_logos/python-logo.png" alt="Python" width="80" /> &nbsp;
-  <img src="https://static.djangoproject.com/img/logos/django-logo-negative.png" alt="Django" width="150" /> &nbsp;
-  <img src="https://raw.githubusercontent.com/FoxUSA/DRF-logo/main/drf-logo.png" alt="DRF" width="100" /> &nbsp;
-  <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Microsoft_SQL_Server_Logo.svg" alt="SQL Server" width="80" /> &nbsp;
-  <img src="https://www.jwts.io/img/logo.svg" alt="JWT" width="80" />
-</p>
+<div align="center">
 
-- **Python 3.8+**
-- **Django 4.2.10**
-- **Django REST Framework 3.14.0**
-- **SQL Server**
-- **JWT Authentication**
+[![Python](https://img.shields.io/badge/-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/-Django-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![SQL Server](https://img.shields.io/badge/-SQL%20Server-CC2927?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)](https://www.microsoft.com/sql-server)
+[![JWT](https://img.shields.io/badge/-JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)](https://jwt.io/)
+
+</div>
 
 ### Frontend
-<p>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" alt="React" width="80" /> &nbsp;
-  <img src="https://raw.githubusercontent.com/remojansen/logo.ts/master/ts.png" alt="TypeScript" width="80" /> &nbsp;
-  <img src="https://mui.com/static/logo.png" alt="Material UI" width="120" /> &nbsp;
-  <img src="https://axios-http.com/assets/logo.svg" alt="Axios" width="80" />
-</p>
+<div align="center">
 
-- **React 18+**
-- **TypeScript**
-- **Material UI**
-- **Axios**
+[![React](https://img.shields.io/badge/-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Material UI](https://img.shields.io/badge/-Material%20UI-0081CB?style=for-the-badge&logo=material-ui&logoColor=white)](https://mui.com/)
+[![Axios](https://img.shields.io/badge/-Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)](https://axios-http.com/)
+
+</div>
 
 ### Infraestrutura
-- **Docker**
-- **Redis**
-- **Celery**
+<div align="center">
+
+[![Docker](https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Redis](https://img.shields.io/badge/-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Celery](https://img.shields.io/badge/-Celery-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+
+</div>
 
 ---
 
-## Como Contribuir
+## 🤝 Como Contribuir
 
-1. Faça um fork do projeto.  
-2. Crie uma branch para sua feature: `git checkout -b minha-feature`.  
-3. Commit suas alterações: `git commit -m 'Minha nova feature'`.  
-4. Envie para a branch: `git push origin minha-feature`.  
-5. Abra um Pull Request.
+1. 🔀 Faça um fork do projeto
+2. 🌿 Crie uma branch para sua feature: `git checkout -b feature/nova-feature`
+3. 💾 Commit suas alterações: `git commit -m 'feat: Adiciona nova feature'`
+4. 📤 Envie para a branch: `git push origin feature/nova-feature`
+5. 🔍 Abra um Pull Request
 
 ---
 
-## Licença
+## 📝 Licença
 
-Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Distribuído sob a licença MIT. Veja o arquivo [`LICENSE`](LICENSE) para mais detalhes.
