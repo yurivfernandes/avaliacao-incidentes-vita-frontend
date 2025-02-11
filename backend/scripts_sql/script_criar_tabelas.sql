@@ -72,7 +72,7 @@ GO
 -- Criar tabela de premissas
 CREATE TABLE dw_analytics.d_premissas (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    assignment_id NVARCHAR(50) NOT NULL,
+    assignment_id NVARCHAR(255) NOT NULL,
     qtd_incidents INT NOT NULL,
     is_contrato_lancado BIT NOT NULL DEFAULT 1,
     is_horas_lancadas BIT NOT NULL DEFAULT 1,
@@ -85,7 +85,7 @@ CREATE TABLE dw_analytics.d_premissas (
     is_category_correto BIT NOT NULL DEFAULT 1,
     CONSTRAINT FK_premissas_assignment FOREIGN KEY (assignment_id) 
         REFERENCES dw_analytics.d_assignment_group(id)
-)
+) 
 GO
 
 -- Criar tabela fato
