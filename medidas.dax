@@ -1,111 +1,16 @@
-// Medida original com problemas
-/*
-Qtd Tickets últimos 3 meses (Original) = 
-// ... código original ...
-*/
-
-// Versão melhorada usando variáveis e IF
-Qtd Tickets últimos 3 meses = 
-VAR SelectedYear = SELECTEDVALUE('d_Calendário'[Ano], BLANK())
-VAR SelectedMonth = SELECTEDVALUE('d_Calendário'[Mês], BLANK())
-VAR SelectedQuarter = SELECTEDVALUE('d_Calendário'[Trimestre], BLANK())
-VAR SelectedWeek = SELECTEDVALUE('d_Calendário'[Semana], BLANK())
-VAR SelectedMonthYear = SELECTEDVALUE('d_Calendário'[Mês Ano], BLANK())
-VAR SelectedMonthName = SELECTEDVALUE('d_Calendário'[Mês nome], BLANK())
-VAR IsYearFiltered = ISFILTERED('d_Calendário'[Ano])
-VAR IsMonthFiltered = ISFILTERED('d_Calendário'[Mês])
-VAR IsQuarterFiltered = ISFILTERED('d_Calendário'[Trimestre])
-VAR IsWeekFiltered = ISFILTERED('d_Calendário'[Semana])
-VAR IsMonthYearFiltered = ISFILTERED('d_Calendário'[Mês Ano])
-VAR IsMonthNameFiltered = ISFILTERED('d_Calendário'[Mês nome])
-
-RETURN
-IF(
-    IsYearFiltered && IsMonthNameFiltered,
-    CALCULATE(
-        [qtd tickets],
-        'd_Calendário'[Ano] = SelectedYear,
-        'd_Calendário'[Mês nome] = SelectedMonthName
-    ),
-    IF(
-        IsYearFiltered,
-        CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SelectedYear),
-        IF(
-            IsMonthFiltered,
-            CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SelectedMonth),
-            IF(
-                IsQuarterFiltered,
-                CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SelectedQuarter),
-                IF(
-                    IsWeekFiltered,
-                    CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SelectedWeek),
-                    IF(
-                        IsMonthYearFiltered,
-                        CALCULATE([qtd tickets], 'd_Calendário'[Mês Ano] = SelectedMonthYear),
-                        IF(
-                            IsMonthNameFiltered,
-                            CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
-                            CALCULATE(
-                                [qtd tickets],
-                                'd_Calendário'[Últimos 3 Meses] = True()
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
-)
-
-// Medida para últimos 6 meses
-Qtd Tickets últimos 6 meses = 
-VAR SelectedYear = SELECTEDVALUE('d_Calendário'[Ano], BLANK())
-VAR SelectedMonth = SELECTEDVALUE('d_Calendário'[Mês], BLANK())
-VAR SelectedQuarter = SELECTEDVALUE('d_Calendário'[Trimestre], BLANK())
-VAR SelectedWeek = SELECTEDVALUE('d_Calendário'[Semana], BLANK())
-VAR SelectedMonthYear = SELECTEDVALUE('d_Calendário'[Mês Ano], BLANK())
-VAR SelectedMonthName = SELECTEDVALUE('d_Calendário'[Mês nome], BLANK())
-VAR IsYearFiltered = ISFILTERED('d_Calendário'[Ano])
-VAR IsMonthFiltered = ISFILTERED('d_Calendário'[Mês])
-VAR IsQuarterFiltered = ISFILTERED('d_Calendário'[Trimestre])
-VAR IsWeekFiltered = ISFILTERED('d_Calendário'[Semana])
-VAR IsMonthYearFiltered = ISFILTERED('d_Calendário'[Mês Ano])
-VAR IsMonthNameFiltered = ISFILTERED('d_Calendário'[Mês nome])
-
-RETURN
-IF(
-    IsYearFiltered && IsMonthNameFiltered,
-    CALCULATE(
-        [qtd tickets],
-        'd_Calendário'[Ano] = SelectedYear,
-        'd_Calendário'[Mês nome] = SelectedMonthName
-    ),
-    IF(
-        IsYearFiltered,
-        CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SelectedYear),
-        IF(
-            IsMonthFiltered,
-            CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SelectedMonth),
-            IF(
-                IsQuarterFiltered,
-                CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SelectedQuarter),
-                IF(
-                    IsWeekFiltered,
-                    CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SelectedWeek),
-                    IF(
-                        IsMonthYearFiltered,
-                        CALCULATE([qtd tickets], 'd_Calendário'[Mês Ano] = SelectedMonthYear),
-                        IF(
-                            IsMonthNameFiltered,
-                            CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
-                            CALCULATE(
-                                [qtd tickets],
-                                'd_Calendário'[Últimos 6 Meses] = True()
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
+Qtd Tickets últimos 3 meses =
+SWITCH(TRUE(),
+    ISFILTERED('d_Calendário'[Ano]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SELECTEDVALUE('d_Calendário'[Ano])),
+    ISFILTERED('d_Calendário'[Mês]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SELECTEDVALUE('d_Calendário'[Mês])),
+    ISFILTERED('d_Calendário'[Trimestre]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SELECTEDVALUE('d_Calendário'[Trimestre])),
+    ISFILTERED('d_Calendário'[Semana]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SELECTEDVALUE('d_Calendário'[Semana])),
+    ISFILTERED('d_Calendário'[Mês nome]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SELECTEDVALUE('d_Calendário'[Mês nome])),
+    ISFILTERED('d_Calendário'[Mês nome]) && ISFILTERED('d_Calendário'[Ano]),
+    CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SELECTEDVALUE('d_Calendário'[Mês nome]) && 'd_Calendário'[Ano] = SELECTEDVALUE('d_Calendário'[Ano])),
+    CALCULATE([qtd tickets], 'd_Calendário'[Últimos 3 Meses] = TRUE())
 )
