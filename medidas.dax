@@ -3,14 +3,19 @@ SWITCH(TRUE(),
     ISFILTERED('d_Calendário'[Ano]),
     CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SELECTEDVALUE('d_Calendário'[Ano])),
     ISFILTERED('d_Calendário'[Mês]),
-    CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SELECTEDVALUE('d_Calendário'[Mês])),
+    CALCULATE([qtd tickets], 
+        DATESINPERIOD(
+            'd_Calendário'[Data],
+            MAX('d_Calendário'[Data]),
+            -3,
+            MONTH
+        )
+    ),
     ISFILTERED('d_Calendário'[Trimestre]),
     CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SELECTEDVALUE('d_Calendário'[Trimestre])),
     ISFILTERED('d_Calendário'[Semana]),
     CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SELECTEDVALUE('d_Calendário'[Semana])),
     ISFILTERED('d_Calendário'[Mês nome]),
     CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SELECTEDVALUE('d_Calendário'[Mês nome])),
-    ISFILTERED('d_Calendário'[Mês nome]) && ISFILTERED('d_Calendário'[Ano]),
-    CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SELECTEDVALUE('d_Calendário'[Mês nome]) && 'd_Calendário'[Ano] = SELECTEDVALUE('d_Calendário'[Ano])),
     CALCULATE([qtd tickets], 'd_Calendário'[Últimos 3 Meses] = TRUE())
 )
