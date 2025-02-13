@@ -104,4 +104,146 @@ SWITCH (
         [qtd tickets],
         'd_Calendário'[Últimos 6 Meses] = TRUE()
     )
+);
+
+// Medida para penúltimo mês
+Qtd Tickets Penúltimo Mês = 
+CALCULATE(
+    [qtd tickets],
+    DATEADD(
+        'd_Calendário'[Data],
+        -1,
+        MONTH
+    )
+);
+
+// Medida para antepenúltimo mês
+Qtd Tickets Antepenúltimo Mês = 
+CALCULATE(
+    [qtd tickets],
+    DATEADD(
+        'd_Calendário'[Data],
+        -2,
+        MONTH
+    )
+);
+
+// Nome do penúltimo mês
+Nome Penúltimo Mês = 
+FORMAT(
+    EOMONTH(MAX('d_Calendário'[Data]), -1),
+    "mmmm"
+);
+
+// Nome do antepenúltimo mês
+Nome Antepenúltimo Mês = 
+FORMAT(
+    EOMONTH(MAX('d_Calendário'[Data]), -2),
+    "mmmm"
+);
+
+// Medida para penúltimo mês com nome dinâmico
+Qtd Tickets [Nome Penúltimo Mês] = 
+CALCULATE(
+    [qtd tickets],
+    DATEADD(
+        'd_Calendário'[Data],
+        -1,
+        MONTH
+    )
+);
+
+// Medida para antepenúltimo mês com nome dinâmico
+Qtd Tickets [Nome Antepenúltimo Mês] = 
+CALCULATE(
+    [qtd tickets],
+    DATEADD(
+        'd_Calendário'[Data],
+        -2,
+        MONTH
+    )
+);
+
+// Medida que retorna os tickets dos meses anteriores em formato de tabela
+Tickets Meses Anteriores = 
+ADDCOLUMNS(
+    SUMMARIZE(
+        'd_Calendário',
+        "Mês",
+        FORMAT(
+            EOMONTH(MAX('d_Calendário'[Data]), -1),
+            "mmmm"
+        ),
+        "Tickets",
+        CALCULATE(
+            [qtd tickets],
+            DATEADD(
+                'd_Calendário'[Data],
+                -1,
+                MONTH
+            )
+        )
+    ),
+    "Mês Anterior 2",
+    FORMAT(
+        EOMONTH(MAX('d_Calendário'[Data]), -2),
+        "mmmm"
+    ),
+    "Tickets Mês Anterior 2",
+    CALCULATE(
+        [qtd tickets],
+        DATEADD(
+            'd_Calendário'[Data],
+            -2,
+            MONTH
+        )
+    )
+);
+
+// Medida de tabela dinâmica baseada em filtros
+Tickets Dinamicos por Mes = 
+VAR UltimaData = MAX('d_Calendário'[Data])
+VAR MesAtual = MONTH(UltimaData)
+VAR AnoAtual = YEAR(UltimaData)
+VAR TemFiltroMes = ISFILTERED('d_Calendário'[Mês nome])
+VAR TemFiltroAno = ISFILTERED('d_Calendário'[Ano])
+
+RETURN
+IF(
+    TemFiltroMes || TemFiltroAno,
+    // Caso tenha filtro, usa os filtros aplicados
+    ADDCOLUMNS(
+        SUMMARIZE(
+            ALLSELECTED('d_Calendário'),
+            'd_Calendário'[Mês nome],
+            'd_Calendário'[Ano]
+        ),
+        "Tickets",
+        CALCULATE(
+            [qtd tickets],
+            'd_Calendário'[Mês nome] = EARLIER('d_Calendário'[Mês nome]),
+            'd_Calendário'[Ano] = EARLIER('d_Calendário'[Ano])
+        )
+    ),
+    // Caso não tenha filtro, mostra últimos 3 meses fechados
+    ADDCOLUMNS(
+        GENERATESERIES(-3, -1, 1),
+        "Mês",
+        FORMAT(
+            EOMONTH(UltimaData, [Value]),
+            "mmmm"
+        ),
+        "Ano",
+        YEAR(EOMONTH(UltimaData, [Value])),
+        "Tickets",
+        CALCULATE(
+            [qtd tickets],
+            DATESINPERIOD(
+                'd_Calendário'[Data],
+                EOMONTH(UltimaData, [Value]),
+                1,
+                MONTH
+            )
+        )
+    )
 )
