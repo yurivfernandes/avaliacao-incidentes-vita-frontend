@@ -102,11 +102,6 @@ SWITCH (
     // Caso padrão - últimos 6 meses
     CALCULATE(
         [qtd tickets],
-        DATESINPERIOD(
-            'd_Calendário'[Data],
-            LASTDATE('d_Calendário'[Data]),
-            -6,
-            MONTH
-        )
+        'd_Calendário'[Últimos 6 Meses] = TRUE()
     )
 )
