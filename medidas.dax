@@ -4,12 +4,13 @@ Qtd Tickets últimos 3 meses (Original) =
 // ... código original ...
 */
 
-// Versão melhorada usando SWITCH e ISFILTERED
+// Versão melhorada usando SWITCH
 Qtd Tickets últimos 3 meses = 
 VAR SelectedYear = SELECTEDVALUE('d_Calendário'[Ano], BLANK())
 VAR SelectedMonth = SELECTEDVALUE('d_Calendário'[Mês], BLANK())
 VAR SelectedQuarter = SELECTEDVALUE('d_Calendário'[Trimestre], BLANK())
 VAR SelectedWeek = SELECTEDVALUE('d_Calendário'[Semana], BLANK())
+VAR SelectedMonthYear = SELECTEDVALUE('d_Calendário'[Mês Ano], BLANK())
 VAR SelectedMonthName = SELECTEDVALUE('d_Calendário'[Mês nome], BLANK())
 
 RETURN
@@ -17,8 +18,8 @@ SWITCH(
     TRUE(),
     // Caso 1: Mês e Ano selecionados
     AND(
-        ISFILTERED('d_Calendário'[Ano]),
-        ISFILTERED('d_Calendário'[Mês nome])
+        NOT ISBLANK(SelectedYear), 
+        NOT ISBLANK(SelectedMonthName)
     ),
     CALCULATE(
         [qtd tickets],
@@ -27,31 +28,34 @@ SWITCH(
     ),
     
     // Caso 2: Apenas Ano selecionado
-    ISFILTERED('d_Calendário'[Ano]),
+    NOT ISBLANK(SelectedYear),
     CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SelectedYear),
     
     // Caso 3: Apenas Mês selecionado
-    ISFILTERED('d_Calendário'[Mês]),
+    NOT ISBLANK(SelectedMonth),
     CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SelectedMonth),
     
     // Caso 4: Trimestre selecionado
-    ISFILTERED('d_Calendário'[Trimestre]),
+    NOT ISBLANK(SelectedQuarter),
     CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SelectedQuarter),
     
     // Caso 5: Semana selecionada
-    ISFILTERED('d_Calendário'[Semana]),
+    NOT ISBLANK(SelectedWeek),
     CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SelectedWeek),
     
-    // Caso 6: Apenas Mês nome selecionado
-    ISFILTERED('d_Calendário'[Mês nome]),
+    // Caso 6: Mês-Ano selecionado
+    NOT ISBLANK(SelectedMonthYear),
+    CALCULATE([qtd tickets], 'd_Calendário'[Mês Ano] = SelectedMonthYear),
+    
+    // Caso 7: Apenas Mês nome selecionado
+    NOT ISBLANK(SelectedMonthName),
     CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
     
-    // Caso padrão: Últimos 3 meses quando nada está selecionado
+    // Caso padrão: Últimos 3 meses
     CALCULATE(
         [qtd tickets],
         'd_Calendário'[Últimos 3 Meses] = True()
-    ),
-    BLANK()
+    )
 )
 
 // Medida para últimos 6 meses
@@ -60,6 +64,7 @@ VAR SelectedYear = SELECTEDVALUE('d_Calendário'[Ano], BLANK())
 VAR SelectedMonth = SELECTEDVALUE('d_Calendário'[Mês], BLANK())
 VAR SelectedQuarter = SELECTEDVALUE('d_Calendário'[Trimestre], BLANK())
 VAR SelectedWeek = SELECTEDVALUE('d_Calendário'[Semana], BLANK())
+VAR SelectedMonthYear = SELECTEDVALUE('d_Calendário'[Mês Ano], BLANK())
 VAR SelectedMonthName = SELECTEDVALUE('d_Calendário'[Mês nome], BLANK())
 
 RETURN
@@ -67,8 +72,8 @@ SWITCH(
     TRUE(),
     // Caso 1: Mês e Ano selecionados
     AND(
-        ISFILTERED('d_Calendário'[Ano]),
-        ISFILTERED('d_Calendário'[Mês nome])
+        NOT ISBLANK(SelectedYear), 
+        NOT ISBLANK(SelectedMonthName)
     ),
     CALCULATE(
         [qtd tickets],
@@ -77,29 +82,32 @@ SWITCH(
     ),
     
     // Caso 2: Apenas Ano selecionado
-    ISFILTERED('d_Calendário'[Ano]),
+    NOT ISBLANK(SelectedYear),
     CALCULATE([qtd tickets], 'd_Calendário'[Ano] = SelectedYear),
     
     // Caso 3: Apenas Mês selecionado
-    ISFILTERED('d_Calendário'[Mês]),
+    NOT ISBLANK(SelectedMonth),
     CALCULATE([qtd tickets], 'd_Calendário'[Mês] = SelectedMonth),
     
     // Caso 4: Trimestre selecionado
-    ISFILTERED('d_Calendário'[Trimestre]),
+    NOT ISBLANK(SelectedQuarter),
     CALCULATE([qtd tickets], 'd_Calendário'[Trimestre] = SelectedQuarter),
     
     // Caso 5: Semana selecionada
-    ISFILTERED('d_Calendário'[Semana]),
+    NOT ISBLANK(SelectedWeek),
     CALCULATE([qtd tickets], 'd_Calendário'[Semana] = SelectedWeek),
     
-    // Caso 6: Apenas Mês nome selecionado
-    ISFILTERED('d_Calendário'[Mês nome]),
+    // Caso 6: Mês-Ano selecionado
+    NOT ISBLANK(SelectedMonthYear),
+    CALCULATE([qtd tickets], 'd_Calendário'[Mês Ano] = SelectedMonthYear),
+    
+    // Caso 7: Apenas Mês nome selecionado
+    NOT ISBLANK(SelectedMonthName),
     CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
     
-    // Caso padrão: Últimos 6 meses quando nada está selecionado
+    // Caso padrão: Últimos 6 meses
     CALCULATE(
         [qtd tickets],
         'd_Calendário'[Últimos 6 Meses] = True()
-    ),
-    BLANK()
+    )
 )
