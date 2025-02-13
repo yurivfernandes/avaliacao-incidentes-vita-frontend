@@ -52,9 +52,18 @@ SWITCH(
     CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
     
     // Caso padrão: Últimos 3 meses quando nada está selecionado
-    CALCULATE(
-        [qtd tickets],
-        'd_Calendário'[Últimos 3 Meses] = True()
+    IF(
+        NOT ISFILTERED('d_Calendário'[Ano]) &&
+        NOT ISFILTERED('d_Calendário'[Mês]) &&
+        NOT ISFILTERED('d_Calendário'[Trimestre]) &&
+        NOT ISFILTERED('d_Calendário'[Semana]) &&
+        NOT ISFILTERED('d_Calendário'[Mês Ano]) &&
+        NOT ISFILTERED('d_Calendário'[Mês nome]),
+        CALCULATE(
+            [qtd tickets],
+            'd_Calendário'[Últimos 3 Meses] = True()
+        ),
+        BLANK()
     )
 )
 
@@ -106,8 +115,17 @@ SWITCH(
     CALCULATE([qtd tickets], 'd_Calendário'[Mês nome] = SelectedMonthName),
     
     // Caso padrão: Últimos 6 meses quando nada está selecionado
-    CALCULATE(
-        [qtd tickets],
-        'd_Calendário'[Últimos 6 Meses] = True()
+    IF(
+        NOT ISFILTERED('d_Calendário'[Ano]) &&
+        NOT ISFILTERED('d_Calendário'[Mês]) &&
+        NOT ISFILTERED('d_Calendário'[Trimestre]) &&
+        NOT ISFILTERED('d_Calendário'[Semana]) &&
+        NOT ISFILTERED('d_Calendário'[Mês Ano]) &&
+        NOT ISFILTERED('d_Calendário'[Mês nome]),
+        CALCULATE(
+            [qtd tickets],
+            'd_Calendário'[Últimos 6 Meses] = True()
+        ),
+        BLANK()
     )
 )
