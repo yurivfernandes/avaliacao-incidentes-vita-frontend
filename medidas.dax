@@ -36,6 +36,16 @@ SWITCH(
                 MONTH
             )
         ),
+    ISFILTERED('d_Calendário'[Mês nome]) && ISFILTERED('d_Calendário'[Ano]),
+        CALCULATE(
+            [qtd tickets],
+            DATESINPERIOD(
+                'd_Calendário'[Data],
+                MAX('d_Calendário'[Data]),
+                -3,
+                MONTH
+            )
+        ),
     CALCULATE(
         [qtd tickets],
         'd_Calendário'[Últimos 3 Meses] = TRUE()
