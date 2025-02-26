@@ -16,6 +16,7 @@ import {
   FaHeadset,   // Ícone relacionado a suporte
   FaClipboardList, // Novo ícone para premissas
 } from 'react-icons/fa';
+import api from '../services/api'; // Importar o serviço de API
 
 function WelcomePage() {
   const { user } = useAuth();
@@ -26,7 +27,7 @@ function WelcomePage() {
 
   const handleDocClick = (e, path) => {
     e.preventDefault();
-    window.open('http://localhost:8000/api/docs/', '_blank');
+    window.open(`${api.defaults.baseURL}/docs/`, '_blank'); // Usar o serviço de API
   };
 
   const cards = [

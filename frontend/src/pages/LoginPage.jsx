@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/LoginPage.css';
 import logo from '../assets/logo_login.svg';
+import api from '../services/api'; // Importar o serviço de API
 
 function LoginPage() {
   useEffect(() => {
@@ -37,15 +38,11 @@ function LoginPage() {
     localStorage.setItem('loginFormData', JSON.stringify(formData));
     
     try {
-      const response = await fetch('http://localhost:8000/api/access/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const response = await api.post('/access/login/', formData); // Usar o serviço de API
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status === 200) {
         localStorage.setItem('token', data.token);
         await login(data.token);
         navigate('/welcome');
