@@ -16,8 +16,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import IndicadorCard, { getTendenciaIcon } from '../components/dashboard/IndicadorCard';
 import Select from 'react-select';
+import { useAuth } from '../context/AuthContext';
 
 function TecnicosReportPage() {
+  const { user } = useAuth();
   const [data, setData] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -27,6 +29,10 @@ function TecnicosReportPage() {
   const [tecnicos, setTecnicos] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState('6');  // default 6 meses
   const [dashboardData, setDashboardData] = useState(null);
+  const [queues, setQueues] = useState([]);
+  const [selectedQueue, setSelectedQueue] = useState(null);
+  const [userQueues, setUserQueues] = useState([]);
+  const [isQueueSelected, setIsQueueSelected] = useState(false);
 
   const periodos = [
     { value: '2', label: 'Últimos 2 meses' },
@@ -73,8 +79,46 @@ function TecnicosReportPage() {
 
   useEffect(() => {
     document.title = 'Avaliação de Incidentes | Relatório de Técnicos';
+    checkUserQueues();
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, [selectedPeriod]);
+
+  useEffect(() => {
+    fetchQueues();
+  }, []);
+
+  // Adicione um novo useEffect para buscar técnicos quando a fila for selecionada
+  useEffect(() => {
+    if (selectedQueue) {
+      fetchTecnicos();
+    }
+  }, [selectedQueue]);
+
+  const checkUserQueues = async () => {
+    try {
+      // Assume que o user tem uma propriedade assignment_groups com as filas do usuário
+      if (user?.assignment_groups?.length === 1) {
+        // Se o usuário tem apenas uma fila, seleciona automaticamente
+        setSelectedQueue(user.assignment_groups[0].id);
+        setUserQueues(user.assignment_groups);
+        setIsQueueSelected(true);
+        await fetchTecnicos(user.assignment_groups[0].id);
+      } else if (user?.assignment_groups?.length > 1) {
+        // Se tem múltiplas filas, permite seleção
+        setUserQueues(user.assignment_groups);
+        setIsQueueSelected(false);
+      } else {
+        // Se não tem filas definidas, carrega todas (para admins)
+        await fetchQueues();
+      }
+    } catch (error) {
+      console.error('Erro ao verificar filas do usuário:', error);
+      setError('Erro ao carregar filas do usuário');
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -100,91 +144,118 @@ function TecnicosReportPage() {
       const apiData = response.data;
       
       if (apiData.resultado_agrupado && apiData.ranking_tecnicos) {
-        // Remover duplicatas dos grupos usando Set
-        const uniqueGroups = Array.from(new Set(
-          apiData.resultado_agrupado.map(item => JSON.stringify({ 
-            id: item.assignment_group_id, 
-            nome: item.assignment_group_nome 
-          }))
-        )).map(item => JSON.parse(item));
-
-        setGroups(uniqueGroups);
-        setSelectedGroup(uniqueGroups[0]?.id);
         setData(apiData.resultado_agrupado);
         setDashboardData(apiData);
+        
+        // Remover duplicatas dos grupos usando Set
+        const somaTotalPorTecnico = new Map();
+        
+        // Primeiro, vamos calcular as tendências
+        const mesesOrdenados = apiData.resultado_agrupado
+          .sort((a, b) => {
+            const [mesA, anoA] = a.mes.split('/');
+            const [mesB, anoB] = b.mes.split('/');
+            return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+          });
+
+        // Pega os dois últimos meses para comparar
+        const ultimoMes = mesesOrdenados[0];
+        const penultimoMes = mesesOrdenados[1];
+
+        // Mapa para armazenar as tendências
+        const tendencias = new Map();
+
+        if (ultimoMes && penultimoMes) {
+          ultimoMes.tecnicos.forEach(tecnico => {
+            const tecnicoPenultimoMes = penultimoMes.tecnicos
+              .find(t => t.tecnico_id === tecnico.tecnico_id);
+            
+            if (tecnicoPenultimoMes) {
+              const tendencia = tecnico.percentual > tecnicoPenultimoMes.percentual ? 'up' :
+                              tecnico.percentual < tecnicoPenultimoMes.percentual ? 'down' : 'same';
+              tendencias.set(tecnico.tecnico_id, tendencia);
+            }
+          });
+        }
+
+        // Agora calcula os totais
+        apiData.resultado_agrupado.forEach(mes => {
+          mes.tecnicos.forEach(tecnico => {
+            const key = tecnico.tecnico_id;
+            if (!somaTotalPorTecnico.has(key)) {
+              somaTotalPorTecnico.set(key, {
+                total_pontos: 0,
+                total_possivel: 0,
+                tecnico_nome: tecnico.tecnico_nome,
+                tecnico_id: tecnico.tecnico_id,
+                percentual: 0,
+                tendencia: tendencias.get(key) || 'same'
+              });
+            }
+            const atual = somaTotalPorTecnico.get(key);
+            atual.total_pontos += tecnico.total_pontos;
+            atual.total_possivel += tecnico.total_possivel;
+          });
+        });
+
+        // Calcula o percentual final e atualiza o ranking
+        apiData.ranking_tecnicos = Array.from(somaTotalPorTecnico.values())
+          .map(tecnico => ({
+            ...tecnico,
+            percentual: (tecnico.total_pontos / tecnico.total_possivel) * 100
+          }))
+          .sort((a, b) => b.percentual - a.percentual);
+
+        setDashboardData(apiData);
+        setGroups(apiData.resultado_agrupado.map(group => ({
+          id: group.assignment_group_id,
+          nome: group.assignment_group_nome
+        })));
+        setSelectedGroup(apiData.resultado_agrupado[0]?.assignment_group_id);
+        setData(apiData.resultado_agrupado);
       }
-
-      // Processa os dados para calcular o total do período
-      const somaTotalPorTecnico = new Map();
-      
-      // Primeiro, vamos calcular as tendências
-      const mesesOrdenados = apiData.resultado_agrupado
-        .sort((a, b) => {
-          const [mesA, anoA] = a.mes.split('/');
-          const [mesB, anoB] = b.mes.split('/');
-          return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-        });
-
-      // Pega os dois últimos meses para comparar
-      const ultimoMes = mesesOrdenados[0];
-      const penultimoMes = mesesOrdenados[1];
-
-      // Mapa para armazenar as tendências
-      const tendencias = new Map();
-
-      if (ultimoMes && penultimoMes) {
-        ultimoMes.tecnicos.forEach(tecnico => {
-          const tecnicoPenultimoMes = penultimoMes.tecnicos
-            .find(t => t.tecnico_id === tecnico.tecnico_id);
-          
-          if (tecnicoPenultimoMes) {
-            const tendencia = tecnico.percentual > tecnicoPenultimoMes.percentual ? 'up' :
-                            tecnico.percentual < tecnicoPenultimoMes.percentual ? 'down' : 'same';
-            tendencias.set(tecnico.tecnico_id, tendencia);
-          }
-        });
-      }
-
-      // Agora calcula os totais
-      apiData.resultado_agrupado.forEach(mes => {
-        mes.tecnicos.forEach(tecnico => {
-          const key = tecnico.tecnico_id;
-          if (!somaTotalPorTecnico.has(key)) {
-            somaTotalPorTecnico.set(key, {
-              total_pontos: 0,
-              total_possivel: 0,
-              tecnico_nome: tecnico.tecnico_nome,
-              tecnico_id: tecnico.tecnico_id,
-              percentual: 0,
-              tendencia: tendencias.get(key) || 'same'
-            });
-          }
-          const atual = somaTotalPorTecnico.get(key);
-          atual.total_pontos += tecnico.total_pontos;
-          atual.total_possivel += tecnico.total_possivel;
-        });
-      });
-
-      // Calcula o percentual final e atualiza o ranking
-      apiData.ranking_tecnicos = Array.from(somaTotalPorTecnico.values())
-        .map(tecnico => ({
-          ...tecnico,
-          percentual: (tecnico.total_pontos / tecnico.total_possivel) * 100
-        }))
-        .sort((a, b) => b.percentual - a.percentual);
-
-      setDashboardData(apiData);
-      setGroups(apiData.resultado_agrupado.map(group => ({
-        id: group.assignment_group_id,
-        nome: group.assignment_group_nome
-      })));
-      setSelectedGroup(apiData.resultado_agrupado[0]?.assignment_group_id);
-      setData(apiData.resultado_agrupado);
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
       setError('Erro ao carregar os dados');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchQueues = async () => {
+    try {
+      const response = await api.get('/dw_analytics/assignment-group/');
+      const activeQueues = response.data.results.filter(queue => queue.status);
+      setQueues(activeQueues);
+      setUserQueues(activeQueues);
+    } catch (error) {
+      console.error('Erro ao carregar filas:', error);
+    }
+  };
+
+  const fetchTecnicos = async (queueId = selectedQueue) => {
+    if (!queueId) return;
+    
+    try {
+      const response = await api.get('/access/users/');
+      
+      // Filtra apenas os técnicos ativos que pertencem à fila selecionada
+      const tecnicosList = response.data.results
+        .filter(user => 
+          user.is_ativo && 
+          user.is_tecnico && 
+          user.assignment_groups.some(group => group.id === queueId)
+        )
+        .map(user => ({
+          id: user.id,
+          nome: user.full_name
+        }));
+      
+      setTecnicos(tecnicosList);
+      setSelectedTecnico('todos');
+      setIsQueueSelected(true);
+    } catch (error) {
+      console.error('Erro ao carregar técnicos:', error);
     }
   };
 
@@ -437,6 +508,39 @@ function TecnicosReportPage() {
   };
 
   const renderDashboardContent = () => {
+    if (!isQueueSelected) {
+      return (
+        <div className="dashboard-content-container">
+          <div className="dashboard-report-header">
+            <h1 className="dashboard-report-title">
+              <FaChartBar className="title-icon" />
+              Relatório de Técnicos
+            </h1>
+          </div>
+          <div className="dashboard-filters-container">
+            <div className="dashboard-filter-group">
+              <label>Selecione uma Fila para continuar</label>
+              <Select
+                className="react-select-container"
+                classNamePrefix="react-select"
+                value={userQueues
+                  .map(q => ({ value: q.id, label: q.dv_assignment_group }))
+                  .find(option => option.value === selectedQueue)}
+                onChange={(option) => {
+                  setSelectedQueue(option.value);
+                  fetchTecnicos(option.value);
+                }}
+                options={userQueues.map(queue => ({
+                  value: queue.id,
+                  label: queue.dv_assignment_group
+                }))}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (loading) {
       return (
         <div className="dashboard-content-container">
@@ -471,7 +575,7 @@ function TecnicosReportPage() {
     }));
 
     const tecnicoOptions = tecnicos.map(tecnico => ({
-      value: tecnico.nome,
+      value: tecnico.id,
       label: tecnico.nome
     }));
 
@@ -506,21 +610,29 @@ function TecnicosReportPage() {
         
         <div className="dashboard-filters-container">
           <div className="dashboard-filter-group">
-            <label>Fila de Atendimento</label>
+            <label>Fila</label>
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
-              value={groupOptions.find(option => option.value === selectedGroup)}
-              onChange={(option) => setSelectedGroup(option.value)}
-              options={groupOptions}
+              value={queues.map(q => ({ value: q.id, label: q.dv_assignment_group }))
+                .find(option => option.value === selectedQueue)}
+              onChange={(option) => {
+                setSelectedQueue(option.value);
+                setSelectedTecnico('todos'); // Reset seleção do técnico
+              }}
+              options={queues.map(queue => ({
+                value: queue.id,
+                label: queue.dv_assignment_group
+              }))}
             />
           </div>
-          
+
           <div className="dashboard-filter-group">
             <label>Técnico</label>
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
+              isDisabled={!selectedQueue} // Desabilita se não houver fila selecionada
               value={tecnicoOptions.find(option => option.value === selectedTecnico) || { value: 'todos', label: 'Todos os Técnicos' }}
               onChange={(option) => setSelectedTecnico(option.value)}
               options={[{ value: 'todos', label: 'Todos os Técnicos' }, ...tecnicoOptions]}
