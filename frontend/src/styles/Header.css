@@ -97,6 +97,14 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+.app-logout:hover {
+  color: #ff4444;
+}
+
+.app-logout:hover svg {
+  color: #ff4444;
+}
+
 .app-premissas {
   background: none;
   border: none;
