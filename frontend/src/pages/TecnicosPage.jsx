@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import TecnicosTable from '../components/Tecnicos/TecnicosTable';
 import AddUserDropdown from '../components/Tecnicos/AddUserDropdown';
@@ -15,7 +15,9 @@ const tabs = [
 
 function TecnicosPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('usuarios');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'usuarios';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [tableData, setTableData] = useState({
     usuarios: [],
     assignment_groups: []
@@ -72,6 +74,7 @@ function TecnicosPage() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
     setCurrentPage(1);
   };
 

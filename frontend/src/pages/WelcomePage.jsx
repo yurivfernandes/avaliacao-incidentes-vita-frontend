@@ -5,16 +5,17 @@ import Header from '../components/Header/Header';
 import '../styles/WelcomePage.css';
 import { 
   FaUserCog, 
-  FaChartBar, // Substituir FaChartPie por FaChartBar
-  FaBook, // Adicionar import para o ícone de documentação
-  FaUsers, // Novo import para técnicos
+  FaChartBar,
+  FaBook,
+  FaUsers,
+  FaUser,  // Adicionando o import que faltava
   FaReact,
-  FaPython, // Para o backend
-  FaFileAlt, // Para o manual
-  FaTicketAlt, // Ícone de ticket/chamado
-  FaListAlt,   // Ícone de lista de chamados
-  FaHeadset,   // Ícone relacionado a suporte
-  FaClipboardList, // Novo ícone para premissas
+  FaPython,
+  FaFileAlt,
+  FaTicketAlt,
+  FaListAlt,
+  FaHeadset,
+  FaClipboardList,
 } from 'react-icons/fa';
 import api from '../services/api'; // Importar o serviço de API
 
@@ -38,9 +39,14 @@ function WelcomePage() {
       icon: <FaUsers size={32} />,
       subItems: [
         { 
-          name: 'Gestão de Usuários', 
+          name: 'Usuários', 
+          icon: <FaUser size={16} />, 
+          path: '/gestao-usuarios?tab=usuarios'
+        },
+        { 
+          name: 'Assignment Groups', 
           icon: <FaUsers size={16} />, 
-          path: '/gestao-usuarios'
+          path: '/gestao-usuarios?tab=assignment_groups'
         }
       ]
     }] : []),
@@ -61,12 +67,17 @@ function WelcomePage() {
       title: 'Avaliação de Incidentes',
       description: 'Realize avaliações de incidentes',
       active: true,
-      icon: <FaHeadset size={32} />, // Ícone principal alterado para headset
+      icon: <FaHeadset size={32} />,
       subItems: [
         { 
-          name: 'Avaliações', 
+          name: 'Tickets Pendentes', 
+          icon: <FaTicketAlt size={16} />, 
+          path: '/avaliacoes?tab=pendentes'
+        },
+        { 
+          name: 'Tickets Avaliados', 
           icon: <FaListAlt size={16} />, 
-          path: '/avaliacoes'
+          path: '/avaliacoes?tab=avaliados'
         }
       ]
     },

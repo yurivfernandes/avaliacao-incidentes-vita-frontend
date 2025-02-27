@@ -52,15 +52,21 @@ function Header() {
           <ul className="app-menu">
             {(user?.is_staff || user?.is_gestor) && (
               <li className="app-menu-item user-menu">
-                <Link to="/gestao-usuarios">
+                <Link to="/gestao-usuarios?tab=usuarios">
                   <FaUsers />
                   <span>Gestão de Usuários</span>
                 </Link>
                 <ul className="user-submenu">
                   <li>
-                    <Link to="/gestao-usuarios">
+                    <Link to="/gestao-usuarios?tab=usuarios">
+                      <FaUser />
+                      <span>Usuários</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/gestao-usuarios?tab=assignment_groups">
                       <FaUsers />
-                      <span>Gestão de Usuários</span>
+                      <span>Assignment Groups</span>
                     </Link>
                   </li>
                 </ul>
@@ -72,6 +78,14 @@ function Header() {
                   <FaClipboardList />
                   <span>Premissas</span>
                 </Link>
+                <ul className="user-submenu">
+                  <li>
+                    <Link to="/premissas/">
+                      <FaClipboardList />
+                      <span>Premissas</span>
+                    </Link>
+                  </li>
+                </ul>
               </li>
             )}
             <li className="app-menu-item user-menu">
@@ -81,9 +95,15 @@ function Header() {
               </Link>
               <ul className="user-submenu">
                 <li>
-                  <Link to="/avaliacoes">
+                  <Link to="/avaliacoes?tab=pendentes">
+                    <FaTicketAlt />
+                    <span>Tickets Pendentes</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/avaliacoes?tab=avaliados">
                     <FaListAlt />
-                    <span>Avaliações</span>
+                    <span>Tickets Avaliados</span>
                   </Link>
                 </li>
               </ul>
