@@ -365,13 +365,9 @@ function TecnicosReportPage() {
     return <span className="dashboard-ranking-number">{position}</span>;
   };
 
-  if (loading) return <div className="loading-container">Carregando...</div>;
-  if (error) return <div className="error-container">{error}</div>;
-
-  return (
-    <>
-      <Header />
-      <div className="dashboard-report-container">
+  const renderDashboardContent = () => {
+    if (loading) {
+      return (
         <div className="dashboard-content-container">
           <div className="dashboard-report-header">
             <h1 className="dashboard-report-title">
@@ -379,251 +375,286 @@ function TecnicosReportPage() {
               Relatório de Técnicos
             </h1>
           </div>
+          <div className="loading-container">Carregando dados...</div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="dashboard-content-container">
+          <div className="dashboard-report-header">
+            <h1 className="dashboard-report-title">
+              <FaChartBar className="title-icon" />
+              Relatório de Técnicos
+            </h1>
+          </div>
+          <div className="error-container">{error}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="dashboard-content-container">
+        <div className="dashboard-report-header">
+          <h1 className="dashboard-report-title">
+            <FaChartBar className="title-icon" />
+            Relatório de Técnicos
+          </h1>
+        </div>
+        
+        <div className="dashboard-filters-container">
+          <div className="dashboard-filter-group">
+            <label>Fila de Atendimento</label>
+            <select 
+              className="dashboard-filter-select"
+              value={selectedGroup || ''} 
+              onChange={(e) => setSelectedGroup(Number(e.target.value))}
+            >
+              {groups.map(group => (
+                <option key={group.id} value={group.id}>
+                  {group.nome}
+                </option>
+              ))}
+            </select>
+          </div>
           
-          <div className="dashboard-filters-container">
-            <div className="dashboard-filter-group">
-              <label>Fila de Atendimento</label>
-              <select 
-                className="dashboard-filter-select"
-                value={selectedGroup || ''} 
-                onChange={(e) => setSelectedGroup(Number(e.target.value))}
-              >
-                {groups.map(group => (
-                  <option key={group.id} value={group.id}>
-                    {group.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="dashboard-filter-group">
-              <label>Técnico</label>
-              <select
-                className="dashboard-filter-select"
-                value={selectedTecnico}
-                onChange={(e) => setSelectedTecnico(e.target.value)}
-              >
-                <option value="todos">Todos os Técnicos</option>
-                {tecnicos.map(tecnico => (
-                  <option key={tecnico.id} value={tecnico.nome}>
-                    {tecnico.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="dashboard-filter-group">
+            <label>Técnico</label>
+            <select
+              className="dashboard-filter-select"
+              value={selectedTecnico}
+              onChange={(e) => setSelectedTecnico(e.target.value)}
+            >
+              <option value="todos">Todos os Técnicos</option>
+              {tecnicos.map(tecnico => (
+                <option key={tecnico.id} value={tecnico.nome}>
+                  {tecnico.nome}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="dashboard-filter-group">
-              <label>Período</label>
-              <select
-                className="dashboard-filter-select"
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-              >
-                {periodos.map(periodo => (
-                  <option key={periodo.value} value={periodo.value}>
-                    {periodo.label}
-                  </option>
-                ))}
-              </select>
+          <div className="dashboard-filter-group">
+            <label>Período</label>
+            <select
+              className="dashboard-filter-select"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+            >
+              {periodos.map(periodo => (
+                <option key={periodo.value} value={periodo.value}>
+                  {periodo.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="dashboard-grid">
+          <IndicadorCard
+            icon={FaChartBar}
+            title="Média % Período"
+            value={calcularMediaPercentualPeriodo().toFixed(2)}
+            subtitle="%"
+            tendencia={calcularTendenciaGeral()}
+          />
+
+          <IndicadorCard
+            icon={FaChartBar}
+            title="Média % Último Mês"
+            value={calcularMediaPercentualUltimoMes().toFixed(2)}
+            subtitle="%"
+            tendencia={calcularTendenciaGeral()}
+          />
+
+          <IndicadorCard
+            icon={FaChartBar}
+            title="Média Período"
+            value={Math.round(calcularMediaPontuacaoPeriodo())}
+            tendencia={calcularTendenciaGeral()}
+          />
+
+          <IndicadorCard
+            icon={FaChartBar}
+            title="Média Último Mês"
+            value={Math.round(calcularMediaPontuacaoUltimoMes())}
+            tendencia={calcularTendenciaGeral()}
+          />
+
+          <IndicadorCard
+            icon={FaExclamationTriangle}
+            title="Ponto Crítico"
+            value={calcularPontoCritico()}
+            className="critical"
+          />
+        </div>
+
+        <div className="dashboard-flex">
+          <div className="dashboard-chart-container">
+            <h3 className="dashboard-chart-title" style={{ textAlign: 'center' }}>
+              Evolução dos Percentuais
+            </h3>
+            <div className="chart-wrapper">
+              <div className="chart-outer-container">
+                <ResponsiveContainer width="95%" height={400}>
+                  <AreaChart 
+                    data={getFilteredData()
+                      .sort((a, b) => {
+                        const [mesA, anoA] = a.mes.split('/');
+                        const [mesB, anoB] = b.mes.split('/');
+                        return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
+                      })} 
+                    margin={{ top: 20, right: 40, left: 20, bottom: 20 }}
+                  >
+                    <defs>
+                      {colors.map((color, index) => (
+                        <linearGradient
+                          key={`gradient-${index}`}
+                          id={`colorGradient${index + 1}`}
+                          x1="0" y1="0"
+                          x2="0" y2="1"
+                        >
+                          <stop offset="5%" stopColor={color.gradient[0]} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={color.gradient[1]} stopOpacity={0.1}/>
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    
+                    <XAxis 
+                      dataKey="mes" 
+                      tickFormatter={formatMes}
+                      style={{ 
+                        fontFamily: 'Poppins',
+                        fontSize: '12px',
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                      padding={{ left: 10, right: 10 }}
+                    />
+                    <YAxis 
+                      hide={true}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip 
+                      formatter={(value, name) => [`${value.toFixed(2)}%`, name.split('_')[0]]}
+                      labelFormatter={formatMes}
+                    />
+                    <Legend 
+                      formatter={(value) => value.split('_')[0]}
+                      wrapperStyle={{ paddingTop: '20px' }}
+                    />
+                    {Object.keys(getFilteredData()[0] || {})
+                      .filter(key => !['mes', 'group_id', 'group_nome'].includes(key) && 
+                        !key.includes('_detalhes') && !key.includes('_tendencia'))
+                      .sort() // Ordena alfabeticamente
+                      .map((tecnico, index, array) => {
+                        const colorIndex = getColorIndex(index, array.length);
+                        return (
+                          <Area
+                            key={tecnico}
+                            type="monotone"
+                            dataKey={tecnico}
+                            name={tecnico}
+                            stroke={colors[colorIndex].stroke}
+                            fill={colors[colorIndex].fill}
+                            strokeWidth={2}
+                            dot={{ 
+                              r: 6,
+                              fill: '#FFFFFF',
+                              stroke: colors[colorIndex].stroke,
+                              strokeWidth: 2.5
+                            }}
+                            activeDot={{ 
+                              r: 8,
+                              fill: '#FFFFFF',
+                              stroke: colors[colorIndex].stroke,
+                              strokeWidth: 2.5
+                            }}
+                            label={props => {
+                              const { x, y, value, index: dataIndex } = props;
+                              const data = getFilteredData();
+                              const proximosValores = Object.keys(data[dataIndex])
+                                .filter(k => !['mes', 'group_id', 'group_nome'].includes(k) && 
+                                  !k.includes('_detalhes') && !k.includes('_tendencia'))
+                                .map(k => ({
+                                  valor: data[dataIndex][k],
+                                  nome: k,
+                                  y: data[dataIndex][k] // armazena o valor Y para comparação
+                                }))
+                                .sort((a, b) => b.y - a.y); // ordena por valor decrescente
+
+                              if (proximosValores.length <= 2) {
+                                const posicao = proximosValores.findIndex(v => v.nome === tecnico);
+                                // Ajusta o offset baseado na posição e no valor
+                                const offsetY = posicao === 0 ? -25 : posicao === 1 ? 25 : 0;
+                                
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y + offsetY}
+                                    fill={colors[colorIndex].stroke}
+                                    fontSize={11}
+                                    fontWeight="500"
+                                    textAnchor="middle"
+                                    className="area-chart-label"
+                                  >
+                                    {`${Math.round(value)}%`}
+                                  </text>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                        );
+                      })}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
-          <div className="dashboard-grid">
-            <IndicadorCard
-              icon={FaChartBar}
-              title="Média % Período"
-              value={calcularMediaPercentualPeriodo().toFixed(2)}
-              subtitle="%"
-              tendencia={calcularTendenciaGeral()}
-            />
-
-            <IndicadorCard
-              icon={FaChartBar}
-              title="Média % Último Mês"
-              value={calcularMediaPercentualUltimoMes().toFixed(2)}
-              subtitle="%"
-              tendencia={calcularTendenciaGeral()}
-            />
-
-            <IndicadorCard
-              icon={FaChartBar}
-              title="Média Período"
-              value={Math.round(calcularMediaPontuacaoPeriodo())}
-              tendencia={calcularTendenciaGeral()}
-            />
-
-            <IndicadorCard
-              icon={FaChartBar}
-              title="Média Último Mês"
-              value={Math.round(calcularMediaPontuacaoUltimoMes())}
-              tendencia={calcularTendenciaGeral()}
-            />
-
-            <IndicadorCard
-              icon={FaExclamationTriangle}
-              title="Ponto Crítico"
-              value={calcularPontoCritico()}
-              className="critical"
-            />
-          </div>
-
-          <div className="dashboard-flex">
-            <div className="dashboard-chart-container">
-              <h3 className="dashboard-chart-title" style={{ textAlign: 'center' }}>
-                Evolução dos Percentuais
-              </h3>
-              <div className="chart-wrapper">
-                <div className="chart-outer-container">
-                  <ResponsiveContainer width="95%" height={400}>
-                    <AreaChart 
-                      data={getFilteredData()
-                        .sort((a, b) => {
-                          const [mesA, anoA] = a.mes.split('/');
-                          const [mesB, anoB] = b.mes.split('/');
-                          return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
-                        })} 
-                      margin={{ top: 20, right: 40, left: 20, bottom: 20 }}
-                    >
-                      <defs>
-                        {colors.map((color, index) => (
-                          <linearGradient
-                            key={`gradient-${index}`}
-                            id={`colorGradient${index + 1}`}
-                            x1="0" y1="0"
-                            x2="0" y2="1"
-                          >
-                            <stop offset="5%" stopColor={color.gradient[0]} stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor={color.gradient[1]} stopOpacity={0.1}/>
-                          </linearGradient>
-                        ))}
-                      </defs>
-                      
-                      <XAxis 
-                        dataKey="mes" 
-                        tickFormatter={formatMes}
-                        style={{ 
-                          fontFamily: 'Poppins',
-                          fontSize: '12px',
-                        }}
-                        axisLine={false}
-                        tickLine={false}
-                        padding={{ left: 10, right: 10 }}
-                      />
-                      <YAxis 
-                        hide={true}
-                        domain={[0, 100]}
-                      />
-                      <Tooltip 
-                        formatter={(value, name) => [`${value.toFixed(2)}%`, name.split('_')[0]]}
-                        labelFormatter={formatMes}
-                      />
-                      <Legend 
-                        formatter={(value) => value.split('_')[0]}
-                        wrapperStyle={{ paddingTop: '20px' }}
-                      />
-                      {Object.keys(getFilteredData()[0] || {})
-                        .filter(key => !['mes', 'group_id', 'group_nome'].includes(key) && 
-                          !key.includes('_detalhes') && !key.includes('_tendencia'))
-                        .sort() // Ordena alfabeticamente
-                        .map((tecnico, index, array) => {
-                          const colorIndex = getColorIndex(index, array.length);
-                          return (
-                            <Area
-                              key={tecnico}
-                              type="monotone"
-                              dataKey={tecnico}
-                              name={tecnico}
-                              stroke={colors[colorIndex].stroke}
-                              fill={colors[colorIndex].fill}
-                              strokeWidth={2}
-                              dot={{ 
-                                r: 6,
-                                fill: '#FFFFFF',
-                                stroke: colors[colorIndex].stroke,
-                                strokeWidth: 2.5
-                              }}
-                              activeDot={{ 
-                                r: 8,
-                                fill: '#FFFFFF',
-                                stroke: colors[colorIndex].stroke,
-                                strokeWidth: 2.5
-                              }}
-                              label={props => {
-                                const { x, y, value, index: dataIndex } = props;
-                                const data = getFilteredData();
-                                const proximosValores = Object.keys(data[dataIndex])
-                                  .filter(k => !['mes', 'group_id', 'group_nome'].includes(k) && 
-                                    !k.includes('_detalhes') && !k.includes('_tendencia'))
-                                  .map(k => ({
-                                    valor: data[dataIndex][k],
-                                    nome: k,
-                                    y: data[dataIndex][k] // armazena o valor Y para comparação
-                                  }))
-                                  .sort((a, b) => b.y - a.y); // ordena por valor decrescente
-
-                                if (proximosValores.length <= 2) {
-                                  const posicao = proximosValores.findIndex(v => v.nome === tecnico);
-                                  // Ajusta o offset baseado na posição e no valor
-                                  const offsetY = posicao === 0 ? -25 : posicao === 1 ? 25 : 0;
-                                  
-                                  return (
-                                    <text
-                                      x={x}
-                                      y={y + offsetY}
-                                      fill={colors[colorIndex].stroke}
-                                      fontSize={11}
-                                      fontWeight="500"
-                                      textAnchor="middle"
-                                      className="area-chart-label"
-                                    >
-                                      {`${Math.round(value)}%`}
-                                    </text>
-                                  );
-                                }
-                                return null;
-                              }}
-                            />
-                          );
-                        })}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+          <div className="dashboard-ranking-container">
+            <h3>
+              <FaTrophy className="card-icon" />
+              Ranking dos Técnicos
+            </h3>
+            <div className="ranking-list-container">
+              <div className="dashboard-ranking-header">
+                <span>Técnico</span>
+                <span>Percentual</span>
+                <span>Pontos Total</span>
               </div>
-            </div>
-
-            <div className="dashboard-ranking-container">
-              <h3>
-                <FaTrophy className="card-icon" />
-                Ranking dos Técnicos
-              </h3>
-              <div className="ranking-list-container">
-                <div className="dashboard-ranking-header">
-                  <span>Técnico</span>
-                  <span>Percentual</span>
-                  <span>Pontos Total</span>
-                </div>
-                <ul className="ranking-list">
-                  {dashboardData?.ranking_tecnicos?.map((tecnico, index) => (
-                    <li key={tecnico.tecnico_id} 
-                        className={`dashboard-ranking-item ${index === 0 ? 'top-1' : ''} ${index < 3 ? `dashboard-top-${index + 1}` : ''}`}>
-                      <div className="dashboard-ranking-info">
-                        {getMedalIcon(index + 1)}
-                        <span className="ranking-name">{tecnico.tecnico_nome}</span>
-                      </div>
-                      <div className="ranking-percentage">
-                        {tecnico.percentual.toFixed(2)}%
-                        {getTendenciaIcon(tecnico.tendencia)}
-                      </div>
-                      <div className="ranking-pontos">
-                        {tecnico.total_pontos} / {tecnico.total_possivel}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="ranking-list">
+                {dashboardData?.ranking_tecnicos?.map((tecnico, index) => (
+                  <li key={tecnico.tecnico_id} 
+                      className={`dashboard-ranking-item ${index === 0 ? 'top-1' : ''} ${index < 3 ? `dashboard-top-${index + 1}` : ''}`}>
+                    <div className="dashboard-ranking-info">
+                      {getMedalIcon(index + 1)}
+                      <span className="ranking-name">{tecnico.tecnico_nome}</span>
+                    </div>
+                    <div className="ranking-percentage">
+                      {tecnico.percentual.toFixed(2)}%
+                      {getTendenciaIcon(tecnico.tendencia)}
+                    </div>
+                    <div className="ranking-pontos">
+                      {tecnico.total_pontos} / {tecnico.total_possivel}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <Header />
+      <div className="dashboard-report-container">
+        {renderDashboardContent()}
       </div>
     </>
   );
