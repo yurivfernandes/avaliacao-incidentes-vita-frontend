@@ -15,6 +15,7 @@ import { FaChartBar, FaTrophy, FaExclamationTriangle, FaChartLine, FaMedal } fro
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import IndicadorCard, { getTendenciaIcon } from '../components/dashboard/IndicadorCard';
+import Select from 'react-select';
 
 function TecnicosReportPage() {
   const [data, setData] = useState([]);
@@ -96,68 +97,81 @@ function TecnicosReportPage() {
         }
       });
 
-      // Processa os dados para calcular o total do período
       const apiData = response.data;
       
       if (apiData.resultado_agrupado && apiData.ranking_tecnicos) {
-        const somaTotalPorTecnico = new Map();
-        
-        // Primeiro, vamos calcular as tendências
-        const mesesOrdenados = apiData.resultado_agrupado
-          .sort((a, b) => {
-            const [mesA, anoA] = a.mes.split('/');
-            const [mesB, anoB] = b.mes.split('/');
-            return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-          });
+        // Remover duplicatas dos grupos usando Set
+        const uniqueGroups = Array.from(new Set(
+          apiData.resultado_agrupado.map(item => JSON.stringify({ 
+            id: item.assignment_group_id, 
+            nome: item.assignment_group_nome 
+          }))
+        )).map(item => JSON.parse(item));
 
-        // Pega os dois últimos meses para comparar
-        const ultimoMes = mesesOrdenados[0];
-        const penultimoMes = mesesOrdenados[1];
+        setGroups(uniqueGroups);
+        setSelectedGroup(uniqueGroups[0]?.id);
+        setData(apiData.resultado_agrupado);
+        setDashboardData(apiData);
+      }
 
-        // Mapa para armazenar as tendências
-        const tendencias = new Map();
-
-        if (ultimoMes && penultimoMes) {
-          ultimoMes.tecnicos.forEach(tecnico => {
-            const tecnicoPenultimoMes = penultimoMes.tecnicos
-              .find(t => t.tecnico_id === tecnico.tecnico_id);
-            
-            if (tecnicoPenultimoMes) {
-              const tendencia = tecnico.percentual > tecnicoPenultimoMes.percentual ? 'up' :
-                              tecnico.percentual < tecnicoPenultimoMes.percentual ? 'down' : 'same';
-              tendencias.set(tecnico.tecnico_id, tendencia);
-            }
-          });
-        }
-
-        // Agora calcula os totais
-        apiData.resultado_agrupado.forEach(mes => {
-          mes.tecnicos.forEach(tecnico => {
-            const key = tecnico.tecnico_id;
-            if (!somaTotalPorTecnico.has(key)) {
-              somaTotalPorTecnico.set(key, {
-                total_pontos: 0,
-                total_possivel: 0,
-                tecnico_nome: tecnico.tecnico_nome,
-                tecnico_id: tecnico.tecnico_id,
-                percentual: 0,
-                tendencia: tendencias.get(key) || 'same'
-              });
-            }
-            const atual = somaTotalPorTecnico.get(key);
-            atual.total_pontos += tecnico.total_pontos;
-            atual.total_possivel += tecnico.total_possivel;
-          });
+      // Processa os dados para calcular o total do período
+      const somaTotalPorTecnico = new Map();
+      
+      // Primeiro, vamos calcular as tendências
+      const mesesOrdenados = apiData.resultado_agrupado
+        .sort((a, b) => {
+          const [mesA, anoA] = a.mes.split('/');
+          const [mesB, anoB] = b.mes.split('/');
+          return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
         });
 
-        // Calcula o percentual final e atualiza o ranking
-        apiData.ranking_tecnicos = Array.from(somaTotalPorTecnico.values())
-          .map(tecnico => ({
-            ...tecnico,
-            percentual: (tecnico.total_pontos / tecnico.total_possivel) * 100
-          }))
-          .sort((a, b) => b.percentual - a.percentual);
+      // Pega os dois últimos meses para comparar
+      const ultimoMes = mesesOrdenados[0];
+      const penultimoMes = mesesOrdenados[1];
+
+      // Mapa para armazenar as tendências
+      const tendencias = new Map();
+
+      if (ultimoMes && penultimoMes) {
+        ultimoMes.tecnicos.forEach(tecnico => {
+          const tecnicoPenultimoMes = penultimoMes.tecnicos
+            .find(t => t.tecnico_id === tecnico.tecnico_id);
+          
+          if (tecnicoPenultimoMes) {
+            const tendencia = tecnico.percentual > tecnicoPenultimoMes.percentual ? 'up' :
+                            tecnico.percentual < tecnicoPenultimoMes.percentual ? 'down' : 'same';
+            tendencias.set(tecnico.tecnico_id, tendencia);
+          }
+        });
       }
+
+      // Agora calcula os totais
+      apiData.resultado_agrupado.forEach(mes => {
+        mes.tecnicos.forEach(tecnico => {
+          const key = tecnico.tecnico_id;
+          if (!somaTotalPorTecnico.has(key)) {
+            somaTotalPorTecnico.set(key, {
+              total_pontos: 0,
+              total_possivel: 0,
+              tecnico_nome: tecnico.tecnico_nome,
+              tecnico_id: tecnico.tecnico_id,
+              percentual: 0,
+              tendencia: tendencias.get(key) || 'same'
+            });
+          }
+          const atual = somaTotalPorTecnico.get(key);
+          atual.total_pontos += tecnico.total_pontos;
+          atual.total_possivel += tecnico.total_possivel;
+        });
+      });
+
+      // Calcula o percentual final e atualiza o ranking
+      apiData.ranking_tecnicos = Array.from(somaTotalPorTecnico.values())
+        .map(tecnico => ({
+          ...tecnico,
+          percentual: (tecnico.total_pontos / tecnico.total_possivel) * 100
+        }))
+        .sort((a, b) => b.percentual - a.percentual);
 
       setDashboardData(apiData);
       setGroups(apiData.resultado_agrupado.map(group => ({
@@ -248,14 +262,26 @@ function TecnicosReportPage() {
   };
 
   const calcularTendenciaGeral = () => {
-    if (!dashboardData?.ranking_tecnicos?.length) return 'same';
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return 'same';
     
-    const tecnicos = dashboardData.ranking_tecnicos;
-    const tendenciasUp = tecnicos.filter(t => t.tendencia === 'up').length;
-    const tendenciasDown = tecnicos.filter(t => t.tendencia === 'down').length;
-    
-    if (tendenciasUp > tendenciasDown) return 'up';
-    if (tendenciasDown > tendenciasUp) return 'down';
+    const mesesOrdenados = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup)
+      .sort((a, b) => {
+        const [mesA, anoA] = a.mes.split('/');
+        const [mesB, anoB] = b.mes.split('/');
+        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+      });
+
+    if (mesesOrdenados.length < 2) return 'same';
+
+    const ultimoMes = mesesOrdenados[0];
+    const penultimoMes = mesesOrdenados[1];
+
+    const mediaUltimoMes = ultimoMes.tecnicos.reduce((acc, t) => acc + t.percentual, 0) / ultimoMes.tecnicos.length;
+    const mediaPenultimoMes = penultimoMes.tecnicos.reduce((acc, t) => acc + t.percentual, 0) / penultimoMes.tecnicos.length;
+
+    if (mediaUltimoMes > mediaPenultimoMes) return 'up';
+    if (mediaUltimoMes < mediaPenultimoMes) return 'down';
     return 'same';
   };
 
@@ -277,8 +303,19 @@ function TecnicosReportPage() {
   };
 
   const calcularMediaPontuacaoUltimoMes = () => {
-    if (!dashboardData?.resultado_agrupado?.length) return 0;
-    const ultimoMes = dashboardData.resultado_agrupado[dashboardData.resultado_agrupado.length - 1];
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return 0;
+    
+    const mesesOrdenados = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup)
+      .sort((a, b) => {
+        const [mesA, anoA] = a.mes.split('/');
+        const [mesB, anoB] = b.mes.split('/');
+        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+      });
+
+    const ultimoMes = mesesOrdenados[0];
+    if (!ultimoMes) return 0;
+
     let totalPontos = 0;
     let totalPossivel = 0;
     
@@ -315,41 +352,75 @@ function TecnicosReportPage() {
   };
 
   const calcularMediaPercentualPeriodo = () => {
-    if (!dashboardData?.resultado_agrupado?.length) return 0;
-    const percentuais = dashboardData.resultado_agrupado.flatMap(group => 
-      group.tecnicos.map(t => t.percentual)
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return 0;
+    
+    const dadosDoGrupo = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup);
+    
+    const percentuais = dadosDoGrupo.flatMap(grupo => 
+      grupo.tecnicos.map(t => t.percentual)
     );
+    
     return percentuais.length ? (percentuais.reduce((a, b) => a + b, 0) / percentuais.length) : 0;
   };
 
   const calcularMediaPercentualUltimoMes = () => {
-    if (!dashboardData?.resultado_agrupado?.length) return 0;
-    const ultimoMes = dashboardData.resultado_agrupado[dashboardData.resultado_agrupado.length - 1];
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return 0;
+    
+    const mesesOrdenados = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup)
+      .sort((a, b) => {
+        const [mesA, anoA] = a.mes.split('/');
+        const [mesB, anoB] = b.mes.split('/');
+        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+      });
+
+    const ultimoMes = mesesOrdenados[0];
+    if (!ultimoMes) return 0;
+
     const percentuais = ultimoMes.tecnicos.map(t => t.percentual);
     return percentuais.length ? (percentuais.reduce((a, b) => a + b, 0) / percentuais.length) : 0;
   };
 
   const calcularMediaPontuacaoPeriodo = () => {
-    if (!dashboardData?.ranking_tecnicos?.length) return 0;
-    const totalPontos = dashboardData.ranking_tecnicos.reduce((sum, tecnico) => 
-      sum + (tecnico.total_pontos || 0), 0);
-    const totalPossivel = dashboardData.ranking_tecnicos.reduce((sum, tecnico) => 
-      sum + (tecnico.total_possivel || 0), 0);
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return 0;
+    
+    const dadosDoGrupo = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup);
+
+    let totalPontos = 0;
+    let totalPossivel = 0;
+
+    dadosDoGrupo.forEach(mes => {
+      mes.tecnicos.forEach(tecnico => {
+        totalPontos += tecnico.total_pontos || 0;
+        totalPossivel += tecnico.total_possivel || 0;
+      });
+    });
+
     return totalPossivel > 0 ? (totalPontos / totalPossivel) * 100 : 0;
   };
 
   const calcularPontoCritico = () => {
-    if (!dashboardData?.item_mais_critico) return '-';
+    if (!dashboardData?.resultado_agrupado?.length || !selectedGroup) return '-';
     
-    try {
-      const { campo, dados } = dashboardData.item_mais_critico;
-      if (!dados || typeof dados.percentual !== 'number') return '-';
-      
-      return `${dados.nome || 'N/A'} (${dados.percentual.toFixed(2)}%)`;
-    } catch (error) {
-      console.error('Erro ao calcular ponto crítico:', error);
-      return '-';
-    }
+    const dadosDoGrupo = dashboardData.resultado_agrupado
+      .filter(grupo => grupo.assignment_group_id === selectedGroup);
+
+    let menorPercentual = 100;
+    let tecnicoCritico = null;
+
+    dadosDoGrupo.forEach(mes => {
+      mes.tecnicos.forEach(tecnico => {
+        if (tecnico.percentual < menorPercentual) {
+          menorPercentual = tecnico.percentual;
+          tecnicoCritico = tecnico;
+        }
+      });
+    });
+
+    if (!tecnicoCritico) return '-';
+    return `${tecnicoCritico.tecnico_nome} (${menorPercentual.toFixed(2)}%)`;
   };
 
   const getMedalIcon = (position) => {
@@ -394,6 +465,36 @@ function TecnicosReportPage() {
       );
     }
 
+    const groupOptions = groups.map(group => ({
+      value: group.id,
+      label: group.nome
+    }));
+
+    const tecnicoOptions = tecnicos.map(tecnico => ({
+      value: tecnico.nome,
+      label: tecnico.nome
+    }));
+
+    const periodoOptions = periodos.map(periodo => ({
+      value: periodo.value,
+      label: periodo.label
+    }));
+
+    const getFilteredRanking = () => {
+      if (!dashboardData?.ranking_tecnicos || !selectedGroup) return [];
+      
+      // Filtra os técnicos que têm dados no grupo selecionado
+      const tecnicosDoGrupo = new Set(
+        dashboardData.resultado_agrupado
+          .filter(grupo => grupo.assignment_group_id === selectedGroup)
+          .flatMap(grupo => grupo.tecnicos.map(t => t.tecnico_id))
+      );
+
+      return dashboardData.ranking_tecnicos
+        .filter(tecnico => tecnicosDoGrupo.has(tecnico.tecnico_id))
+        .sort((a, b) => b.percentual - a.percentual);
+    };
+
     return (
       <div className="dashboard-content-container">
         <div className="dashboard-report-header">
@@ -406,48 +507,35 @@ function TecnicosReportPage() {
         <div className="dashboard-filters-container">
           <div className="dashboard-filter-group">
             <label>Fila de Atendimento</label>
-            <select 
-              className="dashboard-filter-select"
-              value={selectedGroup || ''} 
-              onChange={(e) => setSelectedGroup(Number(e.target.value))}
-            >
-              {groups.map(group => (
-                <option key={group.id} value={group.id}>
-                  {group.nome}
-                </option>
-              ))}
-            </select>
+            <Select
+              className="react-select-container"
+              classNamePrefix="react-select"
+              value={groupOptions.find(option => option.value === selectedGroup)}
+              onChange={(option) => setSelectedGroup(option.value)}
+              options={groupOptions}
+            />
           </div>
           
           <div className="dashboard-filter-group">
             <label>Técnico</label>
-            <select
-              className="dashboard-filter-select"
-              value={selectedTecnico}
-              onChange={(e) => setSelectedTecnico(e.target.value)}
-            >
-              <option value="todos">Todos os Técnicos</option>
-              {tecnicos.map(tecnico => (
-                <option key={tecnico.id} value={tecnico.nome}>
-                  {tecnico.nome}
-                </option>
-              ))}
-            </select>
+            <Select
+              className="react-select-container"
+              classNamePrefix="react-select"
+              value={tecnicoOptions.find(option => option.value === selectedTecnico) || { value: 'todos', label: 'Todos os Técnicos' }}
+              onChange={(option) => setSelectedTecnico(option.value)}
+              options={[{ value: 'todos', label: 'Todos os Técnicos' }, ...tecnicoOptions]}
+            />
           </div>
 
           <div className="dashboard-filter-group">
             <label>Período</label>
-            <select
-              className="dashboard-filter-select"
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-            >
-              {periodos.map(periodo => (
-                <option key={periodo.value} value={periodo.value}>
-                  {periodo.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              className="react-select-container"
+              classNamePrefix="react-select"
+              value={periodoOptions.find(option => option.value === selectedPeriod)}
+              onChange={(option) => setSelectedPeriod(option.value)}
+              options={periodoOptions}
+            />
           </div>
         </div>
 
@@ -626,7 +714,7 @@ function TecnicosReportPage() {
                 <span>Pontos Total</span>
               </div>
               <ul className="ranking-list">
-                {dashboardData?.ranking_tecnicos?.map((tecnico, index) => (
+                {getFilteredRanking().map((tecnico, index) => (
                   <li key={tecnico.tecnico_id} 
                       className={`dashboard-ranking-item ${index === 0 ? 'top-1' : ''} ${index < 3 ? `dashboard-top-${index + 1}` : ''}`}>
                     <div className="dashboard-ranking-info">

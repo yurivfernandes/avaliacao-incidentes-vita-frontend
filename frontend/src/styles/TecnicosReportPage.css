@@ -40,27 +40,68 @@
 .dashboard-filters-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
 .dashboard-filter-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .dashboard-filter-group label {
   font-size: 0.8em;
   color: #666;
+  font-weight: 500;
 }
 
-.dashboard-filter-select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9em;
-  color: #333;
+/* React Select personalizado */
+.dashboard-filter-group .react-select-container {
+  width: 100%;
+}
+
+.dashboard-filter-group .react-select__control {
+  background-color: #f8f9fa !important;
+  border: 1px solid rgba(111, 15, 175, 0.2) !important;
+  border-radius: 8px !important;
+  min-height: 35px !important;
+  box-shadow: none !important;
+}
+
+.dashboard-filter-group .react-select__control:hover {
+  border-color: #670099 !important;
+}
+
+.dashboard-filter-group .react-select__control--is-focused {
+  box-shadow: 0 0 0 1px #670099 !important;
+  border-color: #670099 !important;
+}
+
+.dashboard-filter-group .react-select__menu {
+  background-color: #fff !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(111, 15, 175, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dashboard-filter-group .react-select__option {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+.dashboard-filter-group .react-select__option--is-selected {
+  background-color: #670099 !important;
+  color: #fff !important;
+}
+
+.dashboard-filter-group .react-select__option--is-focused {
+  background-color: rgba(103, 0, 153, 0.1) !important;
+  color: #670099 !important;
+}
+
+.dashboard-filter-group .react-select__single-value {
+  color: #333 !important;
 }
 
 /* Cards do Dashboard */
