@@ -89,7 +89,7 @@ function Header() {
               </li>
             )}
             <li className="app-menu-item user-menu">
-              <Link to="/avaliacoes">
+              <Link to="/avaliacoes?tab=pendentes">
                 <FaHeadset />
                 <span>Avaliação de Incidentes</span>
               </Link>

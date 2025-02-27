@@ -54,6 +54,7 @@ function TicketsSorteados() {
     try {
       const params = new URLSearchParams({
         page: currentPage,
+        page_size: 10, // Adicionando o tamanho fixo da página
         mes_ano: mesAno,
       });
       if (searchTerm) params.append('search', searchTerm);

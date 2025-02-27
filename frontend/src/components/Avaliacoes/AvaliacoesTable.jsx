@@ -49,6 +49,7 @@ function AvaliacoesTable() {
     try {
       const params = new URLSearchParams({
         page: page,
+        page_size: 10, // Adicionando o tamanho fixo da página
       });
       
       if (search.trim()) {
