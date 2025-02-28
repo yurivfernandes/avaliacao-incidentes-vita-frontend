@@ -305,37 +305,38 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
 
   return (
     <>
-      <div className="table-wrapper">
-        <table className="inventory-table">
-          <thead>
-            <tr>
-              {columns[type].map((column) => (
-                <th key={column.key}>{column.header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row) => (
-              <tr key={row.id}>
-                {editingId === row.id ? (
-                  renderEditRow(row)
-                ) : (
-                  columns[type].map((column) => (
-                    <td key={column.key}>
-                      {renderCell(row, column)}
-                    </td>
-                  ))
-                )}
+      <div className="tecnicos-table-container">
+        <div className="tecnicos-table-scroll">
+          <table className="tecnicos-table">
+            <thead>
+              <tr>
+                {columns[type].map((column) => (
+                  <th key={column.key}>{column.header}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="pagination">
-          <div className="pagination-info">
+            </thead>
+            <tbody>
+              {data.map((row) => (
+                <tr key={row.id}>
+                  {editingId === row.id ? (
+                    renderEditRow(row)
+                  ) : (
+                    columns[type].map((column) => (
+                      <td key={column.key}>
+                        {renderCell(row, column)}
+                      </td>
+                    ))
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="tecnicos-pagination">
+          <div className="tecnicos-pagination-info">
             Página {currentPage} de {totalPages}
           </div>
-          <div className="pagination-controls">
+          <div className="tecnicos-pagination-controls">
             <button 
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
@@ -351,7 +352,6 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
           </div>
         </div>
       </div>
-
       {resetPassword.show && (
         <PasswordResetModal
           password={resetPassword.password}

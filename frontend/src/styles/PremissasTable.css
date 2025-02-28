@@ -1,8 +1,18 @@
+.premissas-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
 .premissas-table-container {
   padding: 1rem;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  overflow: hidden;
 }
 
 .table-actions {
@@ -11,9 +21,15 @@
   margin-bottom: 1rem;
 }
 
+.premissas-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .premissas-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .premissas-table th,
@@ -26,6 +42,10 @@
 .premissas-table th {
   background: #670099;
   color: white;
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .actions-column {
@@ -227,8 +247,6 @@
   padding: 0 !important;
 }
 
-/* ...existing code... */
-
 /* Container principal da tabela */
 .table-container {
   display: flex;
@@ -352,8 +370,6 @@
   background: #fef2f2;
 }
 
-/* ...existing code... */
-
 .checkbox-cell {
   text-align: center;
   width: 80px;
@@ -396,4 +412,110 @@
 .checkbox-item label {
   color: #4a5568;
   font-size: 0.875rem;
+}
+
+.table-container {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.inventory-table th,
+.inventory-table td {
+  white-space: nowrap;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tecnicos-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Previne scroll horizontal na página */
+}
+
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.inventory-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.premissas-table-container {
+  width: 100%;
+  max-width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.premissas-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.premissas-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
+}
+
+.premissas-table th,
+.premissas-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
