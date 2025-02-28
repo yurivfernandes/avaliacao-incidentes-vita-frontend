@@ -83,8 +83,10 @@ function TecnicosReportPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [selectedPeriod]);
+    if (selectedQueue) {
+      fetchData();
+    }
+  }, [selectedPeriod, selectedQueue]);
 
   useEffect(() => {
     fetchQueues();
@@ -137,7 +139,8 @@ function TecnicosReportPage() {
       const response = await api.get('/avaliacao/avaliacoes/notas-por-tecnico/', {
         params: {
           start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0]
+          end_date: endDate.toISOString().split('T')[0],
+          assignment_group: selectedQueue // Adicione o parâmetro da fila
         }
       });
 
@@ -614,11 +617,14 @@ function TecnicosReportPage() {
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
+              placeholder="Selecione a fila..."
               value={queues.map(q => ({ value: q.id, label: q.dv_assignment_group }))
                 .find(option => option.value === selectedQueue)}
               onChange={(option) => {
                 setSelectedQueue(option.value);
                 setSelectedTecnico('todos'); // Reset seleção do técnico
+                setSelectedGroup(option.value); // Atualiza o grupo selecionado
+                fetchTecnicos(option.value); // Busca os técnicos da nova fila
               }}
               options={queues.map(queue => ({
                 value: queue.id,
