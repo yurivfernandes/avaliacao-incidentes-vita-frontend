@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaCheck, FaTimes, FaSearch, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes, FaSearch, FaPlus, FaPencilAlt, FaClipboardList } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import Select from 'react-select';
-import '../../styles/PremissasTable.css';
+import '../../styles/TecnicosTable.css';
 import AddPremissaDropdown from './AddPremissaDropdown';
+import CriteriosTable from './CriteriosTable';
 
 function PremissasTable() {
   const { user: currentUser } = useAuth();
@@ -17,6 +18,7 @@ function PremissasTable() {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddPremissa, setShowAddPremissa] = useState(false);
+  const [selectedPremissa, setSelectedPremissa] = useState(null);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -59,25 +61,25 @@ function PremissasTable() {
   };
 
   const handleEdit = (premissa) => {
+    setSelectedPremissa(premissa);
+    setEditingId(null); // Reseta o modo de edição ao navegar
+  };
+
+  const handleEditQtdIncidents = (premissa) => {
     setEditingId(premissa.id);
     setEditData({
       assignment: premissa.assignment,
       qtd_incidents: premissa.qtd_incidents,
-      is_contrato_lancado: premissa.is_contrato_lancado,
-      is_horas_lancadas: premissa.is_horas_lancadas,
-      is_has_met_first_response_target: premissa.is_has_met_first_response_target,
-      is_resolution_target: premissa.is_resolution_target,
-      is_atualizaca_logs_correto: premissa.is_atualizaca_logs_correto,
-      is_ticket_encerrado_corretamente: premissa.is_ticket_encerrado_corretamente,
-      is_descricao_troubleshooting: premissa.is_descricao_troubleshooting,
-      is_cliente_notificado: premissa.is_cliente_notificado,
-      is_category_correto: premissa.is_category_correto,
     });
   };
 
   const handleSave = async (id) => {
     try {
-      await api.patch(`/premissas/list/${id}/`, editData);
+      console.log("Salvando premissa:", id, editData);
+      await api.patch(`/premissas/list/${id}/`, {
+        assignment: editData.assignment,
+        qtd_incidents: editData.qtd_incidents,
+      });
       setEditingId(null);
       fetchPremissas(currentPage, searchTerm);
     } catch (error) {
@@ -89,119 +91,67 @@ function PremissasTable() {
     fetchPremissas(currentPage, searchTerm);
   };
 
-  const renderEditRow = (premissa) => (
-    <>
-      <td>
-        <Select
-          value={{
-            value: editData.assignment,
-            label: premissa.dv_assignment_group
-          }}
-          onChange={(selectedOption) => {
-            setEditData({ ...editData, assignment: selectedOption.value });
-          }}
-          options={assignmentGroups?.map(group => ({
-            value: group.id,
-            label: group.dv_assignment_group
-          }))}
-          className="react-select-container"
-          classNamePrefix="react-select"
-          isDisabled={true}
-        />
-      </td>
-      <td>
-        <input
-          type="number"
-          value={editData.qtd_incidents}
-          onChange={(e) => setEditData({ ...editData, qtd_incidents: e.target.value })}
-          className="edit-input"
-          min="1"
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_contrato_lancado}
-          onChange={(e) => setEditData({ ...editData, is_contrato_lancado: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_horas_lancadas}
-          onChange={(e) => setEditData({ ...editData, is_horas_lancadas: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_has_met_first_response_target}
-          onChange={(e) => setEditData({ ...editData, is_has_met_first_response_target: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_resolution_target}
-          onChange={(e) => setEditData({ ...editData, is_resolution_target: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_atualizaca_logs_correto}
-          onChange={(e) => setEditData({ ...editData, is_atualizaca_logs_correto: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_ticket_encerrado_corretamente}
-          onChange={(e) => setEditData({ ...editData, is_ticket_encerrado_corretamente: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_descricao_troubleshooting}
-          onChange={(e) => setEditData({ ...editData, is_descricao_troubleshooting: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_cliente_notificado}
-          onChange={(e) => setEditData({ ...editData, is_cliente_notificado: e.target.checked })}
-        />
-      </td>
-      <td>
-        <input
-          type="checkbox"
-          checked={editData.is_category_correto}
-          onChange={(e) => setEditData({ ...editData, is_category_correto: e.target.checked })}
-        />
-      </td>
-      <td>
-        <div className="actions-column">
-          <button className="edit-button" onClick={() => handleSave(premissa.id)}>
-            <FaCheck />
-          </button>
-          <button className="edit-button" onClick={() => setEditingId(null)}>
-            <FaTimes />
+  const handleCloseCriterios = () => {
+    setSelectedPremissa(null);
+  };
+
+  // Estrutura do renderEditRow similar ao TecnicosTable
+  const renderEditRow = (item) => {
+    return (
+      <>
+        <td>{item.dv_assignment_group}</td>
+        <td>
+          <input
+            className="edit-input"
+            type="number"
+            value={editData.qtd_incidents}
+            onChange={(e) => setEditData({...editData, qtd_incidents: e.target.value})}
+            style={{ width: '100%', maxWidth: '100px' }}
+          />
+        </td>
+        <td>
+          <div className="actions-column">
+            <button 
+              className="edit-button criterios-button"
+              onClick={() => handleEdit(item)}
+              title="Gerenciar critérios"
+            >
+              <FaClipboardList />
+            </button>
+          </div>
+        </td>
+        <td>
+          <div className="actions-column">
+            <button className="save-button" onClick={() => handleSave(item.id)} title="Salvar">
+              <FaCheck />
+            </button>
+            <button className="cancel-button" onClick={() => setEditingId(null)} title="Cancelar">
+              <FaTimes />
+            </button>
+          </div>
+        </td>
+      </>
+    );
+  };
+
+  if (selectedPremissa) {
+    return (
+      <>
+        <div className="page-header">
+          <div className="page-title">
+            <h2>Critérios - {selectedPremissa.dv_assignment_group}</h2>
+          </div>
+          <button className="button-secondary" onClick={handleCloseCriterios}>
+            Voltar
           </button>
         </div>
-      </td>
-    </>
-  );
-
-  const renderStatus = (isActive) => (
-    <span className={`status-text ${isActive ? 'status-active' : 'status-inactive'}`}>
-      {isActive ? 'Ativo' : 'Inativo'}
-    </span>
-  );
+        <CriteriosTable premissaId={selectedPremissa.id} />
+      </>
+    );
+  }
 
   return (
-    <div className="tecnicos-content">
+    <>
       <div className="page-header">
         <div className="page-actions">
           <div className="dropdown-wrapper">
@@ -216,13 +166,13 @@ function PremissasTable() {
             )}
           </div>
         </div>
-
+        
         <div className="search-container">
           <div className="search-wrapper">
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Buscar..."
+              placeholder="Buscar premissa..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -231,29 +181,25 @@ function PremissasTable() {
         </div>
       </div>
 
-      <div className="table-container">
-        <div className="table-scroll">
-          <table className="inventory-table">
+      <div className="tecnicos-table-container">
+        <div className="tecnicos-table-scroll">
+          <table className="tecnicos-table">
             <thead>
               <tr>
                 <th>Fila</th>
                 <th>Quantidade de Incidentes</th>
-                <th>Contrato Lançado</th>
-                <th>Horas Lançadas</th>
-                <th>Met First Response Target</th>
-                <th>Resolution Target</th>
-                <th>Atualização de Logs Correto</th>
-                <th>Ticket Encerrado Corretamente</th>
-                <th>Descrição de Troubleshooting</th>
-                <th>Cliente Notificado</th>
-                <th>Categoria Correta</th>
+                <th>Critérios</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="12">Carregando...</td>
+                  <td colSpan="4">Carregando...</td>
+                </tr>
+              ) : premissas.length === 0 ? (
+                <tr>
+                  <td colSpan="4">Nenhuma premissa encontrada</td>
                 </tr>
               ) : (
                 premissas.map((premissa) => (
@@ -264,19 +210,25 @@ function PremissasTable() {
                       <>
                         <td>{premissa.dv_assignment_group}</td>
                         <td>{premissa.qtd_incidents}</td>
-                        <td>{renderStatus(premissa.is_contrato_lancado)}</td>
-                        <td>{renderStatus(premissa.is_horas_lancadas)}</td>
-                        <td>{renderStatus(premissa.is_has_met_first_response_target)}</td>
-                        <td>{renderStatus(premissa.is_resolution_target)}</td>
-                        <td>{renderStatus(premissa.is_atualizaca_logs_correto)}</td>
-                        <td>{renderStatus(premissa.is_ticket_encerrado_corretamente)}</td>
-                        <td>{renderStatus(premissa.is_descricao_troubleshooting)}</td>
-                        <td>{renderStatus(premissa.is_cliente_notificado)}</td>
-                        <td>{renderStatus(premissa.is_category_correto)}</td>
                         <td>
                           <div className="actions-column">
-                            <button className="edit-button" onClick={() => handleEdit(premissa)}>
-                              <FaEdit />
+                            <button 
+                              className="edit-button criterios-button"
+                              onClick={() => handleEdit(premissa)}
+                              title="Gerenciar critérios"
+                            >
+                              <FaClipboardList />
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="actions-column">
+                            <button 
+                              className="edit-button" 
+                              onClick={() => handleEditQtdIncidents(premissa)}
+                              title="Editar quantidade"
+                            >
+                              <FaPencilAlt />
                             </button>
                           </div>
                         </td>
@@ -288,12 +240,11 @@ function PremissasTable() {
             </tbody>
           </table>
         </div>
-
-        <div className="pagination">
-          <div className="pagination-info">
+        <div className="tecnicos-pagination">
+          <div className="tecnicos-pagination-info">
             Página {currentPage} de {totalPages}
           </div>
-          <div className="pagination-controls">
+          <div className="tecnicos-pagination-controls">
             <button
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
@@ -309,7 +260,7 @@ function PremissasTable() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

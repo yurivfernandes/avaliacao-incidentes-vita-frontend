@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header/Header';
 import PremissasTable from '../components/Premissas/PremissasTable';
-import '../styles/PremissasPage.css';
+import '../styles/TecnicosPage.css'; // Usamos o mesmo CSS da tela de técnicos para manter padrão
+import '../styles/PremissasPage.css'; // Mantemos o CSS específico de premissas para ajustes pontuais
 
 const PremissasPage = () => {
   return (
-    <div className="premissas-page">
+    <div className="tecnicos-page premissas-page"> {/* Adicionamos a classe premissas-page */}
       <Header />
-      <div className="premissas-content">
+      <main className="tecnicos-content">
         <PremissasTable />
-      </div>
+      </main>
     </div>
   );
 };
 
-export default PremissasPage; 
+export default PremissasPage;

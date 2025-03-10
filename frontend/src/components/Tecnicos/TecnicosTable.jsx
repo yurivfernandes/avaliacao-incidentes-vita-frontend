@@ -254,9 +254,15 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                 <span className="slider"></span>
               </label>
             </td>
-            <td className="actions-column">
-              <button className="save-button" onClick={() => handleSave(item.id)}><FaCheck /></button>
-              <button className="cancel-button" onClick={() => setEditingId(null)}><FaTimes /></button>
+            <td>
+              <div className="actions-column">
+                <button className="save-button" onClick={() => handleSave(item.id)} title="Salvar">
+                  <FaCheck />
+                </button>
+                <button className="cancel-button" onClick={() => setEditingId(null)} title="Cancelar">
+                  <FaTimes />
+                </button>
+              </div>
             </td>
           </>
         );
@@ -281,9 +287,15 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                 <span className="slider"></span>
               </label>
             </td>
-            <td className="actions-column">
-              <button className="save-button" onClick={() => handleSave(item.id)}><FaCheck /></button>
-              <button className="cancel-button" onClick={() => setEditingId(null)}><FaTimes /></button>
+            <td>
+              <div className="actions-column">
+                <button className="save-button" onClick={() => handleSave(item.id)} title="Salvar">
+                  <FaCheck />
+                </button>
+                <button className="cancel-button" onClick={() => setEditingId(null)} title="Cancelar">
+                  <FaTimes />
+                </button>
+              </div>
             </td>
           </>
         );

@@ -8,15 +8,6 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     assignment: null,
     qtd_incidents: '',
-    is_contrato_lancado: true,
-    is_horas_lancadas: true,
-    is_has_met_first_response_target: true,
-    is_resolution_target: true,
-    is_atualizaca_logs_correto: true,
-    is_ticket_encerrado_corretamente: true,
-    is_descricao_troubleshooting: true,
-    is_cliente_notificado: true,
-    is_category_correto: true
   });
   const [assignmentGroups, setAssignmentGroups] = useState([]);
   const { user: currentUser } = useAuth();
@@ -106,93 +97,6 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
               min="1"
               required
             />
-          </div>
-        </div>
-
-        <div className="field-group">
-          <div className="field-group-title">Critérios de Avaliação</div>
-          <div className="checkbox-grid">
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_contrato_lancado}
-                onChange={(e) => setFormData({ ...formData, is_contrato_lancado: e.target.checked })}
-                id="contrato"
-              />
-              <label htmlFor="contrato">Contrato Lançado</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_horas_lancadas}
-                onChange={(e) => setFormData({ ...formData, is_horas_lancadas: e.target.checked })}
-                id="horas"
-              />
-              <label htmlFor="horas">Horas Lançadas</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_has_met_first_response_target}
-                onChange={(e) => setFormData({ ...formData, is_has_met_first_response_target: e.target.checked })}
-                id="first_response"
-              />
-              <label htmlFor="first_response">Primeira Resposta Alvo</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_resolution_target}
-                onChange={(e) => setFormData({ ...formData, is_resolution_target: e.target.checked })}
-                id="resolution"
-              />
-              <label htmlFor="resolution">Resolução Alvo</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_atualizaca_logs_correto}
-                onChange={(e) => setFormData({ ...formData, is_atualizaca_logs_correto: e.target.checked })}
-                id="logs"
-              />
-              <label htmlFor="logs">Atualização de Logs Correto</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_ticket_encerrado_corretamente}
-                onChange={(e) => setFormData({ ...formData, is_ticket_encerrado_corretamente: e.target.checked })}
-                id="ticket"
-              />
-              <label htmlFor="ticket">Ticket Encerrado Corretamente</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_descricao_troubleshooting}
-                onChange={(e) => setFormData({ ...formData, is_descricao_troubleshooting: e.target.checked })}
-                id="troubleshooting"
-              />
-              <label htmlFor="troubleshooting">Descrição de Troubleshooting</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_cliente_notificado}
-                onChange={(e) => setFormData({ ...formData, is_cliente_notificado: e.target.checked })}
-                id="cliente"
-              />
-              <label htmlFor="cliente">Cliente Notificado</label>
-            </div>
-            <div className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={formData.is_category_correto}
-                onChange={(e) => setFormData({ ...formData, is_category_correto: e.target.checked })}
-                id="category"
-              />
-              <label htmlFor="category">Categoria Correta</label>
-            </div>
           </div>
         </div>
 

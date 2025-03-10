@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
 import Header from '../components/Header/Header';
 import AvaliacoesTable from '../components/Avaliacoes/AvaliacoesTable';
-import '../styles/AvaliacoesPage.css';
+import '../styles/TecnicosPage.css';
 
-const AvaliacoesPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') || 'pendentes';
-  const [activeTab, setActiveTab] = useState(tabFromUrl);
-
-  useEffect(() => {
-    setActiveTab(tabFromUrl);
-  }, [tabFromUrl]);
-
+function AvaliacoesPage() {
   return (
-    <div className="avaliacoes-page">
+    <div className="tecnicos-page">
       <Header />
-      <div className="avaliacoes-content">
-        <AvaliacoesTable tipo={activeTab} />
-      </div>
+      <main className="tecnicos-content">
+        <AvaliacoesTable />
+      </main>
     </div>
   );
-};
+}
 
 export default AvaliacoesPage;

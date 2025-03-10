@@ -1,8 +1,28 @@
 /* Página principal */
 .tecnicos-page {
   min-height: 100vh;
-  padding-top: 64px;
+  padding-top: 64px !important; /* Forçamos o padding-top correto */
   background: #f8fafc;
+}
+
+/* Container principal */
+.tecnicos-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* Adicionar espaço extra no topo do conteúdo principal */
+.tecnicos-page .tecnicos-content {
+  padding-top: 1rem;
+}
+
+/* Adicionar espaço entre o topo e as abas */
+.tabs-container {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 /* Container principal */
@@ -279,6 +299,7 @@ input:checked + .slider:before {
 
 /* Tabs */
 .tabs-container {
+  margin-top: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
@@ -875,7 +896,7 @@ input:checked + .slider:before {
 /* Reset e isolamento do container principal */
 .tecnicos-page {
   min-height: 100vh;
-  padding-top: 64px;
+  padding-top: 64px !important; /* Forçamos o padding-top correto */
   background: #f8fafc;
 }
 

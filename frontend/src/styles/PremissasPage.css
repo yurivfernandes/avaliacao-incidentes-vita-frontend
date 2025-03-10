@@ -1,11 +1,18 @@
 .premissas-page {
   min-height: 100vh;
-  padding-top: 64px;
+  padding-top: 64px !important; /* Forçamos o padding-top correto */
   background: #f8fafc;
 }
 
 .premissas-content {
-  max-width: 1400px;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
-} 
+  box-sizing: border-box;
+}
+
+/* Espaço adicional para o conteúdo principal */
+.premissas-page .tecnicos-content {
+  padding-top: 1rem;
+}

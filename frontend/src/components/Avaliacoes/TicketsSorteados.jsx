@@ -1,169 +1,143 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaPlus, FaClock, FaCalendar, FaTimes, FaClipboardCheck, FaCheck } from 'react-icons/fa';
+import { FaSearch, FaCalendarAlt, FaTimes, FaPlus, FaFilter, FaCheck, FaClock } from 'react-icons/fa';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import AddAvaliacaoModal from './AddAvaliacaoModal';
+import '../../styles/TecnicosTable.css';
 
 function TicketsSorteados() {
   const { user: currentUser } = useAuth();
-  
-  // Redireciona usuários sem permissão
-  if (!currentUser?.is_staff && !currentUser?.is_gestor) {
-    return <Navigate to="/" replace />;
-  }
-
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [mesAno, setMesAno] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [avaliacaoData, setAvaliacaoData] = useState({
-    is_contrato_lancado: false,
-    is_horas_lancadas: false,
-    is_has_met_first_response_target: false,
-    is_resolution_target: false,
-    is_atualizaca_logs_correto: false,
-    is_ticket_encerrado_corretamente: false,
-    is_descricao_troubleshooting: false,
-    is_cliente_notificado: false,
-    is_category_correto: false,
-  });
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [filterActive, setFilterActive] = useState(false);
+  const [showAddAvaliacaoModal, setShowAddAvaliacaoModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  const labelMap = {
-    contrato_lancado: 'Contrato Lançado Corretamente',
-    horas_lancadas: 'Horas Lançadas Corretamente',
-    has_met_first_response_target: 'Meta de Primeiro Atendimento Atingida',
-    resolution_target: 'Meta de Resolução Atingida',
-    atualizaca_logs_correto: 'Atualização de Logs Realizada Corretamente',
-    ticket_encerrado_corretamente: 'Ticket Encerrado Corretamente',
-    descricao_troubleshooting: 'Descrição do Troubleshooting Adequada',
-    cliente_notificado: 'Cliente Notificado Adequadamente',
-    category_correto: 'Categorização Realizada Corretamente'
-  };
-
   useEffect(() => {
-    fetchTickets();
-  }, [currentPage, searchTerm, mesAno]);
+    fetchTickets(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (page = 1, search = '') => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        page: currentPage,
-        page_size: 10, // Adicionando o tamanho fixo da página
-        mes_ano: mesAno,
+        page: page,
+        page_size: 10,
       });
-      if (searchTerm) params.append('search', searchTerm);
+      
+      if (search) {
+        params.append('search', search);
+      }
+
+      if (filterActive && selectedMonth) {
+        params.append('month', selectedMonth);
+      }
+
+      if (currentUser?.is_gestor && currentUser?.assignment_groups?.length > 0) {
+        currentUser.assignment_groups.forEach(group => {
+          params.append('assignment_groups', group.id);
+        });
+      }
 
       const response = await api.get(`/dw_analytics/sorted-tickets/?${params}`);
-      setTickets(response.data.results);
-      setTotalPages(response.data.num_pages);
+      setTickets(response.data.results || []);
+      setTotalPages(response.data.num_pages || 1);
     } catch (error) {
-      console.error('Erro ao buscar tickets:', error);
+      console.error('Erro ao buscar tickets sorteados:', error);
+      setTickets([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddClick = (ticket) => {
-    setActiveDropdown(activeDropdown === ticket.incident_number ? null : ticket.incident_number);
+  const handleOpenAvaliacao = (ticket) => {
     setSelectedTicket(ticket);
-    
-    setAvaliacaoData({
-      ...Object.fromEntries(
-        Object.keys(avaliacaoData).map(key => [key, false])
-      ),
-      is_contrato_lancado: Boolean(ticket.contract?.trim()),
-      is_has_met_first_response_target: ticket.sla_atendimento,
-      is_resolution_target: ticket.sla_resolucao,
-    });
+    setShowAddAvaliacaoModal(true);
   };
 
-  const handleInputChange = (e) => {
-    const { name, checked } = e.target;
-    setAvaliacaoData((prevData) => ({
-      ...prevData,
-      [name]: checked,
-    }));
-  };
-
-  const handleSave = async () => {
-    try {
-      if (!selectedTicket) {
-        console.error('Nenhum ticket selecionado');
-        return;
-      }
-
-      const payload = {
-        ...avaliacaoData,
-        incident_id: selectedTicket.incident_id
-      };
-
-      await api.post('/avaliacao/avaliacoes/', payload);
-      
-      setActiveDropdown(null);
-      setSelectedTicket(null);
-      fetchTickets();
-    } catch (error) {
-      console.error('Erro ao salvar avaliação:', error.response?.data || error);
-    }
-  };
-
-  const handleCancel = () => {
-    setActiveDropdown(null);
+  const handleAvaliacaoSuccess = () => {
+    fetchTickets(currentPage, searchTerm);
+    setShowAddAvaliacaoModal(false);
     setSelectedTicket(null);
   };
 
-  const handleToggle = (field) => {
-    setAvaliacaoData(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+  const applyFilter = () => {
+    if (selectedMonth) {
+      setFilterActive(true);
+      setCurrentPage(1);
+      fetchTickets(1, searchTerm);
+    }
   };
 
-  const renderSlaStatus = (isWithinSla) => {
-    return isWithinSla ? 
-      <FaCheck className="status-check" /> : 
-      <FaTimes className="status-times" />;
+  const clearFilters = () => {
+    setSelectedMonth('');
+    setFilterActive(false);
+    setCurrentPage(1);
+    fetchTickets(1, searchTerm);
+  };
+  
+  // Função para formatar a data
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  // Função para renderizar status de SLA
+  const renderSLAStatus = (status) => {
+    return status ? (
+      <span className="status-active"><FaCheck /> Dentro</span>
+    ) : (
+      <span className="status-inactive"><FaClock /> Fora</span>
+    );
   };
 
   return (
-    <div className="tickets-sorteados-section">
-      <div className="section-header">
-        <div className="header-title">
-          <h2>
-            <FaClock />
-            Tickets Pendentes de Avaliação
-          </h2>
+    <>
+      <div className="filters-container">
+        <div className="filter-date-container">
+          <div className="filter-group">
+            <div className="filter-label">Mês:</div>
+            <div className="filter-controls">
+              <div className="date-filter-wrapper">
+                <FaCalendarAlt className="date-icon" />
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="date-filter-input"
+                />
+                <button 
+                  className={`date-filter-button ${filterActive ? 'active' : ''}`} 
+                  onClick={applyFilter}
+                  disabled={!selectedMonth}
+                >
+                  <FaFilter /> Filtrar
+                </button>
+                {filterActive && (
+                  <button
+                    className="clear-filter-button"
+                    onClick={clearFilters}
+                    title="Limpar filtros"
+                  >
+                    <FaTimes /> Limpar
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div className="filters">
-          <div className="month-filter-wrapper">
-            <FaCalendar className="calendar-icon" />
-            <input
-              type="month"
-              value={mesAno}
-              onChange={(e) => setMesAno(e.target.value)}
-              className="month-filter"
-              placeholder="Selecione um mês"
-            />
-            {mesAno && (
-              <FaTimes
-                className="clear-filter"
-                onClick={() => setMesAno('')}
-                title="Limpar filtro"
-              />
-            )}
-          </div>
+        <div className="search-container">
           <div className="search-wrapper">
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Buscar ticket..."
+              placeholder="Buscar tickets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -172,17 +146,21 @@ function TicketsSorteados() {
         </div>
       </div>
 
-      <div className="table-container">
-        <div className="table-scroll">
-          <table className="inventory-table">
+      <div className="tecnicos-table-container">
+        <div className="tecnicos-table-scroll">
+          <table className="tecnicos-table">
             <thead>
               <tr>
                 <th>Incidente</th>
                 <th>Técnico</th>
                 <th>Fila</th>
                 <th>Contrato</th>
-                <th>Cliente</th>
-                <th>Data de Fechamento</th>
+                <th>Empresa</th>
+                <th>Categoria</th>
+                <th>Sub-categoria</th>
+                <th>Detalhe</th>
+                <th>Aberto em</th>
+                <th>Fechado em</th>
                 <th>SLA Atendimento</th>
                 <th>SLA Resolução</th>
                 <th>Ações</th>
@@ -191,83 +169,36 @@ function TicketsSorteados() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="9">Carregando...</td>
+                  <td colSpan={13}>Carregando...</td>
+                </tr>
+              ) : tickets.length === 0 ? (
+                <tr>
+                  <td colSpan={13}>Nenhum ticket sorteado encontrado</td>
                 </tr>
               ) : (
                 tickets.map((ticket) => (
-                  <tr key={ticket.incident_number}>
-                    <td>{ticket.incident_number}</td>
+                  <tr key={ticket.incident_id}>
+                    <td className="number-cell">{ticket.incident_number}</td>
                     <td>{ticket.resolved_by}</td>
                     <td>{ticket.assignment_group}</td>
-                    <td>{ticket.contract}</td>
+                    <td>{ticket.contract || '-'}</td>
                     <td>{ticket.company}</td>
-                    <td>{new Date(ticket.closed_at).toLocaleDateString()}</td>
-                    <td>{renderSlaStatus(ticket.sla_atendimento)}</td>
-                    <td>{renderSlaStatus(ticket.sla_resolucao)}</td>
+                    <td>{ticket.categoria_falha}</td>
+                    <td>{ticket.sub_categoria_falha}</td>
+                    <td>{ticket.dv_u_detalhe_sub_categoria_da_falha || '-'}</td>
+                    <td>{formatDate(ticket.opened_at)}</td>
+                    <td>{formatDate(ticket.closed_at)}</td>
+                    <td>{renderSLAStatus(ticket.sla_atendimento)}</td>
+                    <td>{renderSLAStatus(ticket.sla_resolucao)}</td>
                     <td>
                       <div className="actions-column">
-                        <button 
-                          className="add-button" 
-                          title="Adicionar Avaliação" 
-                          onClick={() => handleAddClick(ticket)}
+                        <button
+                          className="simple-add-button"
+                          onClick={() => handleOpenAvaliacao(ticket)}
+                          title="Adicionar avaliação"
                         >
                           <FaPlus />
                         </button>
-                        {activeDropdown === ticket.incident_number && (
-                          <div className="dropdown">
-                            <div className="dropdown-header">
-                              <div className="dropdown-title">
-                                <FaClipboardCheck />
-                                Avaliação do Incidente {ticket.incident_number}
-                              </div>
-                              <div className="dropdown-subtitle">
-                                Cliente: {ticket.company} | Técnico: {ticket.resolved_by}
-                              </div>
-                            </div>
-                            <div className="dropdown-items-grid">
-                              {Object.keys(avaliacaoData).map((key) => {
-                                const fieldName = key.replace('is_', '');
-                                const isDisabled = [
-                                  'is_contrato_lancado',
-                                  'is_has_met_first_response_target',
-                                  'is_resolution_target'
-                                ].includes(key);
-                              
-                                return (
-                                  <div className="dropdown-item" key={key}>
-                                    <label style={{ color: isDisabled ? '#94a3b8' : '#1e293b' }}>
-                                      {labelMap[fieldName]}
-                                    </label>
-                                    <div className="toggle-buttons" style={{ opacity: isDisabled ? 0.7 : 1 }}>
-                                      <button
-                                        className={`toggle-button ${avaliacaoData[key] ? '' : 'active'}`}
-                                        onClick={() => !isDisabled && handleToggle(key)}
-                                        disabled={isDisabled}
-                                      >
-                                        Não
-                                      </button>
-                                      <button
-                                        className={`toggle-button ${avaliacaoData[key] ? 'active' : ''}`}
-                                        onClick={() => !isDisabled && handleToggle(key)}
-                                        disabled={isDisabled}
-                                      >
-                                        Sim
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            <div className="dropdown-actions">
-                              <button className="cancel-button" onClick={handleCancel}>
-                                Cancelar
-                              </button>
-                              <button className="save-button" onClick={handleSave}>
-                                Salvar
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -276,12 +207,11 @@ function TicketsSorteados() {
             </tbody>
           </table>
         </div>
-
-        <div className="pagination">
-          <div className="pagination-info">
+        <div className="tecnicos-pagination">
+          <div className="tecnicos-pagination-info">
             Página {currentPage} de {totalPages}
           </div>
-          <div className="pagination-controls">
+          <div className="tecnicos-pagination-controls">
             <button
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
@@ -297,30 +227,16 @@ function TicketsSorteados() {
           </div>
         </div>
       </div>
-    </div>
+      
+      {showAddAvaliacaoModal && selectedTicket && (
+        <AddAvaliacaoModal
+          ticket={selectedTicket}
+          onClose={() => setShowAddAvaliacaoModal(false)}
+          onSuccess={handleAvaliacaoSuccess}
+        />
+      )}
+    </>
   );
 }
-
-// Função auxiliar para gerar os últimos N meses
-const generateLastMonths = (count) => {
-  const months = [];
-  const date = new Date();
-  
-  for (let i = 0; i < count; i++) {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    
-    const value = `${year}-${String(month).padStart(2, '0')}`;
-    const label = new Intl.DateTimeFormat('pt-BR', { 
-      month: 'long', 
-      year: 'numeric' 
-    }).format(date);
-    
-    months.unshift({ value, label });
-    date.setMonth(date.getMonth() - 1);
-  }
-  
-  return months;
-};
 
 export default TicketsSorteados;
