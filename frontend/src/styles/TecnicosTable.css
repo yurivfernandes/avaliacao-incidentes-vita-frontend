@@ -676,3 +676,64 @@ input:checked + .slider:before {
 .simple-add-button:active {
   transform: scale(0.95);
 }
+
+/* Estilos para os ícones de status */
+.status-check {
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.status-times {
+  color: #ef4444;
+  font-size: 1.1rem;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #670099;
+  box-shadow: 0 0 0 2px rgba(103, 0, 153, 0.1);
+}
+
+/* Ajuste das larguras das colunas fixas */
+.tecnicos-table td:nth-child(1),
+.tecnicos-table th:nth-child(1) {
+  width: 120px;  /* Incidente */
+}
+
+.tecnicos-table td:nth-child(2),
+.tecnicos-table th:nth-child(2) {
+  width: 180px;  /* Fila */
+}
+
+.tecnicos-table td:nth-child(3),
+.tecnicos-table th:nth-child(3) {
+  width: 150px;  /* Técnico */
+}
+
+.tecnicos-table td:nth-child(4),
+.tecnicos-table th:nth-child(4) {
+  width: 100px;  /* Data */
+}
+
+.tecnicos-table td:nth-child(5),
+.tecnicos-table th:nth-child(5) {
+  width: 150px;  /* Avaliador */
+}
+
+/* Garantir que as células não quebrem o texto */
+.tecnicos-table td,
+.tecnicos-table th {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
