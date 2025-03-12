@@ -3,7 +3,7 @@ import { FaTimes, FaSpinner } from 'react-icons/fa';
 import api from '../../services/api';
 import '../../styles/Modal.css';
 
-function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
+function EditAvaliacaoModal({ ticket, onClose, onSuccess }) {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingCriterios, setLoadingCriterios] = useState(true);
@@ -17,11 +17,15 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
       try {
         setLoadingCriterios(true);
 
-        const initialData = {
-          is_contrato_lancado: !!ticket.contract && ticket.contract !== '-',
-          is_has_met_first_response_target: ticket.sla_atendimento || false,
-          is_resolution_target: ticket.sla_resolucao || false,
-        };
+        const initialData = {};
+        // Mapear notas booleanas existentes
+        ticket.notas_booleanas?.forEach(nota => {
+          initialData[`criterio_${nota.criterio_nome}`] = nota.valor;
+        });
+        // Mapear notas de conversão existentes
+        ticket.notas_conversao?.forEach(nota => {
+          initialData[`criterio_${nota.criterio_nome}`] = nota.nome_conversao;
+        });
         setFormData(initialData);
 
         // Buscar a premissa associada à fila do ticket
@@ -70,17 +74,17 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
               fetchConversoesByCriterio(criterio.id);
               setFormData(prev => ({
                 ...prev,
-                [`criterio_${criterio.nome}`]: ''
+                [`criterio_${criterio.nome}`]: initialData[`criterio_${criterio.nome}`] || ''
               }));
             } else if (criterio.tipo === 'boolean') {
               setFormData(prev => ({
                 ...prev,
-                [`criterio_${criterio.nome}`]: false
+                [`criterio_${criterio.nome}`]: initialData[`criterio_${criterio.nome}`] || false
               }));
             } else if (criterio.tipo === 'integer') {
               setFormData(prev => ({
                 ...prev,
-                [`criterio_${criterio.nome}`]: 0
+                [`criterio_${criterio.nome}`]: initialData[`criterio_${criterio.nome}`] || 0
               }));
             }
           });
@@ -130,11 +134,10 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
   };
 
   const handleConversaoChange = (criterioId, conversaoId) => {
-    console.log('Alterando conversão:', criterioId, conversaoId);
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
+      ...formData,
       [`criterio_${criterioId}`]: conversaoId
-    }));
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -145,7 +148,7 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
     try {
       const criteriosPayload = criterios.map(criterio => {
         const criterioId = criterio.id;
-        const formValue = formData[`criterio_${criterioId}`];
+        const formValue = formData[`criterio_${criterio.nome}`];
 
         if (criterio.tipo === 'boolean') {
           return {
@@ -154,7 +157,6 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
             valor: !!formValue
           };
         } else if (criterio.tipo === 'conversao') {
-          // Garantir que o conversao_id seja enviado
           const conversaoId = formValue;
           if (!conversaoId) {
             throw new Error(`Selecione uma opção para ${criterio.nome}`);
@@ -175,15 +177,16 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
       }).filter(Boolean);
 
       const payload = {
-        incident: ticket.incident_id,
+        incident: ticket.incident,
         criterios: criteriosPayload
       };
 
-      await api.post('/avaliacao/save/', payload);
+      // Usar o ID correto da avaliação
+      await api.patch(`/avaliacao/detail/${ticket.id}/`, payload);
       onSuccess();
     } catch (err) {
-      console.error('Erro ao adicionar avaliação:', err);
-      setError(err.message || 'Erro ao adicionar avaliação. Tente novamente.');
+      console.error('Erro ao editar avaliação:', err);
+      setError(err.message || 'Erro ao editar avaliação. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -199,8 +202,8 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
               <input
                 type="checkbox"
                 id={`criterio_${criterio.id}`}
-                checked={formData[`criterio_${criterio.id}`] || false}
-                onChange={() => handleToggle(`criterio_${criterio.id}`)}
+                checked={formData[`criterio_${criterio.nome}`] || false}
+                onChange={() => handleToggle(`criterio_${criterio.nome}`)}
               />
               <span className="slider round"></span>
             </label>
@@ -209,15 +212,16 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
 
       case 'conversao':
         const conversoes = criteriosConversao[criterio.id] || [];
+        // Encontrar o ID da conversão baseado no nome_conversao
+        const conversaoAtual = conversoes.find(c => c.nome === formData[`criterio_${criterio.nome}`]);
         return (
           <div className="select-field enhanced" key={criterio.id}>
             <label htmlFor={`criterio_${criterio.id}`}>{criterio.nome}</label>
             <select
               id={`criterio_${criterio.id}`}
-              value={formData[`criterio_${criterio.id}`] || ''}
+              value={conversaoAtual?.id || ''}
               onChange={(e) => handleConversaoChange(criterio.id, e.target.value)}
               className="form-select custom-select"
-              required
             >
               <option value="">Selecione uma opção</option>
               {conversoes.map(conversao => (
@@ -233,18 +237,18 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
         return (
           <div className="range-field" key={criterio.id}>
             <label htmlFor={`criterio_${criterio.id}`}>
-              {criterio.nome} <span className="range-value">{formData[`criterio_${criterio.id}`] || 0}</span>
+              {criterio.nome} <span className="range-value">{formData[`criterio_${criterio.nome}`] || 0}</span>
             </label>
             <input
               type="range"
               id={`criterio_${criterio.id}`}
               min="0"
               max="10"
-              value={formData[`criterio_${criterio.id}`] || 0}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                [`criterio_${criterio.id}`]: parseInt(e.target.value)
-              }))}
+              value={formData[`criterio_${criterio.nome}`] || 0}
+              onChange={(e) => setFormData({
+                ...formData,
+                [`criterio_${criterio.nome}`]: parseInt(e.target.value)
+              })}
               className="form-range"
             />
           </div>
@@ -332,4 +336,4 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
   );
 }
 
-export default AddAvaliacaoModal;
+export default EditAvaliacaoModal;

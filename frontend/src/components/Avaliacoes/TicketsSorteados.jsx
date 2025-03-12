@@ -5,6 +5,17 @@ import { useAuth } from '../../context/AuthContext';
 import AddAvaliacaoModal from './AddAvaliacaoModal';
 import '../../styles/TecnicosTable.css';
 
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('pt-BR');
+};
+
+const renderSLAStatus = (status) => {
+  return status ? 
+    <FaCheck style={{ color: '#10b981' }} /> : 
+    <FaTimes style={{ color: '#ef4444' }} />;
+};
+
 function TicketsSorteados() {
   const { user: currentUser } = useAuth();
   const [tickets, setTickets] = useState([]);
@@ -80,20 +91,28 @@ function TicketsSorteados() {
     setCurrentPage(1);
     fetchTickets(1, searchTerm);
   };
-  
-  // Função para formatar a data
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
-  };
 
-  // Função para renderizar status de SLA
-  const renderSLAStatus = (status) => {
-    return status ? (
-      <span className="status-active"><FaCheck /> Dentro</span>
-    ) : (
-      <span className="status-inactive"><FaClock /> Fora</span>
-    );
+  const generateColumns = (firstItem) => {
+    if (!firstItem) return [];
+
+    return [
+      { header: 'Incidente', key: 'incident_number' },
+      { header: 'Técnico', key: 'resolved_by' },
+      { header: 'Fila', key: 'assignment_group' },
+      { header: 'Aberto em', key: 'opened_at', render: (row) => formatDate(row.opened_at) },
+      { header: 'Fechado em', key: 'closed_at', render: (row) => formatDate(row.closed_at) },
+      {
+        header: 'SLA Atendimento', 
+        key: 'sla_atendimento',
+        render: (row) => renderSLAStatus(row.sla_atendimento)
+      },
+      {
+        header: 'SLA Resolução', 
+        key: 'sla_resolucao',
+        render: (row) => renderSLAStatus(row.sla_resolucao)
+      },
+      { header: 'Ações', key: 'actions' }
+    ];
   };
 
   return (
@@ -151,56 +170,40 @@ function TicketsSorteados() {
           <table className="tecnicos-table">
             <thead>
               <tr>
-                <th>Incidente</th>
-                <th>Técnico</th>
-                <th>Fila</th>
-                <th>Contrato</th>
-                <th>Empresa</th>
-                <th>Categoria</th>
-                <th>Sub-categoria</th>
-                <th>Detalhe</th>
-                <th>Aberto em</th>
-                <th>Fechado em</th>
-                <th>SLA Atendimento</th>
-                <th>SLA Resolução</th>
-                <th>Ações</th>
+                {generateColumns(tickets[0]).map(column => (
+                  <th key={column.key}>{column.header}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={13}>Carregando...</td>
+                  <td colSpan={8}>Carregando...</td>
                 </tr>
               ) : tickets.length === 0 ? (
                 <tr>
-                  <td colSpan={13}>Nenhum ticket sorteado encontrado</td>
+                  <td colSpan={8}>Nenhum ticket sorteado encontrado</td>
                 </tr>
               ) : (
                 tickets.map((ticket) => (
                   <tr key={ticket.incident_id}>
-                    <td className="number-cell">{ticket.incident_number}</td>
-                    <td>{ticket.resolved_by}</td>
-                    <td>{ticket.assignment_group}</td>
-                    <td>{ticket.contract || '-'}</td>
-                    <td>{ticket.company}</td>
-                    <td>{ticket.categoria_falha}</td>
-                    <td>{ticket.sub_categoria_falha}</td>
-                    <td>{ticket.dv_u_detalhe_sub_categoria_da_falha || '-'}</td>
-                    <td>{formatDate(ticket.opened_at)}</td>
-                    <td>{formatDate(ticket.closed_at)}</td>
-                    <td>{renderSLAStatus(ticket.sla_atendimento)}</td>
-                    <td>{renderSLAStatus(ticket.sla_resolucao)}</td>
-                    <td>
-                      <div className="actions-column">
-                        <button
-                          className="simple-add-button"
-                          onClick={() => handleOpenAvaliacao(ticket)}
-                          title="Adicionar avaliação"
-                        >
-                          <FaPlus />
-                        </button>
-                      </div>
-                    </td>
+                    {generateColumns(tickets[0]).map(column => (
+                      <td key={column.key}>
+                        {column.key === 'actions' ? (
+                          <div className="actions-column">
+                            <button
+                              className="simple-add-button"
+                              onClick={() => handleOpenAvaliacao(ticket)}
+                              title="Adicionar avaliação"
+                            >
+                              <FaPlus />
+                            </button>
+                          </div>
+                        ) : (
+                          column.render ? column.render(ticket) : ticket[column.key]
+                        )}
+                      </td>
+                    ))}
                   </tr>
                 ))
               )}

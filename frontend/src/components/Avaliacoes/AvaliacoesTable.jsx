@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaCheck, FaTimes, FaSearch, FaClipboardCheck, FaClock } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes, FaSearch, FaClipboardCheck, FaClock, FaCalendarAlt } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import '../../styles/TecnicosTable.css';
 import TicketsSorteados from './TicketsSorteados';
+import EditAvaliacaoModal from './EditAvaliacaoModal';
 
+// Funções auxiliares
 const getTabs = (isStaffOrGestor) => {
   const baseTabs = [
     { id: 'avaliados', label: 'Tickets Avaliados', icon: <FaClipboardCheck /> }
@@ -21,6 +23,16 @@ const getTabs = (isStaffOrGestor) => {
   return baseTabs;
 };
 
+const renderStatus = (valor) => {
+  return valor ? 
+    <FaCheck className="status-check" style={{ color: '#10b981' }} /> : 
+    <FaTimes className="status-times" style={{ color: '#ef4444' }} />;
+};
+
+const renderConversao = (nomeConversao) => {
+  return nomeConversao || '-';
+};
+
 function AvaliacoesTable() {
   const { user: currentUser } = useAuth();
   const isStaffOrGestor = currentUser?.is_staff || currentUser?.is_gestor;
@@ -30,35 +42,30 @@ function AvaliacoesTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
+  const [monthFilter, setMonthFilter] = useState('');
+  const [editingAvaliacao, setEditingAvaliacao] = useState(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'avaliados') {
-      fetchAvaliacoes(currentPage, searchTerm);
-    }
-  }, [activeTab, currentPage, searchTerm]);
+      fetchAvaliacoes(currentPage, searchTerm, monthFilter);
+    } 
+  }, [activeTab, currentPage, searchTerm, monthFilter]);
 
-  const fetchAvaliacoes = async (page = 1, search = '') => {
+  const fetchAvaliacoes = async (page = 1, search = '', month = '') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page,
-      });
-      
-      if (search.trim()) {
-        params.append('search', search);
-      }
-
+      const params = new URLSearchParams({ page });
+      if (search.trim()) params.append('search', search);
+      if (month) params.append('month', month);
       if (currentUser?.is_gestor && currentUser?.assignment_groups?.length > 0) {
-        currentUser.assignment_groups.forEach(group => {
-          params.append('assignment_groups', group.id);
-        });
+        currentUser.assignment_groups.forEach(group => params.append('assignment_groups', group.id));
       } else if (!currentUser?.is_staff) {
         params.append('resolved_by', currentUser.id);
       }
 
       const response = await api.get(`/avaliacao/list/?${params}`);
+
       setAvaliacoes(response.data.results);
       setTotalPages(response.data.num_pages || 1);
     } catch (error) {
@@ -69,122 +76,41 @@ function AvaliacoesTable() {
     }
   };
 
-  const handleEdit = (avaliacao) => {
-    setEditingId(avaliacao.id);
-    const editData = {
-      notas_booleanas: avaliacao.notas_booleanas.map(nota => ({
-        ...nota,
-        valor: nota.valor
-      })),
-      notas_conversao: avaliacao.notas_conversao.map(nota => ({
-        ...nota,
-        valor_convertido: nota.valor_convertido
-      }))
-    };
-    setEditData(editData);
-  };
-
-  const handleSave = async (avaliacaoId) => {
+  const handleEdit = async (avaliacao) => {
     try {
-      const payload = {
-        incident: avaliacaoId,
-        criterios: [
-          ...editData.notas_booleanas.map(nota => ({
-            tipo: 'booleano',
-            criterio_id: nota.criterio_id,
-            valor: nota.valor
-          })),
-          ...editData.notas_conversao.map(nota => ({
-            tipo: 'conversao',
-            criterio_id: nota.criterio_id,
-            conversao_id: nota.valor_convertido
-          }))
-        ]
-      };
+      setLoadingEdit(true);
+      const response = await api.get(`/avaliacao/detail/${avaliacao.id}/`);
+      const avaliacaoCompleta = response.data;
       
-      await api.post('/avaliacao/save/', payload);
-      setEditingId(null);
-      setEditData({});
-      fetchAvaliacoes(currentPage, searchTerm);
+      setEditingAvaliacao({
+        id: avaliacao.id, // Adicionar o ID da avaliação
+        incident: avaliacao.incident,
+        incident_number: avaliacao.number,
+        resolved_by: avaliacao.resolved_by,
+        assignment_group: avaliacao.assignment_group,
+        notas_booleanas: avaliacaoCompleta.notas_booleanas || [],
+        notas_conversao: avaliacaoCompleta.notas_conversao || []
+      });
     } catch (error) {
-      console.error('Erro ao salvar avaliação:', error);
+      console.error('Erro ao buscar dados da avaliação:', error);
+    } finally {
+      setLoadingEdit(false);
     }
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditData({});
+  const handleModalClose = () => {
+    setEditingAvaliacao(null);
   };
 
-  const renderStatus = (valor) => {
-    return valor ? 
-      <FaCheck className="status-check" style={{ color: '#10b981' }} /> : 
-      <FaTimes className="status-times" style={{ color: '#ef4444' }} />;
-  };
-
-  const renderConversao = (valor) => {
-    return `${valor}%`;
-  };
-
-  const renderEditCell = (row, column) => {
-    if (column.type === 'boolean') {
-      const nota = editData.notas_booleanas.find(n => 
-        `boolean_${n.criterio_nome}` === column.key
-      );
-      return (
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={nota?.valor || false}
-            onChange={() => {
-              const updatedNotas = editData.notas_booleanas.map(n =>
-                n.criterio_nome === nota.criterio_nome
-                  ? { ...n, valor: !n.valor }
-                  : n
-              );
-              setEditData({ ...editData, notas_booleanas: updatedNotas });
-            }}
-          />
-          <span className="slider round"></span>
-        </label>
-      );
-    }
-    
-    if (column.type === 'conversao') {
-      const nota = editData.notas_conversao.find(n => 
-        `conversao_${n.criterio_nome}` === column.key
-      );
-      const conversoes = criteriosConversao[nota?.criterio_id] || [];
-      return (
-        <select
-          value={nota?.valor_convertido || ''}
-          onChange={(e) => {
-            const updatedNotas = editData.notas_conversao.map(n =>
-              n.criterio_nome === nota.criterio_nome
-                ? { ...n, valor_convertido: e.target.value }
-                : n
-            );
-            setEditData({ ...editData, notas_conversao: updatedNotas });
-          }}
-          className="form-select"
-        >
-          <option value="">Selecione</option>
-          {conversoes.map(conv => (
-            <option key={conv.id} value={conv.id}>
-              {conv.nome} ({conv.percentual}%)
-            </option>
-          ))}
-        </select>
-      );
-    }
-
-    return column.render ? column.render(row) : row[column.key];
+  const handleModalSuccess = () => {
+    setEditingAvaliacao(null);
+    fetchAvaliacoes(currentPage, searchTerm, monthFilter);
   };
 
   const generateColumns = (firstItem) => {
     if (!firstItem) return [];
 
-    const baseColumns = [
+    return [
       { header: 'Incidente', key: 'number' },
       { header: 'Fila', key: 'assignment_group' },
       { header: 'Técnico', key: 'resolved_by' },
@@ -193,51 +119,34 @@ function AvaliacoesTable() {
         key: 'data_referencia',
         render: (row) => row.data_referencia || '-'
       },
-      { header: 'Avaliador', key: 'created_by' },
+      // Colunas dinâmicas para notas booleanas
+      ...(firstItem.notas_booleanas || []).map(nota => ({
+        header: nota.criterio_nome,
+        key: `boolean_${nota.criterio_nome}`,
+        render: (row) => renderStatus(row.notas_booleanas?.find(n => n.criterio_nome === nota.criterio_nome)?.valor || false)
+      })),
+      // Colunas dinâmicas para notas de conversão
+      ...(firstItem.notas_conversao || []).map(nota => ({
+        header: nota.criterio_nome,
+        key: `conversao_${nota.criterio_nome}`,
+        render: (row) => renderConversao(row.notas_conversao?.find(n => n.criterio_nome === nota.criterio_nome)?.nome_conversao || '-')
+      })),
+      {
+        header: 'Ações',
+        key: 'actions',
+        render: (row) => (
+          <div className="actions-column">
+            <button
+              className="edit-button"
+              onClick={() => handleEdit(row)}
+              title="Editar avaliação"
+            >
+              <FaEdit size={14} />
+            </button>
+          </div>
+        )
+      }
     ];
-
-    // Adicionar colunas para notas booleanas
-    const booleanColumns = (firstItem.notas_booleanas || []).map(nota => ({
-      header: nota.criterio_nome,
-      key: `boolean_${nota.criterio_nome}`,
-      type: 'boolean',
-      editable: true,
-      render: (row) => {
-        const notaItem = row.notas_booleanas.find(n => n.criterio_nome === nota.criterio_nome);
-        return renderStatus(notaItem?.valor || false);
-      }
-    }));
-
-    // Adicionar colunas para notas de conversão
-    const conversaoColumns = (firstItem.notas_conversao || []).map(nota => ({
-      header: nota.criterio_nome,
-      key: `conversao_${nota.criterio_nome}`,
-      type: 'conversao',
-      editable: true,
-      render: (row) => {
-        const notaItem = row.notas_conversao.find(n => n.criterio_nome === nota.criterio_nome);
-        return renderConversao(notaItem?.valor_convertido || 0);
-      }
-    }));
-
-    // Adicionar coluna de ações
-    const actionsColumn = {
-      header: 'Ações',
-      key: 'actions',
-      render: (row) => (
-        <div className="actions-column">
-          <button 
-            className="edit-button" 
-            onClick={() => handleEdit(row)}
-            title="Editar avaliação"
-          >
-            <FaEdit />
-          </button>
-        </div>
-      )
-    };
-
-    return [...baseColumns, ...booleanColumns, ...conversaoColumns, actionsColumn];
   };
 
   return (
@@ -256,16 +165,44 @@ function AvaliacoesTable() {
         </div>
       </div>
 
+      {!loadingEdit && editingAvaliacao && (
+        <EditAvaliacaoModal
+          ticket={editingAvaliacao}
+          onClose={() => setEditingAvaliacao(null)}
+          onSuccess={() => {
+            setEditingAvaliacao(null);
+            fetchAvaliacoes(currentPage, searchTerm, monthFilter);
+          }}
+        />
+      )}
+      
       {activeTab === 'pendentes' ? (
         isStaffOrGestor && <TicketsSorteados />
       ) : (
         <>
-          <div className="page-header">
-            <div className="page-actions">
-              {/* Espaço para botões de ação, caso seja necessário adicionar no futuro */}
+          <div className="filters-container">
+            <div className="filter-date-container">
+              <div className="filter-group">
+                <span className="filter-label">Data Referência:</span>
+                <div className="date-filter-wrapper">
+                  <FaCalendarAlt className="date-icon" />
+                  <input
+                    type="month"
+                    className="date-filter-input"
+                    value={monthFilter}
+                    onChange={(e) => setMonthFilter(e.target.value)}
+                  />
+                  {monthFilter && (
+                    <FaTimes
+                      className="clear-filter"
+                      onClick={() => setMonthFilter('')}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-            
-            <div className="search-container">
+
+            <div className="search-container" style={{ marginLeft: 'auto' }}>
               <div className="search-wrapper">
                 <FaSearch className="search-icon" />
                 <input
@@ -307,9 +244,7 @@ function AvaliacoesTable() {
                       <tr key={avaliacao.id}>
                         {generateColumns(avaliacoes[0]).map(column => (
                           <td key={column.key}>
-                            {editingId === avaliacao.id && column.editable ? 
-                              renderEditCell(avaliacao, column) : 
-                              (column.render ? column.render(avaliacao) : avaliacao[column.key] || '-')}
+                            {column.render ? column.render(avaliacao) : avaliacao[column.key] || '-'}
                           </td>
                         ))}
                       </tr>

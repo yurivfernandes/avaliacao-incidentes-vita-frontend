@@ -143,13 +143,128 @@
   padding: 0.75rem;
 }
 
+/* ===== CORREÇÃO PARA O BOTÃO DE EDITAR ===== */
+/* Regras com maior especificidade para garantir que sejam aplicadas */
+.tecnicos-table td:last-child {
+  position: relative !important;
+  min-width: 100px !important;
+  width: 100px !important;
+  padding: 8px !important;
+  text-align: center !important;
+}
+
 .tecnicos-table .actions-column {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  min-height: 40px !important;
+}
+
+.tecnicos-table .edit-button,
+.tecnicos-table .save-button,
+.tecnicos-table .cancel-button {
+  flex: 0 0 auto !important;
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  margin: 0 2px !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Garantir que os ícones não causem overflow */
+.tecnicos-table .edit-button svg,
+.tecnicos-table .save-button svg,
+.tecnicos-table .cancel-button svg {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+}
+
+/* ===== FIM DA CORREÇÃO ===== */
+
+/* Correção para o botão de editar */
+.actions-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 80px; /* Largura mínima para acomodar botões */
+  width: 100%;
+  height: 40px; /* Altura fixa para manter alinhamento */
+  padding: 0; /* Remove espaçamento interno */
+  position: relative; /* Necessário para posicionamento adequado */
+}
+
+/* Ajuste para os botões dentro da coluna de ações */
+.edit-button,
+.save-button,
+.cancel-button,
+.reset-button {
+  flex-shrink: 0; /* Impede que o botão diminua */
+  min-width: 32px;
+  min-height: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0; /* Remove o padding para evitar que cause overflow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Garantir que a última coluna tenha tamanho adequado e não quebre */
+.tecnicos-table td:last-child,
+.tecnicos-table th:last-child {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Manter os ícones com tamanho controlado */
+.edit-button svg,
+.save-button svg,
+.cancel-button svg {
+  font-size: 0.85rem; /* Tamanho menor para os ícones */
+}
+
+/* Garantir que mesmo celulas vazias mantenham a largura */
+.tecnicos-table td:empty {
+  min-width: 1rem;
+  min-height: 2rem;
+}
+
+/* Ajustes para o botão de editar na tabela */
+.actions-column {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
-  margin: 0 auto;
+  min-width: 80px; /* Largura mínima para evitar quebra */
+}
+
+.edit-button {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0; /* Evita que o botão encolha */
+}
+
+/* Ajuste para a última coluna da tabela */
+.tecnicos-table td:last-child,
+.tecnicos-table th:last-child {
+  width: 80px;
+  min-width: 80px;
+  padding: 0.5rem;
 }
 
 /* Estilo específico para o botão de critérios */
@@ -736,4 +851,63 @@ input:checked + .slider:before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+
+/* Estilos para os botões booleanos */
+.boolean-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-boolean {
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-boolean.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.btn-boolean:hover:not(.active) {
+  background-color: #f1f5f9;
+}
+
+/* Estilos para o select de conversão */
+.custom-select {
+  width: 100%;
+  padding: 6px 24px 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.875rem;
+  color: #1f2937;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+}
+
+.custom-select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -1px;
+}
+
+.custom-select:hover {
+  border-color: #cbd5e1;
+}
+
+/* Ajuste para a célula de edição */
+.tecnicos-table td {
+  padding: 8px;
+  vertical-align: middle;
 }
