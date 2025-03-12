@@ -33,10 +33,9 @@ const renderConversao = (nomeConversao) => {
   return nomeConversao || '-';
 };
 
-function AvaliacoesTable() {
+function AvaliacoesTable({ activeTab }) {
   const { user: currentUser } = useAuth();
   const isStaffOrGestor = currentUser?.is_staff || currentUser?.is_gestor;
-  const [activeTab, setActiveTab] = useState(isStaffOrGestor ? 'pendentes' : 'avaliados');
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,35 +150,17 @@ function AvaliacoesTable() {
 
   return (
     <>
-      <div className="tabs-container">
-        <div className="tabs">
-          {getTabs(isStaffOrGestor).map(tab => (
-            <button
-              key={tab.id}
-              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {!loadingEdit && editingAvaliacao && (
-        <EditAvaliacaoModal
-          ticket={editingAvaliacao}
-          onClose={() => setEditingAvaliacao(null)}
-          onSuccess={() => {
-            setEditingAvaliacao(null);
-            fetchAvaliacoes(currentPage, searchTerm, monthFilter);
-          }}
-        />
-      )}
-      
       {activeTab === 'pendentes' ? (
-        isStaffOrGestor && <TicketsSorteados />
+        <TicketsSorteados />
       ) : (
         <>
+          {!loadingEdit && editingAvaliacao && (
+            <EditAvaliacaoModal
+              ticket={editingAvaliacao}
+              onClose={() => setEditingAvaliacao(null)}
+              onSuccess={handleModalSuccess}
+            />
+          )}
           <div className="filters-container">
             <div className="filter-date-container">
               <div className="filter-group">
