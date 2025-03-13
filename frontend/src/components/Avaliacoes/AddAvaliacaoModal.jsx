@@ -269,6 +269,18 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
               <span className="info-value">{ticket.incident_number}</span>
             </div>
             <div className="info-item">
+              <span className="info-label">Aberto em:</span>
+              <span className="info-value">
+                {new Date(ticket.opened_at).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Fechado em:</span>
+              <span className="info-value">
+                {new Date(ticket.closed_at).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <div className="info-item">
               <span className="info-label">Técnico:</span>
               <span className="info-value">{ticket.resolved_by}</span>
             </div>
@@ -278,15 +290,15 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
             </div>
             <div className="info-item">
               <span className="info-label">Categoria:</span>
-              <span className="info-value">{ticket.category}</span>
+              <span className="info-value">{ticket.categoria_falha}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Subcategoria:</span>
-              <span className="info-value">{ticket.subcategory}</span>
+              <span className="info-value">{ticket.sub_categoria_falha}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Detalhe da Subcategoria:</span>
-              <span className="info-value">{ticket.subcategory_detail}</span>
+              <span className="info-value">{ticket.dv_u_detalhe_sub_categoria_da_falha}</span>
             </div>
           </div>
 
