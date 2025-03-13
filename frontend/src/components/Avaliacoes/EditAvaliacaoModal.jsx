@@ -273,6 +273,18 @@ function EditAvaliacaoModal({ ticket, onClose, onSuccess }) {
               <span className="info-value">{ticket.incident_number}</span>
             </div>
             <div className="info-item">
+              <span className="info-label">Aberto em:</span>
+              <span className="info-value">
+                {new Date(ticket.opened_at).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Fechado em:</span>
+              <span className="info-value">
+                {new Date(ticket.closed_at).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            <div className="info-item">
               <span className="info-label">Técnico:</span>
               <span className="info-value">{ticket.resolved_by}</span>
             </div>
