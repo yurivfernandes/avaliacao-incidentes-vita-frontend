@@ -70,15 +70,16 @@ function PremissasTable() {
     setEditData({
       assignment: premissa.assignment,
       qtd_incidents: premissa.qtd_incidents,
+      meta_mensal: premissa.meta_mensal // Corrigido para pegar a meta_mensal
     });
   };
 
   const handleSave = async (id) => {
     try {
-      console.log("Salvando premissa:", id, editData);
       await api.patch(`/premissas/list/${id}/`, {
         assignment: editData.assignment,
         qtd_incidents: editData.qtd_incidents,
+        meta_mensal: editData.meta_mensal
       });
       setEditingId(null);
       fetchPremissas(currentPage, searchTerm);
@@ -95,7 +96,7 @@ function PremissasTable() {
     setSelectedPremissa(null);
   };
 
-  // Estrutura do renderEditRow similar ao TecnicosTable
+  // Atualizar renderEditRow
   const renderEditRow = (item) => {
     return (
       <>
@@ -107,6 +108,16 @@ function PremissasTable() {
             value={editData.qtd_incidents}
             onChange={(e) => setEditData({...editData, qtd_incidents: e.target.value})}
             style={{ width: '100%', maxWidth: '100px' }}
+          />
+        </td>
+        <td>
+          <input
+            className="edit-input"
+            type="number"
+            value={editData.meta_mensal} // Corrigido para usar meta_mensal ao invés de meta
+            onChange={(e) => setEditData({...editData, meta_mensal: parseInt(e.target.value)})}
+            style={{ width: '100%', maxWidth: '100px' }}
+            min="0"
           />
         </td>
         <td>
@@ -188,19 +199,16 @@ function PremissasTable() {
               <tr>
                 <th>Fila</th>
                 <th>Quantidade de Incidentes</th>
+                <th>Meta</th> {/* Removido o (%) do cabeçalho */}
                 <th>Critérios</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan="4">Carregando...</td>
-                </tr>
+                <tr><td colSpan="5">Carregando...</td></tr>
               ) : premissas.length === 0 ? (
-                <tr>
-                  <td colSpan="4">Nenhuma premissa encontrada</td>
-                </tr>
+                <tr><td colSpan="5">Nenhuma premissa encontrada</td></tr>
               ) : (
                 premissas.map((premissa) => (
                   <tr key={premissa.id}>
@@ -210,6 +218,7 @@ function PremissasTable() {
                       <>
                         <td>{premissa.dv_assignment_group}</td>
                         <td>{premissa.qtd_incidents}</td>
+                        <td>{premissa.meta_mensal}</td> {/* Removido o símbolo % */}
                         <td>
                           <div className="actions-column">
                             <button 
@@ -226,7 +235,7 @@ function PremissasTable() {
                             <button 
                               className="edit-button" 
                               onClick={() => handleEditQtdIncidents(premissa)}
-                              title="Editar quantidade"
+                              title="Editar"
                             >
                               <FaPencilAlt />
                             </button>

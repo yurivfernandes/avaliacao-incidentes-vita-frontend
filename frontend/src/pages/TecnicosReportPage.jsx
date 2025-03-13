@@ -7,14 +7,13 @@ import {
   YAxis, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  ReferenceLine
 } from 'recharts';
 import Header from '../components/Header/Header';
 import api from '../services/api';
-import { FaChartBar, FaTrophy, FaExclamationTriangle, FaChartLine, FaMedal } from 'react-icons/fa';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import IndicadorCard, { getTendenciaIcon } from '../components/dashboard/IndicadorCard';
+import { FaChartBar, FaTrophy, FaChartLine, FaMedal } from 'react-icons/fa';
+import IndicadorCard from '../components/dashboard/IndicadorCard';
 import Select from 'react-select';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,12 +27,18 @@ function TecnicosReportPage() {
   const [selectedTecnico, setSelectedTecnico] = useState('todos');
   const [tecnicos, setTecnicos] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState('6');  // default 6 meses
-  const [dashboardData, setDashboardData] = useState(null);
   const [queues, setQueues] = useState([]);
   const [selectedQueue, setSelectedQueue] = useState(null);
-  const [userQueues, setUserQueues] = useState([]);
   const [isQueueSelected, setIsQueueSelected] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null);
+
+  const [activeRankingTab, setActiveRankingTab] = useState('mensal');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [availableYears, setAvailableYears] = useState([]);
+
+  // Adicionar novos estados para os rankings
+  const [rankingMensal, setRankingMensal] = useState([]);
+  const [rankingAnual, setRankingAnual] = useState([]);
 
   const periodos = [
     { value: '2', label: 'Últimos 2 meses' },
@@ -44,86 +49,107 @@ function TecnicosReportPage() {
     { value: 'anterior', label: 'Ano Anterior' }
   ];
 
-  // Nova paleta de cores mais contrastante (apenas tons de roxo, azul e verde petróleo)
-  const colors = [
-    { 
-      stroke: '#6b3ca4', // Roxo escuro
-      fill: 'url(#colorGradient1)',
-      gradient: ['rgba(107, 60, 164, 0.3)', 'rgba(107, 60, 164, 0)']
-    },
-    { 
-      stroke: '#2d6a4f', // Verde petróleo escuro
-      fill: 'url(#colorGradient2)',
-      gradient: ['rgba(45, 106, 79, 0.3)', 'rgba(45, 106, 79, 0)']
-    },
-    { 
-      stroke: '#0353a4', // Azul escuro
-      fill: 'url(#colorGradient3)',
-      gradient: ['rgba(3, 83, 164, 0.3)', 'rgba(3, 83, 164, 0)']
-    }
-  ];
-
-  // Função para distribuir cores garantindo máximo contraste mesmo com poucos itens
-  const getColorIndex = (index, totalItems) => {
-    if (totalItems <= 1) return 0;
-    if (totalItems === 2) return index * 2; // Garante que use roxo e verde petróleo
-    // Para 3 ou mais, alterna entre as cores disponíveis
-    return index % colors.length;
+  const formatarNumero = (num) => {
+    if (num === undefined || num === null) return '-';
+    return num.toLocaleString('pt-BR');
   };
 
-  // Função para formatar data
-  const formatMes = (mesAno) => {
-    const [mes, ano] = mesAno.split('/');
-    const data = new Date(ano, mes - 1);
-    return format(data, 'MMM-yy', { locale: ptBR }).toUpperCase();
+  // Modificar a função formatarDecimal para não incluir % por padrão
+  const formatarDecimal = (num, includeSymbol = false) => {
+    if (num === undefined || num === null) return '-';
+    return `${Number(num).toFixed(2)}${includeSymbol ? '%' : ''}`;
   };
 
-  useEffect(() => {
-    document.title = 'Avaliação de Incidentes | Relatório de Técnicos';
-    checkUserQueues();
-  }, []);
-
-  useEffect(() => {
-    if (selectedQueue) {
-      fetchData();
-    }
-  }, [selectedPeriod, selectedQueue]);
-
-  useEffect(() => {
-    fetchQueues();
-  }, []);
-
-  // Adicione um novo useEffect para buscar técnicos quando a fila for selecionada
-  useEffect(() => {
-    if (selectedQueue) {
-      fetchTecnicos();
-    }
-  }, [selectedQueue]);
-
-  const checkUserQueues = async () => {
+  const formatMes = (mes) => {
+    if (!mes) return '';
+    
+    // Converte formato "MM/YYYY" para "Mês/YYYY"
     try {
-      // Assume que o user tem uma propriedade assignment_groups com as filas do usuário
-      if (user?.assignment_groups?.length === 1) {
-        // Se o usuário tem apenas uma fila, seleciona automaticamente
-        setSelectedQueue(user.assignment_groups[0].id);
-        setUserQueues(user.assignment_groups);
-        setIsQueueSelected(true);
-        await fetchTecnicos(user.assignment_groups[0].id);
-      } else if (user?.assignment_groups?.length > 1) {
-        // Se tem múltiplas filas, permite seleção
-        setUserQueues(user.assignment_groups);
-        setIsQueueSelected(false);
-      } else {
-        // Se não tem filas definidas, carrega todas (para admins)
-        await fetchQueues();
-      }
-    } catch (error) {
-      console.error('Erro ao verificar filas do usuário:', error);
-      setError('Erro ao carregar filas do usuário');
+      const [month, year] = mes.split('/');
+      const monthNames = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      
+      return `${monthNames[parseInt(month) - 1]}/${year}`;
+    } catch (e) {
+      return mes;
     }
   };
 
+  // Buscar filas disponíveis
+  const fetchQueues = async () => {
+    try {
+      const response = await api.get('/dw_analytics/assignment-group/');
+      const activeQueues = response.data.results
+        ? response.data.results.filter(queue => queue.status)
+        : [];
+      
+      console.log('Filas carregadas:', activeQueues);
+      return activeQueues;
+    } catch (error) {
+      console.error('Erro ao carregar filas:', error);
+      return [];
+    }
+  };
+
+  // Inicialização da página
+  useEffect(() => {
+    const initializePage = async () => {
+      setLoading(true);
+      try {
+        // Carregar filas
+        const availableQueues = await fetchQueues();
+        
+        if (availableQueues.length > 0) {
+          if (user?.assignment_groups?.length > 0) {
+            // Usuário tem filas específicas
+            const userFilteredQueues = availableQueues.filter(
+              queue => user.assignment_groups.some(userQueue => userQueue.id === queue.id)
+            );
+            
+            setQueues(userFilteredQueues);
+            
+            if (userFilteredQueues.length === 1) {
+              // Se só tem uma fila, seleciona automaticamente
+              const queueId = userFilteredQueues[0].id;
+              setSelectedQueue(queueId);
+              setIsQueueSelected(true);
+            }
+          } else {
+            // Usuário não tem filas específicas, usa todas as filas disponíveis
+            setQueues(availableQueues);
+          }
+        } else {
+          setError('Nenhuma fila disponível');
+        }
+      } catch (error) {
+        console.error('Erro na inicialização:', error);
+        setError('Erro ao carregar dados iniciais');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializePage();
+  }, [user]);
+
+  // Efeito quando a fila ou período é alterado
+  useEffect(() => {
+    if (selectedQueue) {
+      setIsQueueSelected(true);
+      setLoading(true);
+      
+      fetchData().finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [selectedQueue, selectedPeriod]);
+
+  // Buscar dados do relatório
   const fetchData = async () => {
+    if (!selectedQueue) return;
+    
     try {
       const endDate = new Date();
       let startDate = new Date();
@@ -137,353 +163,311 @@ function TecnicosReportPage() {
         startDate.setMonth(startDate.getMonth() - parseInt(selectedPeriod));
       }
 
-      const response = await api.get('/avaliacao/notas-por-tecnico/', {
-        params: {
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          assignment_group: selectedQueue
+      const params = {
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        assignment_group: selectedQueue
+      };
+
+      const [notasResponse, rankingMensalRes, rankingAnualRes] = await Promise.all([
+        api.get('/avaliacao/notas-por-tecnico/', { params }),
+        api.get('/avaliacao/ranking-mensal/', { params }),
+        api.get('/avaliacao/ranking-anual/', { params })
+      ]);
+
+      if (notasResponse.data && Array.isArray(notasResponse.data)) {
+        setData(notasResponse.data);
+        
+        if (notasResponse.data.length > 0) {
+          // Extrair grupos únicos
+          const uniqueGroups = Array.from(new Set(notasResponse.data
+            .filter(item => item.assignment_group_id && item.assignment_group_nome)
+            .map(item => JSON.stringify({ id: item.assignment_group_id, nome: item.assignment_group_nome }))))
+            .map(item => JSON.parse(item));
+          
+          setGroups(uniqueGroups);
+          setSelectedGroup(uniqueGroups[0]?.id);
         }
-      });
-
-      setData(response.data);
-      setDashboardData(response.data);
-      
-      // Extrair grupos únicos
-      const uniqueGroups = [...new Set(response.data.map(item => ({
-        id: item.assignment_group_id,
-        nome: item.assignment_group_nome
-      })))];
-      
-      setGroups(uniqueGroups);
-      setSelectedGroup(uniqueGroups[0]?.id);
-      
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err);
-      setError('Erro ao carregar os dados');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchQueues = async () => {
-    try {
-      const response = await api.get('/dw_analytics/assignment-group/');
-      const activeQueues = response.data.results.filter(queue => queue.status);
-      setQueues(activeQueues);
-      setUserQueues(activeQueues);
-    } catch (error) {
-      console.error('Erro ao carregar filas:', error);
-    }
-  };
-
-  const fetchTecnicos = async (queueId = selectedQueue) => {
-    if (!queueId) return;
-    
-    try {
-      const response = await api.get('/access/users/');
-      
-      // Filtra apenas os técnicos ativos que pertencem à fila selecionada
-      const tecnicosList = response.data.results
-        .filter(user => 
-          user.is_ativo && 
-          user.is_tecnico && 
-          user.assignment_groups.some(group => group.id === queueId)
-        )
-        .map(user => ({
-          id: user.id,
-          nome: user.full_name
-        }));
-      
-      setTecnicos(tecnicosList);
-      setSelectedTecnico('todos');
-      setIsQueueSelected(true);
-    } catch (error) {
-      console.error('Erro ao carregar técnicos:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (data.length > 0 && selectedGroup) {
-      const groupData = data.find(g => g.assignment_group_id === selectedGroup);
-      if (groupData) {
-        const tecnicosList = groupData.tecnicos.map(t => ({
-          id: t.tecnico_id,
-          nome: t.tecnico_nome
-        }));
-        setTecnicos(tecnicosList);
       }
+
+      if (rankingMensalRes.data) {
+        setRankingMensal(rankingMensalRes.data);
+      }
+
+      if (rankingAnualRes.data) {
+        setRankingAnual(rankingAnualRes.data);
+        // Atualizar anos disponíveis
+        const anos = [...new Set(rankingAnualRes.data.map(item => item.ano))];
+        if (anos.length > 0) {
+          setAvailableYears(anos.sort((a, b) => b - a));
+          setSelectedYear(Number(anos[0])); // Assegurar que é um número
+        }
+        
+        console.log("Ranking anual recebido:", rankingAnualRes.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      setError('Erro ao carregar os dados');
     }
-  }, [data, selectedGroup]);
-
-  const processData = (rawData) => {
-    if (!rawData || !selectedGroup) return [];
-    
-    return rawData
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .map(item => {
-        const monthData = {
-          mes: item.mes,
-          group_id: item.assignment_group_id,
-          group_nome: item.assignment_group_nome
-        };
-
-        // Adicionar dados de cada técnico
-        item.tecnicos.forEach(tecnico => {
-          monthData[tecnico.tecnico_nome] = tecnico.nota_media;
-          monthData[`${tecnico.tecnico_nome}_detalhes`] = {
-            nota_total: tecnico.nota_total,
-            total_avaliacoes: tecnico.total_avaliacoes,
-            melhor_criterio: tecnico.melhor_criterio,
-            pior_criterio: tecnico.pior_criterio
-          };
-        });
-
-        return monthData;
-      })
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
-      });
-  };
-
-  const formatarNumero = (numero) => {
-    return numero.toLocaleString('pt-BR');
-  };
-
-  const formatarDecimal = (numero) => {
-    return numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  // Atualizar função de cálculo da média do período para considerar mês selecionado
-  const calcularPontuacaoPeriodo = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const dadosGrupo = data.filter(item => item.assignment_group_id === selectedGroup);
-    
-    if (selectedMonth) {
-      const mesSelecionado = dadosGrupo.find(item => item.mes === selectedMonth);
-      let totalNotas = mesSelecionado?.nota_total || 0;
-      let totalAvaliacoes = mesSelecionado?.total_avaliacoes || 0;
-      return totalAvaliacoes > 0 ? totalNotas / totalAvaliacoes : 0;
-    }
-
-    let totalNotas = 0;
-    let totalAvaliacoes = 0;
-    dadosGrupo.forEach(mes => {
-      totalNotas += mes.nota_total || 0;
-      totalAvaliacoes += mes.total_avaliacoes || 0;
-    });
-    
-    return totalAvaliacoes > 0 ? totalNotas / totalAvaliacoes : 0;
-  };
-
-  const calcularPontuacaoUltimoMes = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const ultimoMes = data
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-      })[0];
-
-    return ultimoMes?.nota_media || 0;
-  };
-
-  const calcularPontuacaoPeriodoAnteriores = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const dadosGrupo = data.filter(item => item.assignment_group_id === selectedGroup);
-    let totalNotas = 0;
-    let totalAvaliacoes = 0;
-    
-    dadosGrupo.forEach(mes => {
-      totalNotas += mes.nota_total || 0;
-      totalAvaliacoes += mes.total_avaliacoes || 0;
-    });
-    
-    return totalAvaliacoes > 0 ? totalNotas / totalAvaliacoes : 0;
-  };
-
-  const calcularPontuacaoUltimoMesAnteriores = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const ultimoMes = data
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-      })[0];
-
-    return ultimoMes?.total_avaliacoes > 0 ? 
-      ultimoMes.nota_total / ultimoMes.total_avaliacoes : 0;
-  };
-
-  // Adicionar nova função para calcular total de tickets
-  const calcularTotalTickets = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const dadosGrupo = data.filter(item => item.assignment_group_id === selectedGroup);
-    
-    if (selectedMonth) {
-      const mesSelecionado = dadosGrupo.find(item => item.mes === selectedMonth);
-      return mesSelecionado?.total_tickets || 0;
-    }
-
-    return dadosGrupo.reduce((total, mes) => total + (mes.total_tickets || 0), 0);
-  };
-
-  // Adicionar nova função para calcular total de pontos do período
-  const calcularTotalPontos = () => {
-    if (!data?.length || !selectedGroup) return 0;
-    
-    const dadosGrupo = data.filter(item => item.assignment_group_id === selectedGroup);
-    
-    if (selectedMonth) {
-      const mesSelecionado = dadosGrupo.find(item => item.mes === selectedMonth);
-      return mesSelecionado?.nota_total || 0;
-    }
-
-    return dadosGrupo.reduce((total, mes) => total + (mes.nota_total || 0), 0);
   };
 
   const getFilteredData = () => {
-    const processedData = processData(data);
-    console.log('Processed Data:', processedData); // Log para depuração
-    if (selectedTecnico !== 'todos') {
-      return processedData.map(item => {
-        const filteredItem = { ...item };
-        Object.keys(filteredItem).forEach(key => {
-          if (key !== selectedTecnico && !['mes', 'group_id', 'group_nome'].includes(key)) {
-            delete filteredItem[key];
-          }
-        });
-        return filteredItem;
-      });
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+
+    return data.map(mes => ({
+      mes: mes.mes,
+      meta: mes.meta_mensal,
+      ...mes.tecnicos?.reduce((acc, tecnico) => ({
+        ...acc,
+        [tecnico.tecnico_nome]: tecnico.nota_media
+      }), {})
+    }));
+  };
+
+  const calcularTotalTickets = () => {
+    if (!data?.length) return 0;
+    return data[0]?.total_tickets || 0;
+  };
+
+  const calcularTotalPontos = () => {
+    if (!data?.length) return 0;
+    return data[0]?.tecnicos?.reduce((acc, t) => acc + (t.nota_total || 0), 0) || 0;
+  };
+
+  // Função ajustada para usar os dados do gráfico
+  const calcularPontuacaoPeriodo = () => {
+    if (selectedMonth) {
+      const mesSelecionado = data.find(mes => mes.mes === selectedMonth);
+      if (mesSelecionado?.tecnicos?.length) {
+        const somaMedias = mesSelecionado.tecnicos.reduce((acc, tecnico) => acc + (tecnico.nota_media || 0), 0);
+        return somaMedias / mesSelecionado.tecnicos.length;
+      }
+      return 0;
     }
-    return processedData;
+
+    // Se nenhum mês estiver selecionado, mantém o cálculo original
+    const dadosFiltrados = getFilteredData();
+    if (!dadosFiltrados || dadosFiltrados.length === 0) return 0;
+
+    let somaMedias = 0;
+    let contadorMedias = 0;
+
+    dadosFiltrados.forEach(mes => {
+      Object.entries(mes).forEach(([key, value]) => {
+        if (!['mes', 'meta'].includes(key)) {
+          somaMedias += value || 0;
+          contadorMedias++;
+        }
+      });
+    });
+
+    return contadorMedias > 0 ? somaMedias / contadorMedias : 0;
   };
 
-  const calcularTendenciaGeral = () => {
-    if (!data?.length || !selectedGroup) return 'same';
+  const calcularPontuacaoUltimoMes = () => {
+    if (!data || data.length === 0) return 0;
     
-    const dadosGrupo = data
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-      });
-
-    if (dadosGrupo.length < 2) return 'same';
-
-    const ultimoMes = dadosGrupo[0];
-    const penultimoMes = dadosGrupo[1];
-
-    if (ultimoMes.nota_media > penultimoMes.nota_media) return 'up';
-    if (ultimoMes.nota_media < penultimoMes.nota_media) return 'down';
-    return 'same';
-  };
-
-  const getFilteredRanking = () => {
-    if (!data?.length || !selectedGroup) return [];
+    // Ordena os dados do mais recente para o mais antigo
+    const dadosOrdenados = [...data].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+    });
     
-    const mesesOrdenados = data
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-      });
-
-    if (mesesOrdenados.length < 1) return [];
-
-    // Mês selecionado para média e pontos
-    const mesSelecionado = selectedMonth 
-      ? mesesOrdenados.find(m => m.mes === selectedMonth)
-      : mesesOrdenados[0];
+    // Pega o mês mais recente que tem dados
+    const mesRecente = dadosOrdenados[0];
+    if (!mesRecente?.tecnicos?.length) return 0;
     
-    const mesAnterior = mesesOrdenados[mesesOrdenados.indexOf(mesSelecionado) + 1];
-
-    return mesSelecionado?.tecnicos
-      .sort((a, b) => b.nota_media - a.nota_media)
-      .map((tecnico, index) => {
-        const tecnicoMesAnterior = mesAnterior?.tecnicos
-          .find(t => t.tecnico_id === tecnico.tecnico_id);
-
-        // Tendências baseadas na média e total de pontos
-        const tendenciaMedia = tecnicoMesAnterior
-          ? tecnico.nota_media > tecnicoMesAnterior.nota_media ? 'up'
-            : tecnico.nota_media < tecnicoMesAnterior.nota_media ? 'down'
-            : 'same'
-          : 'same';
-
-        const tendenciaPontos = tecnicoMesAnterior
-          ? tecnico.nota_total > tecnicoMesAnterior.nota_total ? 'up'
-            : tecnico.nota_total < tecnicoMesAnterior.nota_total ? 'down'
-            : 'same'
-          : 'same';
-
-        return {
-          ...tecnico,
-          posicao_ranking: index + 1,
-          media_ultimo_mes: mesSelecionado.nota_media,
-          total_pontos: tecnico.nota_total,
-          tendencia_media: tendenciaMedia,
-          tendencia_pontos: tendenciaPontos
-        };
-      });
+    // Calcula a média do mês mais recente
+    const somaMedias = mesRecente.tecnicos.reduce((acc, tecnico) => acc + (tecnico.nota_media || 0), 0);
+    return somaMedias / mesRecente.tecnicos.length;
   };
 
   const calcularPontoCritico = () => {
-    if (!data?.length || !selectedGroup) return '-';
-    
-    const mesesOrdenados = data
-      .filter(item => item.assignment_group_id === selectedGroup)
-      .sort((a, b) => {
-        const [mesA, anoA] = a.mes.split('/');
-        const [mesB, anoB] = b.mes.split('/');
-        return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-      });
+    if (!data?.length || !data[0]?.tecnicos?.length) return '-';
 
-    // Se tiver mês selecionado, usa ele, senão usa o último mês
-    const mesSelecionado = selectedMonth 
-      ? mesesOrdenados.find(m => m.mes === selectedMonth)
-      : mesesOrdenados[0];
-
-    if (!mesSelecionado?.tecnicos?.length) return '-';
-
-    const tecnicoCritico = mesSelecionado.tecnicos
-      .reduce((min, curr) => curr.nota_media < min.nota_media ? curr : min);
+    const tecnicoCritico = data[0].tecnicos
+      .reduce((min, curr) => (curr.nota_media < min.nota_media) ? curr : min);
 
     return `${tecnicoCritico.tecnico_nome} (${tecnicoCritico.nota_media.toFixed(2)}%)`;
   };
 
-  const getMedalIcon = (position) => {
-    const medalColors = {
-      1: '#FFD700', // Ouro
-      2: '#C0C0C0', // Prata
-      3: '#CD7F32'  // Bronze
-    };
+  // Função corrigida para calcular tendência
+  const calcularTendencia = (atual, anterior) => {
+    if (atual === undefined || anterior === undefined) return null;
+    if (atual === 0 && anterior === 0) return 0;
+    if (anterior === 0) return 100; // Se anterior era 0 e atual > 0, aumento de 100%
+    return ((atual - anterior) / anterior) * 100;
+  };
 
-    if (position <= 3) {
-      return <FaMedal color={medalColors[position]} size={20} className="medal-icon" />;
+  // Função corrigida para calcular tendência do último mês
+  const calcularTendenciaUltimoMes = () => {
+    const dadosFiltrados = [...data].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+    });
+
+    if (dadosFiltrados.length < 2) return null;
+
+    const mesAtual = dadosFiltrados[0];
+    const mesAnterior = dadosFiltrados[1];
+
+    if (!mesAtual?.tecnicos?.length || !mesAnterior?.tecnicos?.length) return null;
+
+    const mediaAtual = mesAtual.tecnicos.reduce((acc, t) => acc + t.nota_media, 0) / mesAtual.tecnicos.length;
+    const mediaAnterior = mesAnterior.tecnicos.reduce((acc, t) => acc + t.nota_media, 0) / mesAnterior.tecnicos.length;
+
+    return calcularTendencia(mediaAtual, mediaAnterior);
+  };
+
+  // Função corrigida para calcular tendência do período
+  const calcularTendenciaPeriodo = () => {
+    const dadosFiltrados = [...data].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+    });
+
+    if (dadosFiltrados.length < 2) return null;
+
+    const metade = Math.floor(dadosFiltrados.length / 2);
+    const periodoRecente = dadosFiltrados.slice(0, metade);
+    const periodoAnterior = dadosFiltrados.slice(metade);
+
+    if (!periodoRecente.length || !periodoAnterior.length) return null;
+
+    const mediaRecente = periodoRecente.reduce((acc, mes) => {
+      if (!mes.tecnicos?.length) return acc;
+      const mediaMes = mes.tecnicos.reduce((sum, t) => sum + t.nota_media, 0) / mes.tecnicos.length;
+      return acc + mediaMes;
+    }, 0) / periodoRecente.length;
+
+    const mediaAnterior = periodoAnterior.reduce((acc, mes) => {
+      if (!mes.tecnicos?.length) return acc;
+      const mediaMes = mes.tecnicos.reduce((sum, t) => sum + t.nota_media, 0) / mes.tecnicos.length;
+      return acc + mediaMes;
+    }, 0) / periodoAnterior.length;
+
+    return calcularTendencia(mediaRecente, mediaAnterior);
+  };
+
+  const colors = [
+    {
+      // Cor: roxo escuro
+      gradient: ['rgba(103, 0, 153, 0.8)', 'rgba(103, 0, 153, 0.1)'],
+      stroke: 'rgba(103, 0, 153, 1)',
+      fill: 'url(#colorGradient1)'
+    },
+    {
+      // Cor: roxo médio
+      gradient: ['rgba(140, 20, 190, 0.8)', 'rgba(140, 20, 190, 0.1)'],
+      stroke: 'rgba(140, 20, 190, 1)',
+      fill: 'url(#colorGradient2)'
+    },
+    {
+      // Cor: azul escuro
+      gradient: ['rgba(45, 50, 180, 0.8)', 'rgba(45, 50, 180, 0.1)'],
+      stroke: 'rgba(45, 50, 180, 1)',
+      fill: 'url(#colorGradient3)'
+    },
+    {
+      // Cor: azul claro
+      gradient: ['rgba(0, 120, 215, 0.8)', 'rgba(0, 120, 215, 0.1)'],
+      stroke: 'rgba(0, 120, 215, 1)',
+      fill: 'url(#colorGradient4)'
     }
-    return <span className="dashboard-ranking-number">{position}</span>;
+  ];
+
+  const getMedalIcon = (posicao, media, meta) => {
+    // Só mostra medalha se atingiu a meta
+    if (!media || !meta || media < meta) {
+      return <span className="ranking-position">{posicao}º</span>;
+    }
+    
+    if (posicao === 1) return <FaMedal color="#FFD700" size={16} />;
+    if (posicao === 2) return <FaMedal color="#D3D3D3" size={16} />;
+    if (posicao === 3) return <FaMedal color="#CD7F32" size={16} />;
+    return <span className="ranking-position">{posicao}º</span>;
+  };
+
+  const getColorIndex = (index, totalItems) => {
+    if (totalItems <= 1) return 0;
+    if (totalItems === 2) return index * 2;
+    return index % colors.length;
+  };
+
+  const getFilteredRanking = () => {
+    if (!rankingMensal || !Array.isArray(rankingMensal) || rankingMensal.length === 0) return [];
+    
+    const mesesOrdenados = [...rankingMensal].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+    });
+
+    const mesSelecionado = selectedMonth 
+      ? mesesOrdenados.find(m => m.mes === selectedMonth)
+      : mesesOrdenados[0];
+
+    const meta = data[0]?.meta_mensal || 0;
+    const tecnicos = mesSelecionado?.tecnicos || [];
+    
+    return tecnicos.map(tecnico => {
+      const percentualMeta = ((tecnico.media / meta) * 100) - 100;
+      let alertClass = '';
+      
+      if (percentualMeta < -10) {
+        alertClass = 'dashboard-alert-red';
+      } else if (percentualMeta < 0) {
+        alertClass = 'dashboard-alert-yellow';
+      } else if (percentualMeta >= 0 && !tecnico.meta_atingida) {
+        alertClass = 'dashboard-alert-green';
+      }
+      
+      return {
+        ...tecnico,
+        meta_atingida: tecnico.media >= meta,
+        alertClass
+      };
+    });
+  };
+
+  const getFilteredRankingAnual = () => {
+    if (!rankingAnual || !Array.isArray(rankingAnual)) return [];
+    
+    const anoSelecionado = rankingAnual.find(item => Number(item.ano) === Number(selectedYear));
+    if (!anoSelecionado) return [];
+    
+    const meta = data[0]?.meta_mensal || 0;
+    const tecnicos = anoSelecionado.tecnicos || [];
+    
+    return tecnicos.map(tecnico => {
+      const percentualMeta = ((tecnico.media / meta) * 100) - 100;
+      let alertClass = '';
+      
+      if (percentualMeta < -10) {
+        alertClass = 'dashboard-alert-red';
+      } else if (percentualMeta < 0) {
+        alertClass = 'dashboard-alert-yellow';
+      } else if (percentualMeta >= 0 && !tecnico.meta_atingida) {
+        alertClass = 'dashboard-alert-green';
+      }
+      
+      return {
+        ...tecnico,
+        meta_atingida: tecnico.media >= meta,
+        alertClass
+      };
+    });
   };
 
   const renderDashboardContent = () => {
-    const handleMonthClick = (data) => {
-      if (data && data.activeLabel) {
-        // Se clicar no mês que já está selecionado, limpa o filtro
-        if (selectedMonth === data.activeLabel) {
-          setSelectedMonth(null);
-        } else {
-          setSelectedMonth(data.activeLabel);
-        }
+    const handleMonthClick = (clickData) => {
+      if (clickData && clickData.activeLabel) {
+        setSelectedMonth(prevMonth => 
+          prevMonth === clickData.activeLabel ? null : clickData.activeLabel
+        );
       }
     };
 
@@ -491,6 +475,38 @@ function TecnicosReportPage() {
       setSelectedMonth(null);
     };
 
+    // Obter dados do mês selecionado
+    const getMesData = () => {
+      if (selectedMonth && data.length > 0) {
+        return data.find(mes => mes.mes === selectedMonth) || data[0];
+      }
+      return data[0];
+    };
+
+    const mesData = getMesData();
+
+    // Calcular indicadores do mês
+    const calcularTotalTicketsSelecionado = () => {
+      return mesData?.total_tickets || 0;
+    };
+
+    const calcularTotalPontosSelecionado = () => {
+      if (!mesData?.tecnicos?.length) return 0;
+      return mesData.tecnicos.reduce((acc, t) => acc + (t.nota_total || 0), 0);
+    };
+
+    const calcularPontuacaoSelecionada = () => {
+      if (!mesData?.tecnicos?.length) return 0;
+      const medias = mesData.tecnicos.map(t => t.nota_media);
+      return medias.reduce((a, b) => a + b, 0) / medias.length;
+    };
+
+    const calcularPontoCriticoSelecionado = () => {
+      if (!mesData?.tecnicos?.length) return '-';
+      const tecnicoCritico = mesData.tecnicos
+        .reduce((min, curr) => (curr.nota_media < min.nota_media) ? curr : min);
+      return `${tecnicoCritico.tecnico_nome} (${tecnicoCritico.nota_media.toFixed(2)}%)`;
+    };
 
     if (!isQueueSelected) {
       return (
@@ -507,14 +523,11 @@ function TecnicosReportPage() {
               <Select
                 className="react-select-container"
                 classNamePrefix="react-select"
-                value={userQueues
-                  .map(q => ({ value: q.id, label: q.dv_assignment_group }))
-                  .find(option => option.value === selectedQueue)}
+                placeholder="Selecione uma fila..."
                 onChange={(option) => {
                   setSelectedQueue(option.value);
-                  fetchTecnicos(option.value);
                 }}
-                options={userQueues.map(queue => ({
+                options={queues.map(queue => ({
                   value: queue.id,
                   label: queue.dv_assignment_group
                 }))}
@@ -553,11 +566,6 @@ function TecnicosReportPage() {
       );
     }
 
-    const groupOptions = groups.map(group => ({
-      value: group.id,
-      label: group.nome
-    }));
-
     const tecnicoOptions = tecnicos.map(tecnico => ({
       value: tecnico.id,
       label: tecnico.nome
@@ -584,13 +592,13 @@ function TecnicosReportPage() {
               className="react-select-container"
               classNamePrefix="react-select"
               placeholder="Selecione a fila..."
-              value={queues.map(q => ({ value: q.id, label: q.dv_assignment_group }))
+              value={queues
+                .map(q => ({ value: q.id, label: q.dv_assignment_group }))
                 .find(option => option.value === selectedQueue)}
               onChange={(option) => {
                 setSelectedQueue(option.value);
                 setSelectedTecnico('todos'); // Reset seleção do técnico
                 setSelectedGroup(option.value); // Atualiza o grupo selecionado
-                fetchTecnicos(option.value); // Busca os técnicos da nova fila
               }}
               options={queues.map(queue => ({
                 value: queue.id,
@@ -604,8 +612,9 @@ function TecnicosReportPage() {
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
-              isDisabled={!selectedQueue} // Desabilita se não houver fila selecionada
-              value={tecnicoOptions.find(option => option.value === selectedTecnico) || { value: 'todos', label: 'Todos os Técnicos' }}
+              isDisabled={!selectedQueue || tecnicoOptions.length === 0} // Desabilita se não houver fila selecionada
+              value={tecnicoOptions.find(option => option.value === selectedTecnico) || 
+                    { value: 'todos', label: 'Todos os Técnicos' }}
               onChange={(option) => setSelectedTecnico(option.value)}
               options={[{ value: 'todos', label: 'Todos os Técnicos' }, ...tecnicoOptions]}
             />
@@ -637,33 +646,32 @@ function TecnicosReportPage() {
 
         <div className="dashboard-grid">
           <IndicadorCard
+            icon={FaChartLine}
+            title="Meta"
+            value={formatarDecimal(mesData?.meta_mensal || 0)}
+            className="meta-card"
+          />
+          <IndicadorCard
             icon={FaChartBar}
             title="Tickets Avaliados"
-            value={formatarNumero(calcularTotalTickets())}
+            value={formatarNumero(calcularTotalTicketsSelecionado())}
           />
           <IndicadorCard
             icon={FaChartBar}
             title="Total de Pontos"
-            value={formatarNumero(Math.round(calcularTotalPontos()))}
-            tendencia={calcularTendenciaGeral()}
+            value={formatarNumero(Math.round(calcularTotalPontosSelecionado()))}
           />
           <IndicadorCard
             icon={FaChartBar}
             title="Média Período"
             value={formatarDecimal(calcularPontuacaoPeriodo())}
-            tendencia={calcularTendenciaGeral()}
+            className={calcularPontuacaoPeriodo() >= (mesData?.meta_mensal || 0) ? 'meta-achieved' : ''}
           />
           <IndicadorCard
             icon={FaChartBar}
             title="Média Último Mês"
             value={formatarDecimal(calcularPontuacaoUltimoMes())}
-            tendencia={calcularTendenciaGeral()}
-          />
-          <IndicadorCard
-            icon={FaExclamationTriangle}
-            title="Ponto Crítico"
-            value={calcularPontoCritico()}
-            className="critical"
+            className={calcularPontuacaoUltimoMes() >= (mesData?.meta_mensal || 0) ? 'meta-achieved' : ''}
           />
         </div>
 
@@ -674,7 +682,7 @@ function TecnicosReportPage() {
             </h3>
             <div className="chart-wrapper">
               <div className="chart-outer-container">
-                <ResponsiveContainer width="95%" height={360}> {/* Reduzido de 400 */}
+                <ResponsiveContainer width="95%" height={360}>
                   <AreaChart 
                     data={getFilteredData()
                       .sort((a, b) => {
@@ -708,22 +716,22 @@ function TecnicosReportPage() {
                       }}
                       axisLine={false}
                       tickLine={false}
-                      padding={{ left: 10, right: 10 }}
+                      interval={0}
+                      padding={{ left: 30, right: 30 }} // Aumentado o padding
                     />
                     <YAxis 
                       hide={true}
                       domain={[0, 100]}
                     />
                     <Tooltip 
-                      formatter={(value, name) => [`${formatarDecimal(value)}`, name.split('_')[0]]}
+                      formatter={(value, name) => [`${formatarDecimal(value)}`, name]}
                       labelFormatter={formatMes}
                     />
                     <Legend 
-                      formatter={(value) => value.split('_')[0]}
                       wrapperStyle={{ paddingTop: '20px' }}
                     />
                     {Object.keys(getFilteredData()[0] || {})
-                      .filter(key => !['mes', 'group_id', 'group_nome'].includes(key) && 
+                      .filter(key => !['mes', 'meta', 'group_id', 'group_nome'].includes(key) && 
                         !key.includes('_detalhes') && !key.includes('_tendencia'))
                       .sort() // Ordena alfabeticamente
                       .map((tecnico, index, array) => {
@@ -741,51 +749,72 @@ function TecnicosReportPage() {
                               r: 6,
                               fill: '#FFFFFF',
                               stroke: colors[colorIndex].stroke,
-                              strokeWidth: 2.5
+                              strokeWidth: 2.5,
+                              strokeOpacity: 1,
+                              fillOpacity: 1, // Garante preenchimento sólido
                             }}
                             activeDot={{ 
                               r: 8,
                               fill: '#FFFFFF',
                               stroke: colors[colorIndex].stroke,
-                              strokeWidth: 2.5
+                              strokeWidth: 2.5,
+                              strokeOpacity: 1,
+                              fillOpacity: 1, // Garante preenchimento sólido
                             }}
                             label={props => {
                               const { x, y, value, index: dataIndex } = props;
-                              const data = getFilteredData();
-                              const proximosValores = Object.keys(data[dataIndex])
-                                .filter(k => !['mes', 'group_id', 'group_nome'].includes(k) && 
+                              // Só exibe valores em um máximo de 4 séries para evitar sobreposição
+                              if (array.length > 4) return null;
+                              
+                              // Calcular offset para evitar sobreposição de labels
+                              const proximosValores = Object.keys(getFilteredData()[dataIndex] || {})
+                                .filter(k => !['mes', 'meta', 'group_id', 'group_nome'].includes(k) && 
                                   !k.includes('_detalhes') && !k.includes('_tendencia'))
                                 .map(k => ({
-                                  valor: data[dataIndex][k],
-                                  nome: k,
-                                  y: data[dataIndex][k] // armazena o valor Y para comparação
-                                }))
-                                .sort((a, b) => b.y - a.y); // ordena por valor decrescente
-
-                              if (proximosValores.length <= 2) {
-                                const posicao = proximosValores.findIndex(v => v.nome === tecnico);
-                                // Ajusta o offset baseado na posição e no valor
-                                const offsetY = posicao === 0 ? -25 : posicao === 1 ? 25 : 0;
-                                
-                                return (
-                                  <text
-                                    x={x}
-                                    y={y + offsetY}
-                                    fill={colors[colorIndex].stroke}
-                                    fontSize={11}
-                                    fontWeight="500"
-                                    textAnchor="middle"
-                                    className="area-chart-label"
-                                  >
-                                    {Math.ceil(value)} {/* Removido o % e usando Math.ceil */}
-                                  </text>
-                                );
-                              }
-                              return null;
+                                  valor: getFilteredData()[dataIndex][k],
+                                  nome: k
+                                }));
+                              
+                              // Ordenar para determinar posição
+                              const valoresOrdenados = [...proximosValores]
+                                .sort((a, b) => b.valor - a.valor);
+                              
+                              // Encontrar a posição do técnico atual
+                              const posicao = valoresOrdenados.findIndex(v => v.nome === tecnico);
+                              
+                              // Ajustar o offset baseado na posição
+                              const offsetY = [-25, 25, -45, 45][posicao] || 0;
+                              
+                              return (
+                                <text
+                                  x={x}
+                                  y={y + offsetY}
+                                  fill={colors[colorIndex].stroke}
+                                  fontSize={11}
+                                  fontWeight="500"
+                                  textAnchor="middle"
+                                  className="area-chart-label"
+                                >
+                                  {Math.round(value)}
+                                </text>
+                              );
                             }}
                           />
                         );
                       })}
+                    {/* Adicionar linha de meta com mais espessura */}
+                    <ReferenceLine 
+                      y={data[0]?.meta_mensal} 
+                      stroke="#670099" 
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      label={{ 
+                        value: `Meta: ${data[0]?.meta_mensal || 0}`,
+                        position: 'right',
+                        fill: '#670099',
+                        fontWeight: 500
+                      }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -793,36 +822,97 @@ function TecnicosReportPage() {
           </div>
 
           <div className="dashboard-ranking-container">
-            <h3>
-              <FaTrophy className="card-icon" />
-              Ranking dos Técnicos
-            </h3>
-            <div className="ranking-list-container">
-              <div className="dashboard-ranking-header">
-                <span>Técnico</span>
-                <span>Média</span>
-                <span>Total Pontos</span>
+            <div className="ranking-header">
+              <h3>
+                <FaTrophy className="card-icon" />
+                Ranking
+              </h3>
+              <div className="ranking-header-content">
+                <div className="ranking-tabs">
+                  <button 
+                    className={`ranking-tab ${activeRankingTab === 'mensal' ? 'active' : ''}`}
+                    onClick={() => setActiveRankingTab('mensal')}
+                  >
+                    Mensal
+                  </button>
+                  <button 
+                    className={`ranking-tab ${activeRankingTab === 'anual' ? 'active' : ''}`}
+                    onClick={() => setActiveRankingTab('anual')}
+                  >
+                    Anual
+                  </button>
+                </div>
+
+                {activeRankingTab === 'anual' && availableYears.length > 0 && (
+                  <Select
+                    className="year-select-container"
+                    classNamePrefix="react-select"
+                    value={{ value: selectedYear, label: selectedYear }}
+                    onChange={(option) => setSelectedYear(Number(option.value))}
+                    options={availableYears.map(year => ({
+                      value: year,
+                      label: year
+                    }))}
+                    isSearchable={false}
+                  />
+                )}
               </div>
-              <ul className="ranking-list">
-                {getFilteredRanking().map((tecnico, index) => (
-                  <li key={tecnico.tecnico_id} 
-                      className={`dashboard-ranking-item ${index === 0 ? 'top-1' : ''} ${index < 3 ? `dashboard-top-${index + 1}` : ''}`}>
-                    <div className="dashboard-ranking-info">
-                      {getMedalIcon(index + 1)}
-                      <span className="ranking-name">{tecnico.tecnico_nome}</span>
-                    </div>
-                    <div className="ranking-percentage">
-                      {formatarDecimal(tecnico.nota_media || 0)}
-                      {getTendenciaIcon(tecnico.tendencia_media)}
-                    </div>
-                    <div className="ranking-pontos">
-                      {formatarNumero(Math.round(tecnico.nota_total || 0))}
-                      {getTendenciaIcon(tecnico.tendencia_pontos)}
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </div>
+
+            <table className="generic-table">
+              <thead>
+                <tr>
+                  <th>Técnico</th>
+                  <th style={{textAlign: 'center'}}>Média</th>
+                  <th style={{textAlign: 'center'}}>Pontos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeRankingTab === 'mensal' ? (
+                  // Ranking Mensal
+                  getFilteredRanking().map((tecnico, index) => (
+                    <tr 
+                      key={tecnico.tecnico_id || index} 
+                      className={`${tecnico.meta_atingida && tecnico.posicao <= 3 ? `dashboard-top-${tecnico.posicao}` : ''} ${tecnico.alertClass}`}
+                    >
+                      <td>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                          {getMedalIcon(tecnico.posicao, tecnico.media, data[0]?.meta_mensal)}
+                          <span>{tecnico.tecnico_nome}</span>
+                        </div>
+                      </td>
+                      <td style={{textAlign: 'center'}}>
+                        {formatarDecimal(tecnico.media || 0, false)}
+                      </td>
+                      <td style={{textAlign: 'center'}}>
+                        {formatarNumero(Math.round(tecnico.total || 0))}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // Ranking Anual
+                  getFilteredRankingAnual().map((tecnico, index) => (
+                    <tr  
+                      key={tecnico.tecnico_id || index} 
+                      className={`${tecnico.meta_atingida && tecnico.posicao <= 3 ? `dashboard-top-${tecnico.posicao}` : ''} ${tecnico.alertClass}`}
+                    >
+                      <td>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                          {getMedalIcon(tecnico.posicao, tecnico.media, data[0]?.meta_mensal)}
+                          <span>{tecnico.tecnico_nome}</span>
+                        </div>
+                      </td>
+                      <td style={{textAlign: 'center'}}>
+                        {formatarDecimal(tecnico.media || 0, false)}
+                      </td>
+                      <td style={{textAlign: 'center'}}>
+                        {formatarNumero(Math.round(tecnico.total || 0))}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

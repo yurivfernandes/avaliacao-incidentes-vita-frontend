@@ -5,9 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 function AddPremissaDropdown({ onClose, onSuccess }) {
+  // Atualizar o estado inicial do formData
   const [formData, setFormData] = useState({
     assignment: null,
     qtd_incidents: '',
+    meta_mensal: ''
   });
   const [assignmentGroups, setAssignmentGroups] = useState([]);
   const { user: currentUser } = useAuth();
@@ -25,13 +27,13 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
       // Depois busca os grupos
       const response = await api.get('/dw_analytics/assignment-group/');
       let groups = response.data.results || response.data;
-      
+
       // Filtra removendo os grupos que já têm premissas
       groups = groups.filter(group => !premissasGroups.has(group.id));
 
       // Se não for staff, filtra apenas os grupos do gestor
       if (!currentUser.is_staff) {
-        groups = groups.filter(group => 
+        groups = groups.filter(group =>
           currentUser.assignment_groups.some(g => g.id === group.id)
         );
       }
@@ -95,6 +97,17 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
               value={formData.qtd_incidents}
               onChange={(e) => setFormData({ ...formData, qtd_incidents: e.target.value })}
               min="1"
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label>Meta Mensal</label> {/* Removido o (%) do label */}
+            <input
+              type="number"
+              value={formData.meta_mensal}
+              onChange={(e) => setFormData({ ...formData, meta_mensal: e.target.value })}
+              min="0"
               required
             />
           </div>
