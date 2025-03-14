@@ -229,6 +229,7 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                 }))}
                 className="react-select-container"
                 classNamePrefix="react-select"
+                menuPortalTarget={document.body}
               />
             </td>
             <td>
@@ -242,6 +243,7 @@ function TecnicosTable({ type, data, loading, onPageChange, totalPages, currentP
                 options={tipoOptions}
                 className="react-select-container"
                 classNamePrefix="react-select"
+                menuPortalTarget={document.body}
               />
             </td>
             <td>

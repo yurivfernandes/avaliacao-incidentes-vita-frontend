@@ -199,6 +199,7 @@ function CriteriosTable({ premissaId }) {
           classNamePrefix="react-select"
           isSearchable={false}
           menuPlacement="auto"
+          menuPortalTarget={document.body}
         />
       </td>
       <td>
@@ -227,6 +228,7 @@ function CriteriosTable({ premissaId }) {
           className="react-select-container"
           classNamePrefix="react-select"
           menuPlacement="auto"
+          menuPortalTarget={document.body}
         />
       </td>
       <td>
