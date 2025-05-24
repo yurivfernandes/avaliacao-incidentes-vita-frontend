@@ -9,10 +9,6 @@ import GestaoUsuarios from './pages/GestaoUsuarios';
 import PremissasPage from './pages/PremissasPage';
 import AvaliacoesPage from './pages/AvaliacoesPage';
 import TecnicosReportPage from './pages/TecnicosReportPage';
-import LandingPage from './pages/LandingPage';
-import SobrePage from './pages/SobrePage';
-import Terms from './pages/Terms';
-import PrivacyPolicy from './pages/PrivacyPolicy';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import logo from './assets/logo_login.svg'; // Certifique-se de que o caminho para o logo está correto
@@ -105,11 +101,8 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/sobre" element={<SobrePage />} />
+      <Route path="/" element={<LoginPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/termos" element={<Terms />} />
-      <Route path="/privacidade" element={<PrivacyPolicy />} />
       <Route
         path="/welcome"
         element={
@@ -172,7 +165,6 @@ const App = () => {
           </ProtectedRoute>
         }
       />
-      <Route path="/landing" element={<LandingPage />} />
     </Routes>
   );
 };
