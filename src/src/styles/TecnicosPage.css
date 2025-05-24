@@ -1,0 +1,942 @@
+/* Página principal */
+.tecnicos-page {
+  min-height: 100vh;
+  padding-top: 64px !important; /* Forçamos o padding-top correto */
+  background: #f8fafc;
+}
+
+/* Container principal */
+.tecnicos-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* Adicionar espaço extra no topo do conteúdo principal */
+.tecnicos-page .tecnicos-content {
+  padding-top: 1rem;
+}
+
+/* Adicionar espaço entre o topo e as abas */
+.tabs-container {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Container principal */
+.tecnicos-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.tecnicos-header {
+  display: flex;
+  justify-content: flex-start; /* Alterado de flex-end para flex-start */
+  margin-bottom: 1.6rem;
+}
+
+/* Ajustes no container de ações para garantir que os dropdowns fiquem dentro da tela */
+.actions-container {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  z-index: 1000;
+}
+
+/* Novo wrapper para os dropdowns */
+.dropdown-wrapper {
+  position: relative;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #D8337D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.action-button:hover {
+  background: #b82664;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.filter-button:hover {
+  background: #4a006f;
+}
+
+.filter-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #D8337D;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+  margin: 0 auto;
+}
+
+/* Estilos para a tabela */
+.inventory-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.inventory-table th {
+  background: #670099;
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  color: white;
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+}
+
+.inventory-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.inventory-table th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.inventory-table td {
+  padding: 1rem 1.25rem;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s;
+}
+
+.inventory-table tbody tr:hover {
+  background-color: #faf5ff;
+}
+
+.inventory-table tbody tr:hover td {
+  color: #670099;
+}
+
+/* Status styles */
+.status-active {
+  color: #059669;
+  font-weight: 500;
+}
+
+.status-inactive {
+  color: #DC2626;
+  font-weight: 500;
+}
+
+/* Edit controls */
+.edit-button,
+.save-button,
+.cancel-button {
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #670099;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.edit-button:hover,
+.save-button:hover,
+.cancel-button:hover {
+  background: rgba(103, 0, 153, 0.1);
+  transform: scale(1.1);
+}
+
+.edit-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Switch toggle */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #670099;
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+/* Paginação */
+.pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+}
+
+.pagination-info {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: #670099;
+  color: #670099;
+  background: #faf5ff;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Remover todos os estilos específicos do dropdown que começam com tecnicos-dropdown-* 
+   pois agora vamos usar as classes inv-filter-* do FilterDropdown.css */
+
+/* Manter apenas os estilos gerais da página e da tabela */
+
+/* Tabs */
+.tabs-container {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-radius: 6px;
+}
+
+.tab.active {
+  color: #670099;
+  background: rgba(103, 0, 153, 0.05);
+}
+
+.actions-column {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.reset-button {
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #D8337D;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.reset-button:hover {
+  background: rgba(216, 51, 125, 0.1);
+  transform: scale(1.1);
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+.password-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  width: 400px;
+  z-index: 1050;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.password-modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.password-modal-header h3 {
+  margin: 0;
+  color: #670099;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.password-modal-content {
+  padding: 1.5rem;
+}
+
+.password-display {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: #670099;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.copy-button:hover {
+  background: rgba(103, 0, 153, 0.1);
+}
+
+.password-warning {
+  color: #DC2626;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.page-actions {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.add-user-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.add-user-button:hover {
+  background: #4a006f;
+}
+
+.add-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 550px; /* Reduzido de 600px */
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 1rem; /* Reduzido de 1.5rem */
+}
+
+.add-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem; /* Reduzido de 1rem */
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #670099;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  margin-bottom: 0.75rem; /* Reduzido de 1rem */
+}
+
+.form-field label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+  position: absolute;
+  left: 10px;
+  top: -8px;
+  padding: 0 5px;
+  background-color: white;
+  color: #6F0FAF;
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+.form-field input:not([type="checkbox"]) {
+  width: 100%;
+  height: 2.5rem; /* Reduzido de 3rem */
+  padding: 0.5rem 0.75rem; /* Reduzido padding */
+  background: #f8f9fa;
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 8px;
+  color: #333333;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  max-width: 250px; /* Limitando largura máxima */
+}
+
+.form-field input:focus {
+  outline: none;
+  border-color: #6F0FAF;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(111, 15, 175, 0.1);
+}
+
+.role-selector {
+  margin-top: 8px;
+}
+
+.role-buttons-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.role-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #64748b;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.role-button:hover {
+  border-color: #670099;
+  background: #faf5ff;
+}
+
+.role-button.active {
+  border-color: #670099;
+  background: #670099;
+  color: white;
+}
+
+.role-icon {
+  font-size: 1.2rem;
+}
+
+.role-button span {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.role-info {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+  border: 1px solid #e2e8f0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem; /* Reduzido de 1rem */
+  margin-top: 1rem; /* Reduzido de 1.5rem */
+  padding-top: 1rem; /* Reduzido de 1.5rem */
+  border-top: 1px solid #e2e8f0;
+}
+
+.button-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem; /* Reduzido padding horizontal */
+  background: linear-gradient(20deg, 
+    rgba(103, 0, 153, 1) 60%,
+    rgba(201, 44, 130, 1) 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 2.5rem; /* Reduzido de 2.8rem */
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(111, 15, 175, 0.3);
+}
+
+.button-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem; /* Reduzido padding horizontal */
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 10px;
+  background: white;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 2.5rem; /* Reduzido de 2.8rem */
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.button-secondary:hover {
+  background: #f8f9fa;
+  border-color: rgba(111, 15, 175, 0.3);
+}
+
+/* ...existing code... */
+
+.add-company-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.add-company-button:hover {
+  background: #4a006f;
+}
+
+.add-company-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 550px;
+  max-width: calc(100vw - 40px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* ...existing code... */
+
+.add-queue-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #670099;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.add-queue-button:hover {
+  background: #4a006f;
+}
+
+/* ...rest of existing code... */
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.modal-actions .button-primary {
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* ...rest of existing code... */
+
+/* Estilização atualizada dos selects para manter padrão */
+.form-field select {
+  width: 100%;
+  height: 3rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 8px;
+  color: #333333;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z' fill='%23670099'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  max-width: 250px;
+  background-color: white;
+}
+
+/* Estilização do dropdown de opções */
+.form-field select option {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: #333333;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Estilização para o hover nas opções */
+.form-field select option:hover,
+.form-field select option:focus {
+  background-color: #f8f0ff !important;
+  color: #670099;
+}
+
+/* Estilização para a opção selecionada */
+.form-field select option:checked {
+  background: linear-gradient(20deg, rgba(103, 0, 153, 0.1) 60%, rgba(201, 44, 130, 0.1) 100%);
+  color: #670099;
+  font-weight: 500;
+}
+
+/* Customização do dropdown */
+.form-field select::-ms-expand {
+  display: none;
+}
+
+/* Estilização para Firefox */
+.form-field select {
+  -moz-appearance: none;
+  text-indent: 0.01px;
+  text-overflow: '';
+}
+
+/* Estilização para o primeiro option (placeholder) */
+.form-field select option:first-child {
+  font-style: italic;
+  color: #666;
+}
+
+/* Removendo outline padrão do sistema */
+.form-field select:focus {
+  outline: none;
+  border-color: #670099;
+  box-shadow: 0 0 0 3px rgba(103, 0, 153, 0.1);
+}
+
+/* Ajustando a seta do select */
+.form-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z' fill='%23670099'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+
+/* Container específico para os selects mantendo espaçamento */
+.select-container {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+/* Ajuste para quando o select está desabilitado */
+.form-field select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Mensagem de erro mantendo o padrão */
+.form-field .error-message {
+  color: #dc3545;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+/* ...existing code... */
+
+/* Estilos complementares para o React Select */
+.form-field .react-select-container {
+  width: 100%;
+  max-width: 250px;
+}
+
+.form-field .react-select__menu {
+  z-index: 1100;
+  border: 1px solid rgba(111, 15, 175, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.form-field .react-select__value-container {
+  font-size: 0.9rem;
+}
+
+/* ...rest of existing code... */
+
+/* ...existing styles... */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  width: 100%;
+}
+
+.search-container {
+  width: 300px; /* Tamanho fixo */
+  min-width: auto; /* Remove min-width */
+  max-width: none; /* Remove max-width */
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 14px;
+}
+
+.search-input {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid rgba(111, 15, 175, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6F0FAF;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(111, 15, 175, 0.1);
+}
+
+.search-input::placeholder {
+  color: #666;
+}
+
+/* ...rest of existing styles... */
+
+/* ...existing code... */
+
+.assignment-groups-select {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.assignment-groups-select option {
+  padding: 5px;
+}
+
+.assignment-groups-select option:checked {
+  background-color: #6F0FAF;
+  color: white;
+}
+
+/* ...existing code... */
+
+/* Reset e isolamento do container principal */
+.tecnicos-page {
+  min-height: 100vh;
+  padding-top: 64px !important; /* Forçamos o padding-top correto */
+  background: #f8fafc;
+}
+
+/* Container principal com largura fixa e centralizado */
+.tecnicos-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Remove classes genéricas e usa prefixo específico */
+.tecnicos-page .table-container,
+.tecnicos-page .inventory-table,
+.tecnicos-page .table-scroll {
+  width: auto;
+  min-width: unset;
+  max-width: unset;
+}
