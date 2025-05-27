@@ -7,7 +7,7 @@ import api from '../../services/api';
 function AddPremissaDropdown({ onClose, onSuccess }) {
   // Atualizar o estado inicial do formData
   const [formData, setFormData] = useState({
-    assignment: null,
+    assignment_group: null,
     qtd_incidents: '',
     meta_mensal: ''
   });
@@ -22,7 +22,7 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
     try {
       // Primeiro busca todas as premissas existentes
       const premissasResponse = await api.get('/premissas/list/');
-      const premissasGroups = new Set(premissasResponse.data.results.map(p => p.assignment));
+      const premissasGroups = new Set(premissasResponse.data.results.map(p => p.assignment_group));
 
       // Depois busca os grupos
       const response = await api.get('/dw_analytics/assignment-group/');
@@ -73,13 +73,13 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
             <label>Fila</label>
             <Select
               value={assignmentGroups
-                .filter(group => group.id === formData.assignment)
+                .filter(group => group.id === formData.assignment_group)
                 .map(group => ({
                   value: group.id,
                   label: group.dv_assignment_group
                 }))[0]}
               onChange={(selectedOption) => {
-                setFormData({ ...formData, assignment: selectedOption.value });
+                setFormData({ ...formData, assignment_group: selectedOption.value });
               }}
               options={assignmentGroups.map(group => ({
                 value: group.id,
