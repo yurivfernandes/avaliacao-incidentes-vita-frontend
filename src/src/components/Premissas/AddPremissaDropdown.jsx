@@ -55,6 +55,50 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
     }
   };
 
+  const customStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: '40px',
+      height: 'auto',
+      width: '100%',
+      background: '#f8f9fa',
+      borderColor: state.isFocused ? '#6F0FAF' : 'rgba(111, 15, 175, 0.2)',
+      boxShadow: state.isFocused ? '0 0 0 3px rgba(111, 15, 175, 0.1)' : 'none',
+      borderRadius: '8px',
+      '&:hover': {
+        borderColor: 'rgba(111, 15, 175, 0.3)'
+      },
+      padding: '2px'
+    }),
+    option: (base, state) => ({
+      ...base,
+      padding: '8px 16px',
+      backgroundColor: state.isSelected 
+        ? 'rgba(111, 15, 175, 0.1)'
+        : state.isFocused 
+          ? '#f8f0ff'
+          : 'white',
+      color: state.isSelected ? '#670099' : '#333333',
+      '&:hover': {
+        backgroundColor: '#f8f0ff',
+        color: '#670099'
+      }
+    }),
+    singleValue: base => ({
+      ...base,
+      color: '#333333',
+    }),
+    placeholder: base => ({
+      ...base,
+      color: '#666666',
+    }),
+    container: (base) => ({
+      ...base,
+      width: '100%',
+      marginTop: '8px',
+    }),
+  };
+
   return (
     <div className="add-user-dropdown">
       <div className="add-user-header">
@@ -77,14 +121,18 @@ function AddPremissaDropdown({ onClose, onSuccess }) {
                 .map(group => ({
                   value: group.id,
                   label: group.dv_assignment_group
-                }))[0]}
+                }))[0] || null}
               onChange={(selectedOption) => {
-                setFormData({ ...formData, assignment_group: selectedOption.value });
+                setFormData({ ...formData, assignment_group: selectedOption ? selectedOption.value : null });
               }}
               options={assignmentGroups.map(group => ({
                 value: group.id,
                 label: group.dv_assignment_group
               }))}
+              placeholder="Selecione uma fila..."
+              isClearable
+              isSearchable
+              styles={customStyles}
               className="react-select-container"
               classNamePrefix="react-select"
             />
