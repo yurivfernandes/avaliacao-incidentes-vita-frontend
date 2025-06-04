@@ -6,7 +6,6 @@ import api from '../../services/api';
 // Atualizado para incluir o tipo "conversao"
 const tipoOptions = [
   { value: 'boolean', label: 'Booleano' },
-  { value: 'integer', label: 'Inteiro' },
   { value: 'conversao', label: 'Conversão' }
 ];
 
@@ -21,6 +20,58 @@ function AddCriterioDropdown({ onClose, onSuccess, premissaId }) {
   
   const [serviceNowFields, setServiceNowFields] = useState([]);
   const [loadingFields, setLoadingFields] = useState(true);
+
+  const customStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: '40px',
+      height: 'auto',
+      width: '100%',
+      background: '#f8f9fa',
+      borderColor: state.isFocused ? '#6F0FAF' : 'rgba(111, 15, 175, 0.2)',
+      boxShadow: state.isFocused ? '0 0 0 3px rgba(111, 15, 175, 0.1)' : 'none',
+      borderRadius: '8px',
+      '&:hover': {
+        borderColor: 'rgba(111, 15, 175, 0.3)'
+      },
+      padding: '2px'
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    option: (base, state) => ({
+      ...base,
+      padding: '8px 16px',
+      backgroundColor: state.isSelected 
+        ? 'rgba(111, 15, 175, 0.1)'
+        : state.isFocused 
+          ? '#f8f0ff'
+          : 'white',
+      color: state.isSelected ? '#670099' : '#333333',
+      '&:hover': {
+        backgroundColor: '#f8f0ff',
+        color: '#670099'
+      }
+    }),
+    singleValue: base => ({
+      ...base,
+      color: '#333333',
+    }),
+    placeholder: base => ({
+      ...base,
+      color: '#666666',
+    }),
+    container: (base) => ({
+      ...base,
+      width: '100%',
+      marginTop: '8px',
+    }),
+  };
 
   useEffect(() => {
     fetchServiceNowFields();
@@ -94,6 +145,8 @@ function AddCriterioDropdown({ onClose, onSuccess, premissaId }) {
               onChange={(selected) => setFormData({ ...formData, tipo: selected.value })}
               options={tipoOptions}
               required
+              styles={customStyles}
+              menuPortalTarget={document.body}
               className="react-select-container"
               classNamePrefix="react-select"
               placeholder="Selecione o tipo"
@@ -128,6 +181,8 @@ function AddCriterioDropdown({ onClose, onSuccess, premissaId }) {
               options={serviceNowFields}
               isLoading={loadingFields}
               isClearable
+              styles={customStyles}
+              menuPortalTarget={document.body}
               className="react-select-container"
               classNamePrefix="react-select"
               placeholder={loadingFields ? "Carregando campos..." : "Selecione o campo"}
