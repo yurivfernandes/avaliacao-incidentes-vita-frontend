@@ -175,7 +175,7 @@ function AddAvaliacaoModal({ ticket, onClose, onSuccess }) {
       }).filter(Boolean);
 
       const payload = {
-        incident: ticket.incident_id,
+        incident: ticket.incident_number,
         criterios: criteriosPayload
       };
 
