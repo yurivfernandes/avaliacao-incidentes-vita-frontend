@@ -106,11 +106,6 @@ function TicketsSorteados() {
         key: 'sla_atendimento',
         render: (row) => renderSLAStatus(row.sla_atendimento)
       },
-      {
-        header: 'SLA Resolução', 
-        key: 'sla_resolucao',
-        render: (row) => renderSLAStatus(row.sla_resolucao)
-      },
       { header: 'Ações', key: 'actions' }
     ];
   };
