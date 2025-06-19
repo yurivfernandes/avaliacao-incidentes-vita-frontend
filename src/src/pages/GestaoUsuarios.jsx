@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { FaUserPlus, FaSearch, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaUserPlus, FaSearch, FaEdit, FaCheck, FaTimes, FaKey } from 'react-icons/fa';
 import Header from '../components/Header/Header';
 import AddUserDropdown from '../components/Tecnicos/AddUserDropdown';
 import AddQueueDropdown from '../components/Tecnicos/AddQueueDropdown';
 import PasswordResetModal from '../components/Tecnicos/PasswordResetModal';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import Select from 'react-select';
 import { generateStrongPassword } from '../utils/passwordGenerator';
 import '../styles/GenericTable.css';
 
@@ -116,7 +115,9 @@ function TecnicosPage() {
 
   const handleSuccess = (type) => {
     console.log(`Chamando fetchData após criação de ${type}`);
-    fetchData(type, currentPage);
+    setShowAddUser(false); // Fecha o dropdown após sucesso
+    setCurrentPage(1); // Volta para a primeira página
+    fetchData(type, 1); // Busca dados atualizados
   };
 
   // Modifique o handleEdit
@@ -184,23 +185,30 @@ function TecnicosPage() {
           { 
             header: 'Ações', 
             key: 'actions',
-            width: '100px',
+            width: '150px',
             text_align: 'center',
             render: (row) => (
-              editingId === row.id ? (
-                <>
-                  <button className="save-button" onClick={() => handleSave(row.id, editData)}>
-                    <FaCheck />
-                  </button>
-                  <button className="cancel-button" onClick={handleCancel}>
-                    <FaTimes />
-                  </button>
-                </>
-              ) : (
-                <button className="edit-button" onClick={() => handleEdit(row)}>
-                  <FaEdit />
-                </button>
-              )
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                {editingId === row.id ? (
+                  <>
+                    <button className="save-button" onClick={() => handleSave(row.id, editData)}>
+                      <FaCheck />
+                    </button>
+                    <button className="cancel-button" onClick={handleCancel}>
+                      <FaTimes />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="edit-button" onClick={() => handleEdit(row)}>
+                      <FaEdit />
+                    </button>
+                    <button className="reset-password-button" onClick={() => handleResetPassword(row.id)}>
+                      <FaKey />
+                    </button>
+                  </>
+                )}
+              </div>
             )
           }
         ];

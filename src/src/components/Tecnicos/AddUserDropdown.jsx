@@ -68,7 +68,6 @@ function AddUserDropdown({ onClose, onSuccess }) {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         full_name: `${formData.first_name} ${formData.last_name}`.trim(),
-        // Agora deve funcionar corretamente
         assignment_groups: formData.assignment_groups.map(group => group.id),
         is_staff: currentUser?.is_staff ? formData.is_staff : false,
         is_gestor: currentUser?.is_staff ? formData.is_gestor : false,
@@ -78,6 +77,10 @@ function AddUserDropdown({ onClose, onSuccess }) {
       };
 
       await api.post('/access/create/', userData);
+      
+      // Chama onSuccess antes de mostrar o modal
+      onSuccess('usuarios');
+      
       setResetPassword({ 
         show: true, 
         username: username.toLowerCase(),
@@ -102,7 +105,7 @@ function AddUserDropdown({ onClose, onSuccess }) {
   const handleModalClose = () => {
     setResetPassword({ show: false, username: '', password: '' });
     onClose();
-    onSuccess(); // Garante que a lista será atualizada
+    // Removemos o onSuccess daqui pois já foi chamado após criar o usuário
   };
 
   const customStyles = {
