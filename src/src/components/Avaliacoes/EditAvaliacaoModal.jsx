@@ -35,7 +35,7 @@ function EditAvaliacaoModal({ ticket, onClose, onSuccess }) {
           setPremissa(premissaEncontrada);
 
           // Buscar os critérios dessa premissa
-          const criteriosResponse = await api.get(`/premissas/criterios/?premissa=${premissaEncontrada.id}`);
+          const criteriosResponse = await api.get(`/premissas/criterios/?premissa_id=${premissaEncontrada.id}`);
           const criteriosAtivos = criteriosResponse.data.results.filter(c => c.ativo);
 
           // Filtrar quais critérios devem ser exibidos para avaliação manual
@@ -115,7 +115,7 @@ function EditAvaliacaoModal({ ticket, onClose, onSuccess }) {
 
   const fetchConversoesByCriterio = async (criterioId) => {
     try {
-      const response = await api.get(`/premissas/conversoes/?criterio=${criterioId}`);
+      const response = await api.get(`/premissas/conversoes/?criterio_id=${criterioId}`);
       console.log(`Conversões para critério ${criterioId}:`, response.data);
 
       const conversoes = Array.isArray(response.data) ? response.data : response.data.results || [];

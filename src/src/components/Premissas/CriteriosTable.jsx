@@ -85,7 +85,7 @@ function CriteriosTable({ premissaId }) {
   const fetchCriterios = async () => {
     setLoading(true);
     try {
-      let url = `/premissas/criterios/?premissa=${premissaId}`;
+      let url = `/premissas/criterios/?premissa_id=${premissaId}`;
       if (searchTerm) {
         url += `&search=${searchTerm}`;
       }
@@ -123,7 +123,7 @@ function CriteriosTable({ premissaId }) {
 
   const handleSave = async (id) => {
     try {
-      await api.patch(`/premissas/criterios/${id}/?premissa=${premissaId}`, editData);
+      await api.patch(`/premissas/criterios/?criterio_id=${id}`, editData);
       setEditingId(null);
       fetchCriterios();
     } catch (error) {
