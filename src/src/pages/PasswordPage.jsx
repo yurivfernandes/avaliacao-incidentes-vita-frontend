@@ -7,7 +7,7 @@ import '../styles/PasswordPage.css';
 
 function PasswordPage() {
   useEffect(() => {
-    document.title = 'Vita Gamify - Alterar Senha';
+    document.title = 'Vita Análise de Incidentes - Alterar Senha';
   }, []);
 
   const [formData, setFormData] = useState({

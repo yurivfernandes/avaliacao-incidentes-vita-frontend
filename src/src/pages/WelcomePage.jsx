@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header/Header';
 import '../styles/WelcomePage.css';
 import { 
-  FaUserCog, 
   FaChartBar,
   FaBook,
   FaUsers,
@@ -91,11 +90,6 @@ function WelcomePage() {
           name: 'Técnicos',
           icon: <FaUsers size={16} />,
           path: '/relatorios/tecnicos'
-        },
-        {
-          name: 'Equipes',
-          icon: <FaUserCog size={16} />,
-          path: '/relatorios/equipes'
         }
       ]
     },
@@ -108,7 +102,7 @@ function WelcomePage() {
         { 
           name: 'Documentação', 
           icon: <FaBook size={16} />, 
-          path: '#',  // mudado para '#' já que vamos usar handleDocClick
+          path: 'docs',  // mudado para '#' já que vamos usar handleDocClick
         },
         { 
           name: 'Manual do Usuário', 
@@ -139,9 +133,9 @@ function WelcomePage() {
           <div className="shape shape-3"></div>
         </div>
         <header className="welcome-header">
-          <h1>Bem-vindo ao Vita Gamify{user?.first_name ? `, ${user.first_name}` : ''}!</h1>
+          <h1>Bem-vindo(a) ao Vita Análise de Incidentes{user?.first_name ? `, ${user.first_name}` : ''}!</h1>
           <p className="welcome-subtitle">
-            Selecione uma das opções abaixo para começar sua jornada:
+            Selecione uma das opções abaixo para iniciar:
           </p>
         </header>
         
@@ -160,7 +154,7 @@ function WelcomePage() {
                       <li key={i}>
                         {card.title === 'Documentação' ? (
                           <a 
-                            href="#"
+                            href="docs"
                             onClick={handleDocClick}
                             rel="noopener noreferrer"
                           >

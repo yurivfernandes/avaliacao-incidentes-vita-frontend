@@ -117,12 +117,6 @@ function Header() {
                     <span>Técnicos</span>
                   </Link>
                 </li>
-                <li>
-                  <Link to="/relatorios/equipes">
-                    <FaUserCog />
-                    <span>Equipes</span>
-                  </Link>
-                </li>
               </ul>
             </li>
             <li className="app-menu-divider" />

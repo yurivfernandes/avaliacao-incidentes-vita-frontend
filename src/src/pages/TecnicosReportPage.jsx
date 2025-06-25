@@ -658,11 +658,6 @@ function TecnicosReportPage() {
           />
           <IndicadorCard
             icon={FaChartBar}
-            title="Total de Pontos"
-            value={formatarNumero(Math.round(calcularTotalPontosSelecionado()))}
-          />
-          <IndicadorCard
-            icon={FaChartBar}
             title="Média Período"
             value={formatarDecimal(calcularPontuacaoPeriodo())}
             className={calcularPontuacaoPeriodo() >= (mesData?.meta_mensal || 0) ? 'meta-achieved' : ''}

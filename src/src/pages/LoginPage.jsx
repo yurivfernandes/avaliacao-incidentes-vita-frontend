@@ -7,7 +7,7 @@ import api from '../services/api'; // Importar o serviço de API
 
 function LoginPage() {
   useEffect(() => {
-    document.title = 'Vita Gamify - Login';
+    document.title = 'Vita Análise de Incidentes - Login';
     const savedFormData = localStorage.getItem('loginFormData');
     if (savedFormData) {
       setFormData(JSON.parse(savedFormData));
