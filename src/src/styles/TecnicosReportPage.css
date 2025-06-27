@@ -956,8 +956,7 @@ tr:hover .medal-icon {
 .ranking-content {
   padding: 0;
 }
-  display: none;
-}
+
 .generic-table th:first-child {
   text-align: left;
   border-radius: 6px 0 0 6px;
