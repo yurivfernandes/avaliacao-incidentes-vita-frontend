@@ -817,7 +817,6 @@ function TecnicosReportPage() {
                   {/* Eixo X oculto, mas necessário para renderizar as barras */}
                   <XAxis 
                     type="number"
-                    dataKey="nota"
                     domain={[0, 100]}
                     hide
                   />
