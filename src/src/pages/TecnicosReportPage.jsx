@@ -30,7 +30,7 @@ function TecnicosReportPage() {
   const [error, setError] = useState(null);
   const [selectedTecnico, setSelectedTecnico] = useState('todos');
   const [tecnicos, setTecnicos] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('6');  // default 6 meses
+  const [selectedPeriod, setSelectedPeriod] = useState('anterior');  // padrão: mês anterior
   const [queues, setQueues] = useState([]);
   const [selectedQueue, setSelectedQueue] = useState(null);
   const [isQueueSelected, setIsQueueSelected] = useState(false);
@@ -486,11 +486,19 @@ function TecnicosReportPage() {
     return Math.max(...data[0].tecnicos.map(t => t.nota_media || 0));
   };
 
-  // Função para obter dados do gráfico de barras horizontal
+  // Função para obter dados do gráfico de barras horizontal (sempre do mês anterior)
   const getBarChartData = () => {
-    if (!data?.length || !data[0]?.tecnicos?.length) return [];
-    
-    return data[0].tecnicos
+    if (!data?.length) return [];
+    // Ordena os dados do mais recente para o mais antigo
+    const dadosOrdenados = [...data].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
+    });
+    // Pega o mês mais recente disponível (mês anterior)
+    const mesAnterior = dadosOrdenados[0];
+    if (!mesAnterior?.tecnicos?.length) return [];
+    return mesAnterior.tecnicos
       .map(tecnico => ({
         nome: tecnico.tecnico_nome.length > 15 
           ? tecnico.tecnico_nome.substring(0, 15) + '...' 
@@ -499,28 +507,30 @@ function TecnicosReportPage() {
         nota: Number(tecnico.nota_media) || 0
       }))
       .sort((a, b) => b.nota - a.nota)
-      .slice(0, 8); // Limita a 8 técnicos para evitar sobrecarga visual
+      .slice(0, 8);
   };
 
-  // Função para obter dados da linha temporal (média mensal da equipe)
+  // Função para obter dados da linha temporal (sempre últimos 6 meses)
   const getLineChartData = () => {
     if (!data || !Array.isArray(data) || data.length === 0) return [];
-
-    return data.map(mes => {
+    // Ordena do mais antigo para o mais recente
+    const dadosOrdenados = [...data].sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
+    });
+    // Pega os últimos 6 meses
+    const ultimos6 = dadosOrdenados.slice(-6);
+    return ultimos6.map(mes => {
       const tecnicos = mes.tecnicos || [];
       const mediaEquipe = tecnicos.length > 0 
         ? tecnicos.reduce((acc, t) => acc + (Number(t.nota_media) || 0), 0) / tecnicos.length 
         : 0;
-      
       return {
         mes: mes.mes,
         mediaEquipe: Number(mediaEquipe.toFixed(2)),
         meta: Number(mes.meta_mensal) || 0
       };
-    }).sort((a, b) => {
-      const [mesA, anoA] = a.mes.split('/');
-      const [mesB, anoB] = b.mes.split('/');
-      return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
     });
   };
 
