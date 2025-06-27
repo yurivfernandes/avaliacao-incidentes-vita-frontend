@@ -797,43 +797,34 @@ function TecnicosReportPage() {
                   layout="horizontal"
                   margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
                 >
-                  <XAxis 
-                    type="number" 
-                    domain={[0, 100]}
-                    tick={{ fontSize: 12 }}
-                  />
+                  {/* Apenas nomes dos técnicos no eixo Y */}
                   <YAxis 
                     dataKey="nome" 
                     type="category" 
                     width={90}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 13 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
+                  {/* Sem eixo X */}
+                  {/* Sem ReferenceLine, sem XAxis */}
                   <Tooltip 
-                    formatter={(value, name, props) => [
-                      `${formatarDecimal(value)}`, 
-                      'Nota'
-                    ]}
+                    formatter={(value) => [`${formatarDecimal(value)}`, 'Nota']}
                     labelFormatter={(label, payload) => {
                       const item = payload?.[0]?.payload;
                       return item?.nomeCompleto || label;
                     }}
                   />
                   <Bar dataKey="nota" radius={[0, 4, 4, 0]}>
-                    {barData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.nota >= (Number(data[0]?.meta_mensal) || 0) ? '#00aa00' : '#ff6b6b'} 
-                      />
-                    ))}
+                    {barData.map((entry, index) => {
+                      let fill = '#00bcd4'; // azul ciano
+                      if (entry.nota < 60) fill = '#ef4444'; // vermelho
+                      else if (entry.nota < 70) fill = '#facc15'; // amarelo
+                      else if (entry.nota < 80) fill = '#22c55e'; // verde
+                      else fill = '#00bcd4'; // azul ciano
+                      return <Cell key={`cell-${index}`} fill={fill} />;
+                    })}
                   </Bar>
-                  {data[0]?.meta_mensal && (
-                    <ReferenceLine 
-                      x={Number(data[0].meta_mensal)} 
-                      stroke="#670099" 
-                      strokeDasharray="5 5"
-                      strokeWidth={2}
-                    />
-                  )}
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -1044,6 +1035,7 @@ function TecnicosReportPage() {
     </>
   );
 }
+
 
 export default TecnicosReportPage;
 
