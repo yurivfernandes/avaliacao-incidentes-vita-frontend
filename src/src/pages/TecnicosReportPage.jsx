@@ -760,7 +760,8 @@ function TecnicosReportPage() {
             icon={FaTrophy}
             title="Top 1"
             value={topTecnico.nome}
-            subtitle={`${formatarDecimal(topTecnico.nota)}`}
+            // Só mostra a nota se houver nome válido
+            subtitle={topTecnico.nome && topTecnico.nome !== '-' ? `${formatarDecimal(topTecnico.nota)}` : ''}
             className={topTecnico.nota >= (data[0]?.meta_mensal || 0) ? 'meta-achieved' : ''}
           />
           <IndicadorCard
