@@ -3,19 +3,23 @@ import '../styles/TecnicosReportPage.css';
 import { 
   AreaChart, 
   Area,
+  BarChart,
+  Bar,
   XAxis, 
   YAxis, 
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Cell
 } from 'recharts';
 import Header from '../components/Header/Header';
 import api from '../services/api';
-import { FaChartBar, FaTrophy, FaChartLine, FaMedal } from 'react-icons/fa';
+import { FaChartBar, FaTrophy, FaChartLine, FaMedal, FaTicketAlt, FaUser, FaStar } from 'react-icons/fa';
 import IndicadorCard from '../components/dashboard/IndicadorCard';
 import Select from 'react-select';
 import { useAuth } from '../context/AuthContext';
+import GenericTable from '../components/GenericTable';  // Corrigindo o caminho de importação
 
 function TecnicosReportPage() {
   const { user } = useAuth();
@@ -462,6 +466,126 @@ function TecnicosReportPage() {
     });
   };
 
+  // Função para obter dados do técnico top 1
+  const getTopTecnico = () => {
+    if (!data?.length || !data[0]?.tecnicos?.length) return { nome: '-', nota: 0 };
+    
+    const topTecnico = data[0].tecnicos
+      .reduce((max, curr) => (curr.nota_media > max.nota_media) ? curr : max);
+    
+    return {
+      nome: topTecnico.tecnico_nome,
+      nota: topTecnico.nota_media
+    };
+  };
+
+  // Função para obter a melhor nota individual
+  const getMelhorNota = () => {
+    if (!data?.length || !data[0]?.tecnicos?.length) return 0;
+    
+    return Math.max(...data[0].tecnicos.map(t => t.nota_media || 0));
+  };
+
+  // Função para obter dados do gráfico de barras horizontal
+  const getBarChartData = () => {
+    if (!data?.length || !data[0]?.tecnicos?.length) return [];
+    
+    return data[0].tecnicos
+      .map(tecnico => ({
+        nome: tecnico.tecnico_nome.length > 15 
+          ? tecnico.tecnico_nome.substring(0, 15) + '...' 
+          : tecnico.tecnico_nome,
+        nomeCompleto: tecnico.tecnico_nome,
+        nota: Number(tecnico.nota_media) || 0
+      }))
+      .sort((a, b) => b.nota - a.nota)
+      .slice(0, 8); // Limita a 8 técnicos para evitar sobrecarga visual
+  };
+
+  // Função para obter dados da linha temporal (média mensal da equipe)
+  const getLineChartData = () => {
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
+
+    return data.map(mes => {
+      const tecnicos = mes.tecnicos || [];
+      const mediaEquipe = tecnicos.length > 0 
+        ? tecnicos.reduce((acc, t) => acc + (Number(t.nota_media) || 0), 0) / tecnicos.length 
+        : 0;
+      
+      return {
+        mes: mes.mes,
+        mediaEquipe: Number(mediaEquipe.toFixed(2)),
+        meta: Number(mes.meta_mensal) || 0
+      };
+    }).sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/');
+      const [mesB, anoB] = b.mes.split('/');
+      return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
+    });
+  };
+
+  // Componente do velocímetro
+  const SpeedometerChart = ({ value, meta, max = 100 }) => {
+    const safeValue = Number(value) || 0;
+    const safeMeta = Number(meta) || 0;
+    const percentage = Math.min((safeValue / max) * 100, 100);
+    const metaPercentage = Math.min((safeMeta / max) * 100, 100);
+    
+    // Definir cor baseada na relação com a meta
+    let color = '#ff4444'; // Vermelho (abaixo da meta)
+    if (safeValue >= safeMeta) {
+      color = '#00aa00'; // Verde (atingiu a meta)
+    } else if (safeValue >= safeMeta * 0.8) {
+      color = '#ffaa00'; // Amarelo (próximo da meta)
+    }
+
+    return (
+      <div className="speedometer-container">
+        <div className="speedometer-chart">
+          <svg width="200" height="120" viewBox="0 0 200 120">
+            {/* Arco de fundo */}
+            <path
+              d="M 30 100 A 70 70 0 0 1 170 100"
+              fill="none"
+              stroke="#e0e0e0"
+              strokeWidth="15"
+            />
+            
+            {/* Arco de progresso */}
+            <path
+              d="M 30 100 A 70 70 0 0 1 170 100"
+              fill="none"
+              stroke={color}
+              strokeWidth="15"
+              strokeDasharray={`${percentage * 2.2} 220`}
+              strokeLinecap="round"
+            />
+            
+            {/* Marca da meta */}
+            {safeMeta > 0 && (
+              <line
+                x1={30 + (metaPercentage / 100) * 140}
+                y1="85"
+                x2={30 + (metaPercentage / 100) * 140}
+                y2="100"
+                stroke="#670099"
+                strokeWidth="3"
+              />
+            )}
+            
+            {/* Texto do valor */}
+            <text x="100" y="75" textAnchor="middle" fontSize="24" fontWeight="bold" fill={color}>
+              {safeValue.toFixed(1)}
+            </text>
+            <text x="100" y="95" textAnchor="middle" fontSize="12" fill="#666">
+              Meta: {safeMeta}
+            </text>
+          </svg>
+        </div>
+      </div>
+    );
+  };
+
   const renderDashboardContent = () => {
     const handleMonthClick = (clickData) => {
       if (clickData && clickData.activeLabel) {
@@ -566,15 +690,12 @@ function TecnicosReportPage() {
       );
     }
 
-    const tecnicoOptions = tecnicos.map(tecnico => ({
-      value: tecnico.id,
-      label: tecnico.nome
-    }));
-
-    const periodoOptions = periodos.map(periodo => ({
-      value: periodo.value,
-      label: periodo.label
-    }));
+    // Definir as variáveis no escopo correto
+    const topTecnico = getTopTecnico();
+    const melhorNota = getMelhorNota();
+    const barData = getBarChartData();
+    const lineData = getLineChartData();
+    const mediaGeral = calcularPontuacaoPeriodo();
 
     return (
       <div className="dashboard-content-container">
@@ -597,8 +718,8 @@ function TecnicosReportPage() {
                 .find(option => option.value === selectedQueue)}
               onChange={(option) => {
                 setSelectedQueue(option.value);
-                setSelectedTecnico('todos'); // Reset seleção do técnico
-                setSelectedGroup(option.value); // Atualiza o grupo selecionado
+                setSelectedTecnico('todos');
+                setSelectedGroup(option.value);
               }}
               options={queues.map(queue => ({
                 value: queue.id,
@@ -608,309 +729,308 @@ function TecnicosReportPage() {
           </div>
 
           <div className="dashboard-filter-group">
-            <label>Técnico</label>
-            <Select
-              className="react-select-container"
-              classNamePrefix="react-select"
-              isDisabled={!selectedQueue || tecnicoOptions.length === 0} // Desabilita se não houver fila selecionada
-              value={tecnicoOptions.find(option => option.value === selectedTecnico) || 
-                    { value: 'todos', label: 'Todos os Técnicos' }}
-              onChange={(option) => setSelectedTecnico(option.value)}
-              options={[{ value: 'todos', label: 'Todos os Técnicos' }, ...tecnicoOptions]}
-            />
-          </div>
-
-          <div className="dashboard-filter-group">
             <label>Período</label>
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
-              value={periodoOptions.find(option => option.value === selectedPeriod)}
+              value={periodos.find(option => option.value === selectedPeriod)}
               onChange={(option) => setSelectedPeriod(option.value)}
-              options={periodoOptions}
+              options={periodos.map(periodo => ({
+                value: periodo.value,
+                label: periodo.label
+              }))}
             />
           </div>
         </div>
 
-        {/* Indicador de filtro movido para antes dos cards */}
-        <div className="active-filter-indicator">
-          {selectedMonth ? (
-            <>
-              <span>Filtrando por: {formatMes(selectedMonth)}</span>
-              <button onClick={clearMonthFilter} className="clear-filter-btn">
-                Limpar filtro
-              </button>
-            </>
-          ) : null}
-        </div>
-
-        <div className="dashboard-grid">
+        {/* Grid de Cards - 4 cards centralizados */}
+        <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', maxWidth: '1200px', margin: '0 auto' }}>
+          <IndicadorCard
+            icon={FaTicketAlt}
+            title="Tickets Avaliados"
+            value={formatarNumero(calcularTotalTickets())}
+          />
           <IndicadorCard
             icon={FaChartLine}
             title="Meta"
-            value={formatarDecimal(mesData?.meta_mensal || 0)}
+            value={formatarDecimal(data[0]?.meta_mensal || 0)}
             className="meta-card"
           />
           <IndicadorCard
-            icon={FaChartBar}
-            title="Tickets Avaliados"
-            value={formatarNumero(calcularTotalTicketsSelecionado())}
+            icon={FaTrophy}
+            title="Top 1"
+            value={topTecnico.nome}
+            subtitle={`${formatarDecimal(topTecnico.nota)}`}
+            className={topTecnico.nota >= (data[0]?.meta_mensal || 0) ? 'meta-achieved' : ''}
           />
           <IndicadorCard
-            icon={FaChartBar}
-            title="Média Período"
-            value={formatarDecimal(calcularPontuacaoPeriodo())}
-            className={calcularPontuacaoPeriodo() >= (mesData?.meta_mensal || 0) ? 'meta-achieved' : ''}
-          />
-          <IndicadorCard
-            icon={FaChartBar}
-            title="Média Último Mês"
-            value={formatarDecimal(calcularPontuacaoUltimoMes())}
-            className={calcularPontuacaoUltimoMes() >= (mesData?.meta_mensal || 0) ? 'meta-achieved' : ''}
+            icon={FaStar}
+            title="Melhor Nota"
+            value={formatarDecimal(melhorNota)}
+            className={melhorNota >= (data[0]?.meta_mensal || 0) ? 'meta-achieved' : ''}
           />
         </div>
 
-        <div className="dashboard-flex">
-          <div className="dashboard-chart-container">
-            <h3 className="dashboard-chart-title" style={{ textAlign: 'center' }}>
-              Evolução da Média
+        {/* Grid de Gráficos - 3 gráficos lado a lado */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(3, 1fr)', 
+          gap: '20px', 
+          margin: '30px 0',
+          minHeight: '350px'
+        }}>
+          {/* Gráfico de Barras Horizontal */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '8px', 
+            padding: '20px', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+          }}>
+            <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>
+              Desempenho por Técnico
             </h3>
-            <div className="chart-wrapper">
-              <div className="chart-outer-container">
-                <ResponsiveContainer width="95%" height={360}>
-                  <AreaChart 
-                    data={getFilteredData()
-                      .sort((a, b) => {
-                        const [mesA, anoA] = a.mes.split('/');
-                        const [mesB, anoB] = b.mes.split('/');
-                        return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
-                      })} 
-                    margin={{ top: 20, right: 40, left: 20, bottom: 20 }}
-                    onClick={handleMonthClick}
-                  >
-                    <defs>
-                      {colors.map((color, index) => (
-                        <linearGradient
-                          key={`gradient-${index}`}
-                          id={`colorGradient${index + 1}`}
-                          x1="0" y1="0"
-                          x2="0" y2="1"
-                        >
-                          <stop offset="5%" stopColor={color.gradient[0]} stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor={color.gradient[1]} stopOpacity={0.1}/>
-                        </linearGradient>
-                      ))}
-                    </defs>
-                    
-                    <XAxis 
-                      dataKey="mes" 
-                      tickFormatter={formatMes}
-                      style={{ 
-                        fontFamily: 'Poppins',
-                        fontSize: '12px',
-                      }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval={0}
-                      padding={{ left: 30, right: 30 }} // Aumentado o padding
-                    />
-                    <YAxis 
-                      hide={true}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip 
-                      formatter={(value, name) => [`${formatarDecimal(value)}`, name]}
-                      labelFormatter={formatMes}
-                    />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: '20px' }}
-                    />
-                    {Object.keys(getFilteredData()[0] || {})
-                      .filter(key => !['mes', 'meta', 'group_id', 'group_nome'].includes(key) && 
-                        !key.includes('_detalhes') && !key.includes('_tendencia'))
-                      .sort() // Ordena alfabeticamente
-                      .map((tecnico, index, array) => {
-                        const colorIndex = getColorIndex(index, array.length);
-                        return (
-                          <Area
-                            key={tecnico}
-                            type="monotone"
-                            dataKey={tecnico}
-                            name={tecnico}
-                            stroke={colors[colorIndex].stroke}
-                            fill={colors[colorIndex].fill}
-                            strokeWidth={2}
-                            dot={{ 
-                              r: 6,
-                              fill: '#FFFFFF',
-                              stroke: colors[colorIndex].stroke,
-                              strokeWidth: 2.5,
-                              strokeOpacity: 1,
-                              fillOpacity: 1, // Garante preenchimento sólido
-                            }}
-                            activeDot={{ 
-                              r: 8,
-                              fill: '#FFFFFF',
-                              stroke: colors[colorIndex].stroke,
-                              strokeWidth: 2.5,
-                              strokeOpacity: 1,
-                              fillOpacity: 1, // Garante preenchimento sólido
-                            }}
-                            label={props => {
-                              const { x, y, value, index: dataIndex } = props;
-                              // Só exibe valores em um máximo de 4 séries para evitar sobreposição
-                              if (array.length > 4) return null;
-                              
-                              // Calcular offset para evitar sobreposição de labels
-                              const proximosValores = Object.keys(getFilteredData()[dataIndex] || {})
-                                .filter(k => !['mes', 'meta', 'group_id', 'group_nome'].includes(k) && 
-                                  !k.includes('_detalhes') && !k.includes('_tendencia'))
-                                .map(k => ({
-                                  valor: getFilteredData()[dataIndex][k],
-                                  nome: k
-                                }));
-                              
-                              // Ordenar para determinar posição
-                              const valoresOrdenados = [...proximosValores]
-                                .sort((a, b) => b.valor - a.valor);
-                              
-                              // Encontrar a posição do técnico atual
-                              const posicao = valoresOrdenados.findIndex(v => v.nome === tecnico);
-                              
-                              // Ajustar o offset baseado na posição
-                              const offsetY = [-25, 25, -45, 45][posicao] || 0;
-                              
-                              return (
-                                <text
-                                  x={x}
-                                  y={y + offsetY}
-                                  fill={colors[colorIndex].stroke}
-                                  fontSize={11}
-                                  fontWeight="500"
-                                  textAnchor="middle"
-                                  className="area-chart-label"
-                                >
-                                  {Math.round(value)}
-                                </text>
-                              );
-                            }}
-                          />
-                        );
-                      })}
-                    {/* Adicionar linha de meta com mais espessura */}
+            {barData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={barData}
+                  layout="horizontal"
+                  margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                >
+                  <XAxis 
+                    type="number" 
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    dataKey="nome" 
+                    type="category" 
+                    width={90}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip 
+                    formatter={(value, name, props) => [
+                      `${formatarDecimal(value)}`, 
+                      'Nota'
+                    ]}
+                    labelFormatter={(label, payload) => {
+                      const item = payload?.[0]?.payload;
+                      return item?.nomeCompleto || label;
+                    }}
+                  />
+                  <Bar dataKey="nota" radius={[0, 4, 4, 0]}>
+                    {barData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.nota >= (Number(data[0]?.meta_mensal) || 0) ? '#00aa00' : '#ff6b6b'} 
+                      />
+                    ))}
+                  </Bar>
+                  {data[0]?.meta_mensal && (
                     <ReferenceLine 
-                      y={data[0]?.meta_mensal} 
+                      x={Number(data[0].meta_mensal)} 
+                      stroke="#670099" 
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                    />
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ 
+                height: '300px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#666'
+              }}>
+                Nenhum dado disponível
+              </div>
+            )}
+          </div>
+
+          {/* Velocímetro */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '8px', 
+            padding: '20px', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>
+              Média Geral
+            </h3>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <SpeedometerChart 
+                value={mediaGeral} 
+                meta={data[0]?.meta_mensal || 0} 
+              />
+            </div>
+          </div>
+
+          {/* Gráfico de Linha - Evolução Mensal da Equipe */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '8px', 
+            padding: '20px', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+          }}>
+            <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>
+              Evolução Mensal da Equipe
+            </h3>
+            {lineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart
+                  data={lineData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient id="colorMedia" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#670099" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#670099" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="mes" 
+                    tickFormatter={formatMes}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis 
+                    domain={[0, 100]} 
+                    hide 
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`${formatarDecimal(value)}`, 'Média da Equipe']}
+                    labelFormatter={formatMes}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="mediaEquipe"
+                    stroke="#670099"
+                    fill="url(#colorMedia)"
+                    strokeWidth={2}
+                    dot={{ fill: '#FFFFFF', stroke: '#670099', strokeWidth: 2, r: 4 }}
+                  />
+                  {data[0]?.meta_mensal && (
+                    <ReferenceLine 
+                      y={Number(data[0].meta_mensal)} 
                       stroke="#670099" 
                       strokeDasharray="5 5"
                       strokeWidth={2}
                       label={{ 
-                        value: `Meta: ${data[0]?.meta_mensal || 0}`,
+                        value: `Meta: ${data[0].meta_mensal}`,
                         position: 'right',
-                        fill: '#670099',
-                        fontWeight: 500
+                        style: { fontSize: '12px' }
                       }}
                     />
-                  </AreaChart>
-                </ResponsiveContainer>
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ 
+                height: '300px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#666'
+              }}>
+                Nenhum dado disponível
               </div>
-            </div>
-          </div>
-
-          <div className="dashboard-ranking-container">
-            <div className="ranking-header">
-              <h3>
-                <FaTrophy className="card-icon" />
-                Ranking
-              </h3>
-              <div className="ranking-header-content">
-                <div className="ranking-tabs">
-                  <button 
-                    className={`ranking-tab ${activeRankingTab === 'mensal' ? 'active' : ''}`}
-                    onClick={() => setActiveRankingTab('mensal')}
-                  >
-                    Mensal
-                  </button>
-                  <button 
-                    className={`ranking-tab ${activeRankingTab === 'anual' ? 'active' : ''}`}
-                    onClick={() => setActiveRankingTab('anual')}
-                  >
-                    Anual
-                  </button>
-                </div>
-
-                {activeRankingTab === 'anual' && availableYears.length > 0 && (
-                  <Select
-                    className="year-select-container"
-                    classNamePrefix="react-select"
-                    value={{ value: selectedYear, label: selectedYear }}
-                    onChange={(option) => setSelectedYear(Number(option.value))}
-                    options={availableYears.map(year => ({
-                      value: year,
-                      label: year
-                    }))}
-                    isSearchable={false}
-                  />
-                )}
-              </div>
-            </div>
-
-            <table className="generic-table">
-              <thead>
-                <tr>
-                  <th>Técnico</th>
-                  <th style={{textAlign: 'center'}}>Média</th>
-                  <th style={{textAlign: 'center'}}>Pontos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeRankingTab === 'mensal' ? (
-                  // Ranking Mensal
-                  getFilteredRanking().map((tecnico, index) => (
-                    <tr 
-                      key={tecnico.tecnico_id || index} 
-                      className={`${tecnico.meta_atingida && tecnico.posicao <= 3 ? `dashboard-top-${tecnico.posicao}` : ''} ${tecnico.alertClass}`}
-                    >
-                      <td>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                          {getMedalIcon(tecnico.posicao, tecnico.media, data[0]?.meta_mensal)}
-                          <span>{tecnico.tecnico_nome}</span>
-                        </div>
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        {formatarDecimal(tecnico.media || 0, false)}
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        {formatarNumero(Math.round(tecnico.total || 0))}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  // Ranking Anual
-                  getFilteredRankingAnual().map((tecnico, index) => (
-                    <tr  
-                      key={tecnico.tecnico_id || index} 
-                      className={`${tecnico.meta_atingida && tecnico.posicao <= 3 ? `dashboard-top-${tecnico.posicao}` : ''} ${tecnico.alertClass}`}
-                    >
-                      <td>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                          {getMedalIcon(tecnico.posicao, tecnico.media, data[0]?.meta_mensal)}
-                          <span>{tecnico.tecnico_nome}</span>
-                        </div>
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        {formatarDecimal(tecnico.media || 0, false)}
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        {formatarNumero(Math.round(tecnico.total || 0))}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            )}
           </div>
         </div>
+
+        {/* Tabela de Ranking */}
+        <div className="ranking-section">
+          <div className="ranking-header">
+            {/* Removido o título "Ranking de Técnicos" */}
+            <div className="ranking-controls">
+              <div className="ranking-tabs">
+                <button 
+                  className={`ranking-tab ${activeRankingTab === 'mensal' ? 'active' : ''}`}
+                  onClick={() => setActiveRankingTab('mensal')}
+                >
+                  Mensal
+                </button>
+                <button 
+                  className={`ranking-tab ${activeRankingTab === 'anual' ? 'active' : ''}`}
+                  onClick={() => setActiveRankingTab('anual')}
+                >
+                  Anual
+                </button>
+              </div>
+
+              {activeRankingTab === 'anual' && availableYears.length > 0 && (
+                <Select
+                  className="year-select-container"
+                  classNamePrefix="react-select"
+                  value={{ value: selectedYear, label: selectedYear }}
+                  onChange={(option) => setSelectedYear(Number(option.value))}
+                  options={availableYears.map(year => ({
+                    value: year,
+                    label: year
+                  }))}
+                  isSearchable={false}
+                />
+              )}
+            </div>
+          </div>
+
+          {activeRankingTab === 'mensal' ? (
+            renderRankingTable(getFilteredRanking())
+          ) : (
+            renderRankingTable(getFilteredRankingAnual())
+          )}
+        </div>
       </div>
+    );
+  };
+
+  const renderRankingTable = (rankingData) => {
+    const columns = [
+      {
+        header: 'Analista',
+        key: 'tecnico_nome',
+        render: (row) => (
+          <span className="analista-nome">{row.tecnico_nome}</span>
+        )
+      },
+      {
+        header: 'Qtd. Tickets',
+        key: 'total_tickets',
+        render: (row) => (
+          <span className="tickets-qtd">{formatarNumero(row.total_tickets || 0)}</span>
+        )
+      },
+      {
+        header: 'Posição',
+        key: 'posicao',
+        render: (row) => (
+          <div className="ranking-position-cell">
+            {getMedalIcon(row.posicao, row.media, data[0]?.meta_mensal)}
+          </div>
+        )
+      },
+      {
+        header: 'Média',
+        key: 'media',
+        render: (row) => (
+          <span className="media-valor">{formatarDecimal(row.media || 0, false)}</span>
+        )
+      }
+    ];
+
+    return (
+      <GenericTable
+        columns={columns}
+        data={rankingData}
+        loading={loading}
+        currentPage={1}
+        totalPages={1}
+      />
     );
   };
 
@@ -925,3 +1045,4 @@ function TecnicosReportPage() {
 }
 
 export default TecnicosReportPage;
+

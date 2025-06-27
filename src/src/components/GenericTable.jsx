@@ -67,9 +67,9 @@ function GenericTable({ columns, data, loading, onSave, onEdit, onCancel, onPage
   };
 
   return (
-    <div className="table-container">
-      <div className="table-scroll">
-        <table className="generic-table inventory-table">
+    <div className="table-container" style={{ width: '100%', overflowX: 'auto', padding: 0, margin: 0 }}>
+      <div className="table-scroll" style={{ width: '100%', minWidth: 0, overflowX: 'auto', padding: 0, margin: 0 }}>
+        <table className="generic-table inventory-table" style={{ width: '100%', minWidth: 0, tableLayout: 'auto' }}>
           <thead>
             <tr>
               {columns.map((column) => (
