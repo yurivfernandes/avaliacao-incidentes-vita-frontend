@@ -529,8 +529,12 @@ function TecnicosReportPage() {
     const safeValue = Number(value) || 0;
     const safeMeta = Number(meta) || 0;
     const percentage = Math.min((safeValue / max) * 100, 100);
-    const metaPercentage = Math.min((safeMeta / max) * 100, 100);
-    
+
+    // Para a marca da meta: calcula o ângulo e converte para coordenadas do arco
+    const metaAngle = Math.PI * (1 - (safeMeta / max)); // 180° a 0°
+    const metaX = 100 + 70 * Math.cos(metaAngle);
+    const metaY = 100 - 70 * Math.sin(metaAngle);
+
     // Definir cor baseada na relação com a meta
     let color = '#ff4444'; // Vermelho (abaixo da meta)
     if (safeValue >= safeMeta) {
@@ -538,6 +542,12 @@ function TecnicosReportPage() {
     } else if (safeValue >= safeMeta * 0.8) {
       color = '#ffaa00'; // Amarelo (próximo da meta)
     }
+
+    // Calcula o comprimento do arco para o valor atual
+    const arcLength = (percentage / 100) * Math.PI * 70;
+    const arcAngle = Math.PI * (percentage / 100);
+    const arcX = 100 + 70 * Math.cos(Math.PI - arcAngle);
+    const arcY = 100 - 70 * Math.sin(Math.PI - arcAngle);
 
     return (
       <div className="speedometer-container">
@@ -550,29 +560,25 @@ function TecnicosReportPage() {
               stroke="#e0e0e0"
               strokeWidth="15"
             />
-            
             {/* Arco de progresso */}
             <path
-              d="M 30 100 A 70 70 0 0 1 170 100"
+              d={`M 30 100 A 70 70 0 0 1 ${arcX} ${arcY}`}
               fill="none"
               stroke={color}
               strokeWidth="15"
-              strokeDasharray={`${percentage * 2.2} 220`}
               strokeLinecap="round"
             />
-            
             {/* Marca da meta */}
             {safeMeta > 0 && (
               <line
-                x1={30 + (metaPercentage / 100) * 140}
-                y1="85"
-                x2={30 + (metaPercentage / 100) * 140}
-                y2="100"
+                x1={metaX}
+                y1={metaY - 10}
+                x2={metaX}
+                y2={metaY + 10}
                 stroke="#670099"
-                strokeWidth="3"
+                strokeWidth="4"
               />
             )}
-            
             {/* Texto do valor */}
             <text x="100" y="75" textAnchor="middle" fontSize="24" fontWeight="bold" fill={color}>
               {safeValue.toFixed(1)}
@@ -796,8 +802,15 @@ function TecnicosReportPage() {
                   data={barData}
                   layout="horizontal"
                   margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                  barCategoryGap={16}
                 >
-                  {/* Apenas nomes dos técnicos no eixo Y */}
+                  {/* Eixo X oculto, mas necessário para renderizar as barras */}
+                  <XAxis 
+                    type="number"
+                    dataKey="nota"
+                    domain={[0, 100]}
+                    hide
+                  />
                   <YAxis 
                     dataKey="nome" 
                     type="category" 
@@ -806,8 +819,6 @@ function TecnicosReportPage() {
                     axisLine={false}
                     tickLine={false}
                   />
-                  {/* Sem eixo X */}
-                  {/* Sem ReferenceLine, sem XAxis */}
                   <Tooltip 
                     formatter={(value) => [`${formatarDecimal(value)}`, 'Nota']}
                     labelFormatter={(label, payload) => {
