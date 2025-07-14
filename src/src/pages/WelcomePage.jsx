@@ -33,7 +33,7 @@ function WelcomePage() {
   const cards = [
     ...(user?.is_staff || user?.is_gestor ? [{
       title: 'Gestão de Usuários',
-      description: 'Gerencie a equipe técnica',
+      description: 'Crie e edite usuários e filas.',
       active: true,
       icon: <FaUsers size={32} />,
       subItems: [
@@ -51,7 +51,7 @@ function WelcomePage() {
     }] : []),
     ...(user?.is_staff || user?.is_gestor ? [{
       title: 'Premissas',
-      description: 'Edite as premissas do sistema',
+      description: 'Crie e edite as regras de avaliações de incidentes.',
       active: true,
       icon: <FaClipboardList size={32} />,
       subItems: [
@@ -64,7 +64,7 @@ function WelcomePage() {
     }] : []),
     {
       title: 'Avaliação de Incidentes',
-      description: 'Realize avaliações de incidentes',
+      description: 'Realize e visualize avaliações dos incidentes.',
       active: true,
       icon: <FaHeadset size={32} />,
       subItems: [
@@ -82,7 +82,7 @@ function WelcomePage() {
     },
     {
       title: 'Relatórios',
-      description: 'Acesse relatórios detalhados e estatísticas',
+      description: 'Acesse relatórios detalhados e estatística das avaliações realizadas.',
       active: true,
       icon: <FaChartBar size={32} />, // Alterado de FaChartPie para FaChartBar
       subItems: [
@@ -95,7 +95,7 @@ function WelcomePage() {
     },
     {
       title: 'Documentação',
-      description: 'Acesse as documentações disponíveis do sistema',
+      description: 'Acesse as documentações disponíveis do sistema.',
       active: user?.is_staff || false,
       icon: <FaBook size={32} />,
       subItems: [
