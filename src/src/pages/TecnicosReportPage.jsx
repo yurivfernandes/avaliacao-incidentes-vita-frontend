@@ -30,7 +30,7 @@ function TecnicosReportPage() {
   const [error, setError] = useState(null);
   const [selectedTecnico, setSelectedTecnico] = useState('todos');
   const [tecnicos, setTecnicos] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('anterior');  // padrão: mês anterior
+  const [selectedPeriod, setSelectedPeriod] = useState('1');  // padrão: último mês
   const [queues, setQueues] = useState([]);
   const [selectedQueue, setSelectedQueue] = useState(null);
   const [isQueueSelected, setIsQueueSelected] = useState(false);
@@ -45,6 +45,7 @@ function TecnicosReportPage() {
   const [rankingAnual, setRankingAnual] = useState([]);
 
   const periodos = [
+    { value: '1', label: 'Último mês' },
     { value: '2', label: 'Últimos 2 meses' },
     { value: '3', label: 'Últimos 3 meses' },
     { value: '6', label: 'Últimos 6 meses' },
@@ -158,7 +159,13 @@ function TecnicosReportPage() {
       const endDate = new Date();
       let startDate = new Date();
 
-      if (selectedPeriod === 'atual') {
+      // Ajuste para pegar o último mês completo
+      if (selectedPeriod === '1') {
+        // Primeiro dia do mês anterior
+        startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1);
+        // Último dia do mês anterior
+        endDate.setDate(0); // Vai para o último dia do mês anterior
+      } else if (selectedPeriod === 'atual') {
         startDate = new Date(endDate.getFullYear(), 0, 1);
       } else if (selectedPeriod === 'anterior') {
         startDate = new Date(endDate.getFullYear() - 1, 0, 1);
@@ -486,28 +493,21 @@ function TecnicosReportPage() {
     return Math.max(...data[0].tecnicos.map(t => t.nota_media || 0));
   };
 
-  // Função para obter dados do gráfico de barras horizontal (sempre do mês anterior)
+  // Função modificada para obter dados do gráfico de barras horizontal
   const getBarChartData = () => {
-    if (!data?.length) return [];
-    // Ordena os dados do mais recente para o mais antigo
-    const dadosOrdenados = [...data].sort((a, b) => {
-      const [mesA, anoA] = a.mes.split('/');
-      const [mesB, anoB] = b.mes.split('/');
-      return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-    });
-    // Pega o mês mais recente disponível (mês anterior)
-    const mesAnterior = dadosOrdenados[0];
-    if (!mesAnterior?.tecnicos?.length) return [];
-    return mesAnterior.tecnicos
-      .map(tecnico => ({
-        nome: tecnico.tecnico_nome.length > 15 
-          ? tecnico.tecnico_nome.substring(0, 15) + '...' 
-          : tecnico.tecnico_nome,
-        nomeCompleto: tecnico.tecnico_nome,
-        nota: Number(tecnico.nota_media) || 0
-      }))
-      .sort((a, b) => b.nota - a.nota)
-      .slice(0, 8);
+    // Dados mocados para teste visual
+    const mockData = [
+      { nome: 'João', nomeCompleto: 'João Silva', nota: 85 },
+      { nome: 'Maria', nomeCompleto: 'Maria Santos', nota: 75 },
+      { nome: 'Pedro', nomeCompleto: 'Pedro Oliveira', nota: 65 },
+      { nome: 'Ana', nomeCompleto: 'Ana Beatriz', nota: 55 },
+      { nome: 'Carlos', nomeCompleto: 'Carlos Eduardo', nota: 95 },
+      { nome: 'Paulo', nomeCompleto: 'Paulo Roberto', nota: 72 },
+      { nome: 'Lucas', nomeCompleto: 'Lucas Mendes', nota: 88 },
+      { nome: 'Julia', nomeCompleto: 'Julia Costa', nota: 68 }
+    ].sort((a, b) => b.nota - a.nota);
+
+    return mockData;
   };
 
   // Função para obter dados da linha temporal (sempre últimos 6 meses)
@@ -801,7 +801,7 @@ function TecnicosReportPage() {
             background: 'white', 
             borderRadius: '8px', 
             padding: '20px', 
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           }}>
             <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>
               Desempenho por Técnico
@@ -811,53 +811,25 @@ function TecnicosReportPage() {
                 <BarChart
                   data={barData}
                   layout="horizontal"
-                  margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                  barCategoryGap={16}
+                  margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
                 >
-                  {/* Eixo X oculto, mas necessário para renderizar as barras */}
-                  <XAxis 
-                    type="number"
-                    dataKey="nota"
-                    domain={[0, 100]}
-                    hide
-                  />
+                  <XAxis type="number" domain={[0, 100]} />
                   <YAxis 
                     dataKey="nome" 
-                    type="category" 
-                    width={90}
-                    tick={{ fontSize: 13 }}
-                    axisLine={false}
-                    tickLine={false}
+                    type="category"
                   />
-                  <Tooltip 
-                    formatter={(value) => [`${formatarDecimal(value)}`, 'Nota']}
-                    labelFormatter={(label, payload) => {
-                      const item = payload?.[0]?.payload;
-                      return item?.nomeCompleto || label;
-                    }}
+                  <Tooltip
+                    formatter={(value) => [`${value.toFixed(1)}`, 'Nota']}
+                    labelFormatter={(label) => `${label}`}
                   />
-                  <Bar dataKey="nota" radius={[0, 4, 4, 0]}>
-                    {barData.map((entry, index) => {
-                      let fill = '#00bcd4'; // azul ciano
-                      if (entry.nota < 60) fill = '#ef4444'; // vermelho
-                      else if (entry.nota < 70) fill = '#facc15'; // amarelo
-                      else if (entry.nota < 80) fill = '#22c55e'; // verde
-                      else fill = '#00bcd4'; // azul ciano
-                      return <Cell key={`cell-${index}`} fill={fill} />;
-                    })}
-                  </Bar>
+                  <Bar 
+                    dataKey="nota"
+                    fill="#670099"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ 
-                height: '300px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                color: '#666'
-              }}>
-                Nenhum dado disponível
-              </div>
+              <div>Nenhum dado disponível</div>
             )}
           </div>
 
@@ -1056,7 +1028,6 @@ function TecnicosReportPage() {
     </>
   );
 }
-
 
 export default TecnicosReportPage;
 
