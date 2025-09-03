@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // Verifique se esta URL está correta
-  //baseURL: 'https://api-avaliacao-incidentes.gestri.com.br/api',
+  //baseURL: 'http://localhost:8000/api', // Verifique se esta URL está correta
+  baseURL: 'https://api.gamedesk.com.br/api',
   headers: {
     'Content-Type': 'application/json',
   },
